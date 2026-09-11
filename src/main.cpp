@@ -2,30 +2,44 @@
 
 #include <vector>
 
-#define STATUS_LED PB14
+#include "./hardwear/radio/HC12.hpp"
+#include "./hardwear/led/BlinkLed.hpp"
+#include "./hardwear/buzzer/Buzzer.hpp"
 
-HardwareSerial HC12(PA12, PA11);
+Buzzer buzzer(PA8);
+BlinkLed statusLed(PB14, 255);
+HC12 radioHC12(PB15, PA9, PA10, 9600, []() {statusLed.flash();});
+
+const Buzzer::Melody startupMelody = {
+    {262, 200},
+    {294, 200},
+    {330, 200}
+};
 
 void setup() {
-    pinMode(STATUS_LED, OUTPUT); // Set the built-in LED pin as an output
-    HC12.begin(9600);
+    statusLed.begin();
+    radioHC12.begin();
+    buzzer.begin();
 
-    delay(100);
+    buzzer.playMelody(startupMelody);
 
-    HC12.write("AT+DEFAULT\r\n");
+    radioHC12.sendATCommand("AT+DEFAULT");
 }
 
 void loop() {
+    buzzer.update();
+    statusLed.update();
+
     std::vector<uint8_t> receivedBytes;
-    while (HC12.available()) {
-        receivedBytes.push_back(HC12.read());
-        analogWrite(STATUS_LED, 35);
+    while (radioHC12.available()) {
+        if (auto byte = radioHC12.read()) {
+            receivedBytes.push_back(*byte);
+        }
         delay(5);
     }
     if (!receivedBytes.empty()) {
-        delay(50);
-        HC12.write(receivedBytes.data(), receivedBytes.size());
+        delay(10);
+        radioHC12.send(std::span(receivedBytes.data(), receivedBytes.size()));
         receivedBytes.clear();
-        analogWrite(STATUS_LED, 0);
     }
 }

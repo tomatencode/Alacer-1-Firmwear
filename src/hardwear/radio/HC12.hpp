@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>
+#include <SoftwareSerial.h>
 #include <cstdint>
 #include <functional>
 #include <span>
@@ -40,7 +41,7 @@ private:
 
     int _baudRate;
 
-    HardwareSerial _serial;
+    SoftwareSerial _serial;
 
     std::function<void()> _onSendCallback;
     std::function<void()> _onReceiveCallback;

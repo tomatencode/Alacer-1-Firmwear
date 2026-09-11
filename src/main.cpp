@@ -27,21 +27,25 @@ void setup() {
 void loop() {
     buzzer.update();
     statusLed.update();
+    radioHC12.update();
 
     etl::vector<uint8_t, 32> receivedBytes;
-    while (radioHC12.available() && receivedBytes.size() < 32) {
+
+    while (radioHC12.available() && receivedBytes.size() < receivedBytes.capacity()) {
         if (auto byte = radioHC12.read()) {
             receivedBytes.push_back(*byte);
         }
-        delay(5);
     }
 
-    if (receivedBytes == etl::vector<uint8_t, 32>{0x41}) {
+    if (receivedBytes.size() == 1 && receivedBytes[0] == 0x41) {
         buzzer.beep(1000, 200);
     }
+
     if (!receivedBytes.empty()) {
         delay(10);
-        radioHC12.send(receivedBytes);
+        radioHC12.send(
+            std::span<const uint8_t>(receivedBytes.data(), receivedBytes.size())
+        );
         receivedBytes.clear();
     }
 }

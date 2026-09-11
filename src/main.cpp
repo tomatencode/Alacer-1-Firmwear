@@ -7,7 +7,7 @@
 #include "./hardwear/buzzer/Buzzer.hpp"
 
 Buzzer buzzer(PA8);
-BlinkLed statusLed(PB14, 255);
+BlinkLed statusLed(PB14, 35, 50);
 HC12 radioHC12(PB15, PA9, PA10, 9600, []() {statusLed.flash();});
 
 const Buzzer::Melody startupMelody = {
@@ -37,7 +37,7 @@ void loop() {
         }
         delay(5);
     }
-    
+
     if (receivedBytes == std::vector<uint8_t>{0x41}) {
         buzzer.beep(1000, 200);
     }

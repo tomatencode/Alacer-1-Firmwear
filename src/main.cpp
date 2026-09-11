@@ -37,9 +37,13 @@ void loop() {
         }
         delay(5);
     }
+    
+    if (receivedBytes == std::vector<uint8_t>{0x41}) {
+        buzzer.beep(1000, 200);
+    }
     if (!receivedBytes.empty()) {
         delay(10);
-        radioHC12.send(std::span(receivedBytes.data(), receivedBytes.size()));
+        radioHC12.send(receivedBytes);
         receivedBytes.clear();
     }
 }

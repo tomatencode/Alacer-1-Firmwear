@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include <vector>
+#include <etl/vector.h>
 
 class Buzzer {
 public:
@@ -10,7 +10,7 @@ public:
         uint16_t durationMs;
     };
 
-    using Melody = std::vector<Note>;
+    using Melody = etl::vector<Note, 32>;
 
     Buzzer(uint8_t pin);
 

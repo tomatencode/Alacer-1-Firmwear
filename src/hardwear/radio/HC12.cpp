@@ -112,9 +112,9 @@ bool HC12::atDone() {
     return _atState == ATState::DONE;
 }
 
-std::optional<std::string> HC12::takeATResponse() {
+std::optional<etl::string<128>> HC12::takeATResponse() {
     if (atDone()) {
-        std::string response = _atResponse;
+        etl::string<128> response = _atResponse;
         _atResponse.clear();
         _atState = ATState::IDLE;
         return response;

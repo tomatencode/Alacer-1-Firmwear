@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <functional>
 #include <span>
-#include <string>
+#include <etl/string.h>
 #include <optional>
 
 
@@ -27,7 +27,7 @@ public:
     bool sendATCommand(const char* command, uint32_t timeout_ms = 200);
     bool atBusy();
     bool atDone();
-    std::optional<std::string> takeATResponse();
+    std::optional<etl::string<128>> takeATResponse();
 
     void update();
 
@@ -48,6 +48,6 @@ private:
     ATState _atState;
     uint32_t _atStartStepTime;
     uint32_t _atTimeout;
-    std::string _atCommand;
-    std::string _atResponse;
+    etl::string<128> _atCommand;
+    etl::string<128> _atResponse;
 };

@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-#include <vector>
+#include <etl/vector.h>
 
 #include "./hardwear/radio/HC12.hpp"
 #include "./hardwear/led/BlinkLed.hpp"
@@ -22,23 +22,21 @@ void setup() {
     buzzer.begin();
 
     buzzer.playMelody(startupMelody);
-
-    radioHC12.sendATCommand("AT+DEFAULT");
 }
 
 void loop() {
     buzzer.update();
     statusLed.update();
 
-    std::vector<uint8_t> receivedBytes;
-    while (radioHC12.available()) {
+    etl::vector<uint8_t, 32> receivedBytes;
+    while (radioHC12.available() && receivedBytes.size() < 32) {
         if (auto byte = radioHC12.read()) {
             receivedBytes.push_back(*byte);
         }
         delay(5);
     }
 
-    if (receivedBytes == std::vector<uint8_t>{0x41}) {
+    if (receivedBytes == etl::vector<uint8_t, 32>{0x41}) {
         buzzer.beep(1000, 200);
     }
     if (!receivedBytes.empty()) {

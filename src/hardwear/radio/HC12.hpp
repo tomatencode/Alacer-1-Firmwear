@@ -13,10 +13,7 @@ public:
 
     HC12(int setPin,
          int rxPin,
-         int txPin,
-         int baudRate = 9600,
-         std::function<void()> onSendCallback = nullptr,
-         std::function<void()> onReceiveCallback = nullptr
+         int txPin
         );
 
     void begin();
@@ -39,12 +36,7 @@ private:
     int _rxPin;
     int _txPin;
 
-    int _baudRate;
-
     SoftwareSerial _serial;
-
-    std::function<void()> _onSendCallback;
-    std::function<void()> _onReceiveCallback;
 
     ATState _atState;
     uint32_t _atStartStepTime;

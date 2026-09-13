@@ -1,12 +1,12 @@
 #include <Arduino.h>
 #include "HC12.hpp"
 
-HC12::HC12(int setPin, int rxPin, int txPin, int baudRate, std::function<void()> onSendCallback, std::function<void()> onReceiveCallback)
-    : _setPin(setPin), _rxPin(rxPin), _txPin(txPin), _baudRate(baudRate), _onSendCallback(onSendCallback), _onReceiveCallback(onReceiveCallback), _serial(_rxPin, _txPin), _atState(ATState::IDLE) {
+HC12::HC12(int setPin, int rxPin, int txPin)
+    : _setPin(setPin), _rxPin(rxPin), _txPin(txPin), _serial(_rxPin, _txPin), _atState(ATState::IDLE) {
 }
 
 void HC12::begin() {
-    _serial.begin(_baudRate);
+    _serial.begin(9600);
 
     pinMode(_setPin, OUTPUT);
     digitalWrite(_setPin, HIGH);
@@ -15,9 +15,6 @@ void HC12::begin() {
 bool HC12::send(std::span<const uint8_t> data) {
     if (atBusy()) {
         return false;
-    }
-    if (_onSendCallback && data.size() > 0) {
-        _onSendCallback();
     }
     for (auto byte : data) {
         _serial.write(byte);
@@ -38,9 +35,6 @@ std::optional<uint8_t> HC12::read() {
     }
     if (!available()) {
         return std::nullopt;
-    }
-    if (_onReceiveCallback) {
-        _onReceiveCallback();
     }
     return _serial.read();
 }

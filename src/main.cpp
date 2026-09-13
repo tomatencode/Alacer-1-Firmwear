@@ -8,7 +8,7 @@
 
 Buzzer buzzer(PA8);
 BlinkLed statusLed(PB14, 35, 50);
-HC12 radioHC12(PB15, PA9, PA10, 9600, []() {statusLed.flash();});
+HC12 radioHC12(PB15, PA9, PA10);
 
 const Buzzer::Melody startupMelody = {
     {262, 200},
@@ -35,6 +35,7 @@ void loop() {
         if (auto byte = radioHC12.read()) {
             receivedBytes.push_back(*byte);
         }
+        statusLed.flash();
     }
 
     if (receivedBytes.size() == 1 && receivedBytes[0] == 0x41) {

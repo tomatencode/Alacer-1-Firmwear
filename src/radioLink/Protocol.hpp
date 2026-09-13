@@ -2,10 +2,15 @@
 #include <cstdint>
 #include <optional>
 #include <etl/vector.h>
+#include <span>
 
 namespace Protocol {
 
 constexpr uint8_t START_BYTE = 0xAA;
+constexpr uint16_t CRC16_INITIAL = 0xFFFF;
+
+const size_t MAX_MESSAGES_PER_FRAME = 16;
+const size_t MAX_FRAME_SIZE = 1024;
 
 enum class MessageType : uint8_t {
     GET_TELEMETRY = 0x01,
@@ -24,10 +29,14 @@ struct Message {
 };
 
 struct Frame {
-    uint16_t messagesTotalLen;
     uint8_t numMessages;
-    etl::vector<Message, 16> messages;
+    etl::vector<Message, MAX_MESSAGES_PER_FRAME> messages;
 };
+
+uint16_t updateCrc16(uint16_t crc, uint8_t byte);
+
+
+std::optional<size_t> encode(const Frame& frame, std::span<uint8_t> outBuffer);
 
 class Parser {
 public:
@@ -68,8 +77,7 @@ private:
 
     std::optional<Message> feedMessage(uint8_t byte);
 
-    uint16_t _currentCrc = 0;
-    void updateCrc16(uint8_t byte);
+    uint16_t _currentCrc = CRC16_INITIAL;
 
     FrameParseState _frameState = WAITING_FOR_START_BYTE;
     MessageParseState _messageState = WAITING_FOR_TYPE;
@@ -80,6 +88,8 @@ private:
     uint8_t _crcLow = 0;
 
     uint8_t _messagePayloadIndex = 0;
+
+    uint16_t _MessagesExpectedLen = 0;
     uint16_t _MessagesBytesCount = 0;
 
     uint32_t _crcErrorCount = 0;

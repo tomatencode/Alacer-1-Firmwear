@@ -27,7 +27,7 @@ void Protocol::Parser::feed(uint8_t byte) {
         _currentFrame.numMessages = byte;
 
         if (_currentFrame.numMessages > 16) {
-            _lenErrorCount.fetch_add(1, std::memory_order_relaxed);
+            _lenErrorCount++;
             _frameState = WAITING_FOR_START_BYTE;
             break;
         }
@@ -51,11 +51,11 @@ void Protocol::Parser::feed(uint8_t byte) {
             if (_MessagesBytesCount == _currentFrame.messagesTotalLen) {
                 _frameState = WAITING_FOR_CRC_LOW;
             } else {
-                _lenErrorCount.fetch_add(1, std::memory_order_relaxed);
+                _lenErrorCount++;
                 _frameState = WAITING_FOR_START_BYTE;
             }
         } else if (_MessagesBytesCount > _currentFrame.messagesTotalLen) {
-            _lenErrorCount.fetch_add(1, std::memory_order_relaxed);
+            _lenErrorCount++;
             _frameState = WAITING_FOR_START_BYTE;
         }
         break;
@@ -72,11 +72,11 @@ void Protocol::Parser::feed(uint8_t byte) {
         _frameState = WAITING_FOR_START_BYTE;
 
         if (receivedCrc != _currentCrc) {
-            _crcErrorCount.fetch_add(1, std::memory_order_relaxed);
+            _crcErrorCount++;
         }
         if (receivedCrc == _currentCrc) {
             if (_pendingFrame.has_value()) {
-                _overwrittenFramesCount.fetch_add(1, std::memory_order_relaxed);
+                _overwrittenFramesCount++;
             }
             _pendingFrame = _currentFrame;
         }
@@ -125,15 +125,12 @@ std::optional<Protocol::Message> Protocol::Parser::feedMessage(uint8_t byte) {
 }
 
 std::optional<Protocol::Frame> Protocol::Parser::takeFrame() {
-    __disable_irq();
     auto frame = _pendingFrame;
     _pendingFrame = std::nullopt;
-    __enable_irq();
     return frame;
 }
 
 void Protocol::Parser::reset() {
-    __disable_irq();
     _frameState = WAITING_FOR_START_BYTE;
     _messageState = WAITING_FOR_TYPE;
     _currentFrame = Frame{};
@@ -143,7 +140,6 @@ void Protocol::Parser::reset() {
     _messagePayloadIndex = 0;
     _MessagesBytesCount = 0;
     _pendingFrame = std::nullopt;
-    __enable_irq();
 }
 
 void Protocol::Parser::resetParseState() {

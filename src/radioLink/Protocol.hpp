@@ -1,8 +1,6 @@
 #pragma once
-#include <Arduino.h>
 #include <cstdint>
 #include <optional>
-#include <atomic>
 #include <etl/vector.h>
 
 namespace Protocol {
@@ -33,15 +31,21 @@ struct Frame {
 
 class Parser {
 public:
-    void feed(uint8_t byte); // irq safe
+    void feed(uint8_t byte);
 
     bool hasFrame() const { return _pendingFrame.has_value(); };
-    std::optional<Frame> takeFrame();
+
+    std::optional<Frame> takeFrame() {
+        auto frame = _pendingFrame;
+        _pendingFrame = std::nullopt;
+        return frame;
+    };
+
     void reset();
 
-    uint32_t crcErrorCount() const { return _crcErrorCount.load(std::memory_order_relaxed); };
-    uint32_t overflowCount() const { return _lenErrorCount.load(std::memory_order_relaxed); };
-    uint32_t overwrittenFramesCount() const { return _overwrittenFramesCount.load(std::memory_order_relaxed); };
+    uint32_t crcErrorCount() const { return _crcErrorCount; };
+    uint32_t overflowCount() const { return _lenErrorCount; };
+    uint32_t overwrittenFramesCount() const { return _overwrittenFramesCount; };
 private:
     enum FrameParseState {
         WAITING_FOR_START_BYTE,
@@ -78,9 +82,9 @@ private:
     uint8_t _messagePayloadIndex = 0;
     uint16_t _MessagesBytesCount = 0;
 
-    std::atomic<uint32_t> _crcErrorCount{0};
-    std::atomic<uint32_t> _lenErrorCount{0};
-    std::atomic<uint32_t> _overwrittenFramesCount{0};
+    uint32_t _crcErrorCount = 0;
+    uint32_t _lenErrorCount = 0;
+    uint32_t _overwrittenFramesCount = 0;
 
 };
 

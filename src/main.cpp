@@ -49,7 +49,7 @@ void loop() {
                 // Process the first message in the frame as an example
                 auto& message = frame->messages[0];
                 if (message.type == Protocol::MessageType::DO_BEEP) {
-                    buzzer.beep(1000, 200);
+                    buzzer.beep(1000, 200); // to reach, packet: AA 03 00 01 21 01 00 83 34
 
                     Protocol::Frame responseFrame;
                     responseFrame.numMessages = 1;

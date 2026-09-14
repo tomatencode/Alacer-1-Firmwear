@@ -56,6 +56,7 @@ void MessageScheduler::update() {
             message.seqId = context.sequenceId;
             message.status = Protocol::JobStatus::BUSY;
             frame.messages.push_back(message);
+            msgIndex++;
         }
 
         frame.numMessages = msgIndex;

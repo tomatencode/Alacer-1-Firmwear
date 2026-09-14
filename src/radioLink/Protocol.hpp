@@ -23,6 +23,21 @@ enum class MessageType : uint8_t {
     FIRE_PYRO_ACK = 0x32
 };
 
+// The subset of MessageType that the controller can receive as a request
+constexpr MessageType DISPATCHABLE_TYPES[] = {
+    MessageType::GET_TELEMETRY,
+    MessageType::SET_GIMBAL,
+    MessageType::DO_BEEP,
+    MessageType::FIRE_PYRO,
+};
+
+constexpr bool isDispatchable(MessageType type) {
+    for (auto t : DISPATCHABLE_TYPES) {
+        if (t == type) return true;
+    }
+    return false;
+}
+
 struct Message {
     MessageType type;
     uint8_t seqId;

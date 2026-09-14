@@ -18,7 +18,9 @@ enum class MessageType : uint8_t {
     SET_GIMBAL = 0x11,
     SET_GIMBAL_ACK = 0x12,
     DO_BEEP = 0x21,
-    DO_BEEP_ACK = 0x22
+    DO_BEEP_ACK = 0x22,
+    FIRE_PYRO = 0x31,
+    FIRE_PYRO_ACK = 0x32
 };
 
 struct Message {

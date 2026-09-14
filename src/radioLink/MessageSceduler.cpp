@@ -4,7 +4,7 @@
 
 
 MessageScheduler::MessageScheduler(Protocol::Parser& parser, Radio& radio)
-        : _parser(parser), _radio(radio), _lastReceived_ms(0), _didRespond(false),
+        : _parser(parser), _radio(radio), _lastReceived_ms(0),
             _dropedMessages(0), _responseContexts{} {
 }
 
@@ -24,6 +24,7 @@ void MessageScheduler::update() {
             continue;
 
         _lastReceived_ms = millis();
+        _didRespond = false;
         auto frame = frameOpt.value();
 
         for (uint8_t i = 0; i < frame.numMessages; ++i) {
@@ -37,10 +38,17 @@ void MessageScheduler::update() {
         _responseContexts.begin(), _responseContexts.end(),
         [](const ResponseContext& context) { return context.inUse; });
 
-    if ((!_scheduledMessages.empty() || hasBusyContexts)
-        && millis() - _lastReceived_ms >= SEND_TIMEOUT_MS) {
+    bool hasScheduledMessages = !_scheduledMessages.empty();
+
+    bool sendTimoutDone = millis() - _lastReceived_ms >= SEND_TIMEOUT_MS;
+
+    if ((hasScheduledMessages || (hasBusyContexts && sendTimoutDone)) && !_didRespond) {
         Protocol::Frame frame;
         
+        const auto scheduledMessageCount = std::min(
+            _scheduledMessages.size(),
+            static_cast<size_t>(Protocol::MAX_MESSAGES_PER_FRAME));
+
         uint8_t msgIndex = 0;
         while (msgIndex < _scheduledMessages.size() && msgIndex < Protocol::MAX_MESSAGES_PER_FRAME) {
             frame.messages.push_back(_scheduledMessages[msgIndex++]);
@@ -66,9 +74,13 @@ void MessageScheduler::update() {
 
         if (serializedSize.has_value()) {
             bool success = _radio.send(std::span<const uint8_t>(encodedFrame.data(), serializedSize.value()));
-            
-            if (success)
-                _scheduledMessages.clear();
+
+            if (success) {
+                _didRespond = true;
+                _scheduledMessages.erase(
+                    _scheduledMessages.begin(),
+                    _scheduledMessages.begin() + scheduledMessageCount);
+            }
         }
     }
 }

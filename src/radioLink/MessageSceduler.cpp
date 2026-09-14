@@ -57,14 +57,21 @@ void MessageScheduler::handleIncomingMessage(const Protocol::Message& message) {
     }
 
     auto& job = jobIt->second;
-    job(message.payload, [this, message](Protocol::MessageType responseType, etl::vector<uint8_t, 256> responsePayload) {
-        Protocol::Message response;
-        response.type = responseType;
-        response.seqId = message.seqId;
-        response.messageLen = responsePayload.size();
-        response.payload = responsePayload;
-        scheduleMessage(response);
-    });
+    job(message.seqId,
+        std::span<const uint8_t>(message.payload.data(), message.payload.size()),
+        JobResult::create<MessageScheduler, &MessageScheduler::handleJobResult>(*this));
+}
+
+void MessageScheduler::handleJobResult(
+    uint8_t sequenceId,
+    Protocol::MessageType responseType,
+    std::span<const uint8_t> responsePayload) {
+    Protocol::Message response;
+    response.type = responseType;
+    response.seqId = sequenceId;
+    response.messageLen = responsePayload.size();
+    response.payload.assign(responsePayload.begin(), responsePayload.end());
+    scheduleMessage(response);
 }
 
 void MessageScheduler::scheduleMessage(const Protocol::Message& message) {
@@ -72,7 +79,7 @@ void MessageScheduler::scheduleMessage(const Protocol::Message& message) {
 }
 
 
-void MessageScheduler::registerForJob(Protocol::MessageType jobType, std::function<void(etl::vector<uint8_t, 256> params, std::function<void(Protocol::MessageType, etl::vector<uint8_t, 256>)> resultCallback)> job) {
+void MessageScheduler::registerForJob(Protocol::MessageType jobType, Job job) {
     if (!Protocol::isDispatchable(jobType))
         return;
     _jobs.insert(std::make_pair(jobType, job));

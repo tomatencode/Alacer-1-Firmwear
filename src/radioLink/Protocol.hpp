@@ -13,34 +13,22 @@ const size_t MAX_MESSAGES_PER_FRAME = 16;
 const size_t MAX_FRAME_SIZE = 1024;
 
 enum class MessageType : uint8_t {
-    GET_TELEMETRY = 0x01,
-    TELEMETRY = 0x02,
-    SET_GIMBAL = 0x11,
-    SET_GIMBAL_ACK = 0x12,
-    DO_BEEP = 0x21,
-    DO_BEEP_ACK = 0x22,
-    FIRE_PYRO = 0x31,
-    FIRE_PYRO_ACK = 0x32
+    TELEMETRY = 0x01,
+    SET_GIMBAL = 0x02,
+    DO_BEEP = 0x03,
+    FIRE_PYRO = 0x04,
 };
 
-// The subset of MessageType that the controller can receive as a request
-constexpr MessageType DISPATCHABLE_TYPES[] = {
-    MessageType::GET_TELEMETRY,
-    MessageType::SET_GIMBAL,
-    MessageType::DO_BEEP,
-    MessageType::FIRE_PYRO,
+enum class JobStatus : uint8_t {
+    BUSY = 0x00,
+    SUCCESS = 0x01,
+    FAILURE = 0x02,
 };
-
-constexpr bool isDispatchable(MessageType type) {
-    for (auto t : DISPATCHABLE_TYPES) {
-        if (t == type) return true;
-    }
-    return false;
-}
 
 struct Message {
     MessageType type;
     uint8_t seqId;
+    JobStatus status; // only meaningfull on responses
     uint8_t messageLen;
     etl::vector<uint8_t, 256> payload;
 };
@@ -86,6 +74,7 @@ private:
     enum MessageParseState {
         WAITING_FOR_TYPE,
         WAITING_FOR_SEQ_ID,
+        WAITING_FOR_STATUS,
         WAITING_FOR_MESSAGE_LEN,
         WAITING_FOR_PAYLOAD,
     };

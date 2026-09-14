@@ -97,6 +97,11 @@ std::optional<Protocol::Message> Protocol::Parser::feedMessage(uint8_t byte) {
     }
     case WAITING_FOR_SEQ_ID: {
         _currentMessage.seqId = byte;
+        _messageState = WAITING_FOR_STATUS;
+        break;
+    }
+    case WAITING_FOR_STATUS: {
+        _currentMessage.status = static_cast<Protocol::JobStatus>(byte);
         _messageState = WAITING_FOR_MESSAGE_LEN;
         break;
     }
@@ -191,6 +196,7 @@ std::optional<size_t> Protocol::encode(const Frame& frame, std::span<uint8_t> ou
 
         outBuffer[messagesStart + messagesIndex++] = static_cast<uint8_t>(message.type);
         outBuffer[messagesStart + messagesIndex++] = message.seqId;
+        outBuffer[messagesStart + messagesIndex++] = static_cast<uint8_t>(message.status);
         outBuffer[messagesStart + messagesIndex++] = message.messageLen;
 
         for (size_t j = 0; j < message.messageLen; j++) {

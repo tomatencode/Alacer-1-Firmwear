@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <span>
 #include "etl/delegate.h"
 #include "etl/vector.h"
@@ -14,11 +15,9 @@ constexpr uint32_t SEND_TIMEOUT_MS = 50;
 class MessageScheduler {
 public:
     using JobResult = etl::delegate<void(
-        uint8_t sequenceId,
         Protocol::MessageType responseType,
         std::span<const uint8_t> responsePayload)>;
     using Job = etl::delegate<void(
-        uint8_t sequenceId,
         std::span<const uint8_t> params,
         JobResult resultCallback)>;
 
@@ -33,14 +32,20 @@ public:
     }
     
 private:
+    struct ResponseContext {
+        MessageScheduler* scheduler;
+        uint8_t sequenceId;
+        bool inUse;
+
+        void respond(
+            Protocol::MessageType responseType,
+            std::span<const uint8_t> responsePayload);
+    };
+
     Protocol::Parser& _parser;
     Radio& _radio;
 
     void handleIncomingMessage(const Protocol::Message& message);
-    void handleJobResult(
-        uint8_t sequenceId,
-        Protocol::MessageType responseType,
-        std::span<const uint8_t> responsePayload);
     void scheduleMessage(const Protocol::Message& message);
 
     uint32_t _lastReceived_ms;
@@ -50,4 +55,5 @@ private:
 
     etl::map<Protocol::MessageType, Job, 16> _jobs;
     etl::vector<Protocol::Message, 16> _scheduledMessages;
+    std::array<ResponseContext, Protocol::MAX_MESSAGES_PER_FRAME> _responseContexts;
 };

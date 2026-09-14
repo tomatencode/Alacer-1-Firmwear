@@ -96,13 +96,15 @@ void MessageScheduler::handleIncomingMessage(const Protocol::Message& message) {
 }
 
 void MessageScheduler::ResponseContext::respond(
-    Protocol::JobStatus status,
+    JobResultStatus status,
     std::span<const uint8_t> responsePayload) {
     inUse = false;
     Protocol::Message response;
     response.type = messageType;
     response.seqId = sequenceId;
-    response.status = status;
+    response.status = status == JobResultStatus::SUCCESS
+        ? Protocol::JobStatus::SUCCESS
+        : Protocol::JobStatus::FAILURE;
     response.messageLen = responsePayload.size();
     response.payload.assign(responsePayload.begin(), responsePayload.end());
     scheduler->scheduleMessage(response);

@@ -14,8 +14,13 @@ constexpr uint32_t SEND_TIMEOUT_MS = 50;
 
 class MessageScheduler {
 public:
+    enum class JobResultStatus : uint8_t {
+        SUCCESS,
+        FAILURE,
+    };
+
     using JobResult = etl::delegate<void(
-        Protocol::JobStatus status,
+        JobResultStatus status,
         std::span<const uint8_t> responsePayload)>;
     using Job = etl::delegate<void(
         std::span<const uint8_t> params,
@@ -39,7 +44,7 @@ private:
         bool inUse;
 
         void respond(
-            Protocol::JobStatus status,
+            JobResultStatus status,
             std::span<const uint8_t> responsePayload);
     };
 

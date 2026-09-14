@@ -15,7 +15,7 @@ constexpr uint32_t SEND_TIMEOUT_MS = 50;
 class MessageScheduler {
 public:
     using JobResult = etl::delegate<void(
-        Protocol::MessageType responseType,
+        Protocol::JobStatus status,
         std::span<const uint8_t> responsePayload)>;
     using Job = etl::delegate<void(
         std::span<const uint8_t> params,
@@ -34,11 +34,12 @@ public:
 private:
     struct ResponseContext {
         MessageScheduler* scheduler;
+        Protocol::MessageType messageType;
         uint8_t sequenceId;
         bool inUse;
 
         void respond(
-            Protocol::MessageType responseType,
+            Protocol::JobStatus status,
             std::span<const uint8_t> responsePayload);
     };
 
@@ -56,4 +57,5 @@ private:
     etl::map<Protocol::MessageType, Job, 16> _jobs;
     etl::vector<Protocol::Message, 16> _scheduledMessages;
     std::array<ResponseContext, Protocol::MAX_MESSAGES_PER_FRAME> _responseContexts;
+
 };

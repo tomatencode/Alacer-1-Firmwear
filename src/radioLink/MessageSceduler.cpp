@@ -33,14 +33,33 @@ void MessageScheduler::update() {
         }
     }
 
-    // Send all scheduled messages
-    if (!_scheduledMessages.empty()
+    bool hasBusyContexts = std::any_of(
+        _responseContexts.begin(), _responseContexts.end(),
+        [](const ResponseContext& context) { return context.inUse; });
+
+    if ((!_scheduledMessages.empty() || hasBusyContexts)
         && millis() - _lastReceived_ms >= SEND_TIMEOUT_MS) {
         Protocol::Frame frame;
-        frame.numMessages = _scheduledMessages.size();
-        for (uint8_t i = 0; i < frame.numMessages; ++i) {
-            frame.messages[i] = _scheduledMessages[i];
+        
+        uint8_t msgIndex = 0;
+        while (msgIndex < _scheduledMessages.size() && msgIndex < Protocol::MAX_MESSAGES_PER_FRAME) {
+            frame.messages[msgIndex] = _scheduledMessages[msgIndex++];
         }
+        for (auto& context : _responseContexts) {
+            if (msgIndex >= Protocol::MAX_MESSAGES_PER_FRAME)
+                break;
+            if (!context.inUse)
+                continue;
+            
+            Protocol::Message message = Protocol::Message{};
+            message.type = context.messageType;
+            message.seqId = context.sequenceId;
+            message.status = Protocol::JobStatus::BUSY;
+            frame.messages[msgIndex++] = message;
+        }
+
+        frame.numMessages = msgIndex;
+
         std::array<uint8_t, Protocol::MAX_FRAME_SIZE> encodedFrame;
         auto serializedSize = Protocol::encode(frame, encodedFrame);
 
@@ -69,6 +88,7 @@ void MessageScheduler::handleIncomingMessage(const Protocol::Message& message) {
     }
 
     contextIt->scheduler = this;
+    contextIt->messageType = message.type;
     contextIt->sequenceId = message.seqId;
     contextIt->inUse = true;
     job(std::span<const uint8_t>(message.payload.data(), message.payload.size()),
@@ -76,12 +96,13 @@ void MessageScheduler::handleIncomingMessage(const Protocol::Message& message) {
 }
 
 void MessageScheduler::ResponseContext::respond(
-    Protocol::MessageType responseType,
+    Protocol::JobStatus status,
     std::span<const uint8_t> responsePayload) {
     inUse = false;
     Protocol::Message response;
-    response.type = responseType;
+    response.type = messageType;
     response.seqId = sequenceId;
+    response.status = status;
     response.messageLen = responsePayload.size();
     response.payload.assign(responsePayload.begin(), responsePayload.end());
     scheduler->scheduleMessage(response);

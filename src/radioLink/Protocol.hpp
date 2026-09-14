@@ -19,7 +19,7 @@ enum class MessageType : uint8_t {
     FIRE_PYRO = 0x04,
 };
 
-enum class JobStatus : uint8_t {
+enum class RequestStatus : uint8_t {
     BUSY = 0x00,
     SUCCESS = 0x01,
     FAILURE = 0x02,
@@ -28,7 +28,7 @@ enum class JobStatus : uint8_t {
 struct Message {
     MessageType type;
     uint8_t seqId;
-    JobStatus status; // only meaningfull on responses
+    RequestStatus status; // only meaningfull on responses
     uint8_t messageLen;
     etl::vector<uint8_t, 256> payload;
 };

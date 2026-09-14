@@ -62,7 +62,7 @@ void MessageScheduler::update() {
             Protocol::Message message = Protocol::Message{};
             message.type = context.messageType;
             message.seqId = context.sequenceId;
-            message.status = Protocol::JobStatus::BUSY;
+            message.status = Protocol::RequestStatus::BUSY;
             frame.messages.push_back(message);
             msgIndex++;
         }
@@ -87,13 +87,13 @@ void MessageScheduler::update() {
 
 
 void MessageScheduler::handleIncomingMessage(const Protocol::Message& message) {
-    auto jobIt = _jobs.find(message.type);
-    if (jobIt == _jobs.end()) {
+    auto handlerIt = _jobs.find(message.type);
+    if (handlerIt == _jobs.end()) {
         ++_dropedMessages;
         return;
     }
 
-    auto& job = jobIt->second;
+    auto& handler = handlerIt->second;
     auto contextIt = std::find_if(
         _responseContexts.begin(), _responseContexts.end(),
         [](const ResponseContext& context) { return !context.inUse; });
@@ -106,12 +106,12 @@ void MessageScheduler::handleIncomingMessage(const Protocol::Message& message) {
     contextIt->messageType = message.type;
     contextIt->sequenceId = message.seqId;
     contextIt->inUse = true;
-    job(std::span<const uint8_t>(message.payload.data(), message.payload.size()),
-        JobResult::create<ResponseContext, &ResponseContext::respond>(*contextIt));
+    handler(std::span<const uint8_t>(message.payload.data(), message.payload.size()),
+        HandlerResult::create<ResponseContext, &ResponseContext::respond>(*contextIt));
 }
 
 void MessageScheduler::ResponseContext::respond(
-    JobResultStatus status,
+    HandlerResultStatus status,
     std::span<const uint8_t> responsePayload) {
     if (!inUse)
         return;
@@ -119,9 +119,9 @@ void MessageScheduler::ResponseContext::respond(
     Protocol::Message response;
     response.type = messageType;
     response.seqId = sequenceId;
-    response.status = status == JobResultStatus::SUCCESS
-        ? Protocol::JobStatus::SUCCESS
-        : Protocol::JobStatus::FAILURE;
+    response.status = status == HandlerResultStatus::SUCCESS
+        ? Protocol::RequestStatus::SUCCESS
+        : Protocol::RequestStatus::FAILURE;
     response.messageLen = responsePayload.size();
     response.payload.assign(responsePayload.begin(), responsePayload.end());
     scheduler->scheduleMessage(response);
@@ -136,6 +136,6 @@ void MessageScheduler::scheduleMessage(const Protocol::Message& message) {
 }
 
 
-void MessageScheduler::registerForJob(Protocol::MessageType jobType, Job job) {
+void MessageScheduler::registerRequestHandler(Protocol::MessageType jobType, Handler job) {
     _jobs.insert(std::make_pair(jobType, job));
 }

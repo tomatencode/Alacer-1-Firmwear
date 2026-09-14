@@ -14,23 +14,23 @@ constexpr uint32_t SEND_TIMEOUT_MS = 50;
 
 class MessageScheduler {
 public:
-    enum class JobResultStatus : uint8_t {
+    enum class HandlerResultStatus : uint8_t {
         SUCCESS,
         FAILURE,
     };
 
-    using JobResult = etl::delegate<void(
-        JobResultStatus status,
+    using HandlerResult = etl::delegate<void(
+        HandlerResultStatus status,
         std::span<const uint8_t> responsePayload)>;
-    using Job = etl::delegate<void(
+    using Handler = etl::delegate<void(
         std::span<const uint8_t> payload,
-        JobResult resultCallback)>;
+        HandlerResult resultCallback)>;
 
     MessageScheduler(Protocol::Parser& parser, Radio& radio);
 
     void update();
     
-    void registerForJob(Protocol::MessageType jobType, Job job);
+    void registerRequestHandler(Protocol::MessageType requestType, Handler handler);
     
     uint32_t getDroppedMessages() const { // for diagnostics
         return _dropedMessages;
@@ -44,7 +44,7 @@ private:
         bool inUse;
 
         void respond(
-            JobResultStatus status,
+            HandlerResultStatus status,
             std::span<const uint8_t> responsePayload);
     };
 
@@ -59,7 +59,7 @@ private:
 
     uint32_t _dropedMessages;
 
-    etl::map<Protocol::MessageType, Job, 32> _jobs;
+    etl::map<Protocol::MessageType, Handler, 32> _jobs;
     etl::vector<Protocol::Message, 32> _scheduledMessages;
     std::array<ResponseContext, 32> _responseContexts;
 

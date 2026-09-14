@@ -101,7 +101,7 @@ std::optional<Protocol::Message> Protocol::Parser::feedMessage(uint8_t byte) {
         break;
     }
     case WAITING_FOR_STATUS: {
-        _currentMessage.status = static_cast<Protocol::JobStatus>(byte);
+        _currentMessage.status = static_cast<Protocol::RequestStatus>(byte);
         _messageState = WAITING_FOR_MESSAGE_LEN;
         break;
     }

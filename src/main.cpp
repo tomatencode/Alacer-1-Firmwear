@@ -32,11 +32,11 @@ void setup() {
 
     buzzer.playMelody(startupMelody);
 
-    messageScheduler.registerForJob(
+    messageScheduler.registerRequestHandler(
         Protocol::MessageType::DO_BEEP,
-        [](std::span<const uint8_t>, MessageScheduler::JobResult resultCallback) {
+        [](std::span<const uint8_t>, MessageScheduler::HandlerResult resultCallback) {
             buzzer.beep(1000, 200);
-            resultCallback(MessageScheduler::JobResultStatus::SUCCESS, {});
+            resultCallback(MessageScheduler::HandlerResultStatus::SUCCESS, {});
         });
 
 }

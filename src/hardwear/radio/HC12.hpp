@@ -7,8 +7,10 @@
 #include <etl/string.h>
 #include <optional>
 
+#include "./Radio.hpp"
 
-class HC12 {
+
+class HC12 : public Radio {
 public:
 
     HC12(int setPin,

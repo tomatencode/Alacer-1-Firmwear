@@ -23,7 +23,7 @@ public:
         JobResultStatus status,
         std::span<const uint8_t> responsePayload)>;
     using Job = etl::delegate<void(
-        std::span<const uint8_t> params,
+        std::span<const uint8_t> payload,
         JobResult resultCallback)>;
 
     MessageScheduler(Protocol::Parser& parser, Radio& radio);

@@ -59,8 +59,8 @@ private:
 
     uint32_t _dropedMessages;
 
-    etl::map<Protocol::MessageType, Job, 16> _jobs;
-    etl::vector<Protocol::Message, 16> _scheduledMessages;
-    std::array<ResponseContext, Protocol::MAX_MESSAGES_PER_FRAME> _responseContexts;
+    etl::map<Protocol::MessageType, Job, 32> _jobs;
+    etl::vector<Protocol::Message, 32> _scheduledMessages;
+    std::array<ResponseContext, 32> _responseContexts;
 
 };

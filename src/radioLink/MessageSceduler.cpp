@@ -43,7 +43,7 @@ void MessageScheduler::update() {
         
         uint8_t msgIndex = 0;
         while (msgIndex < _scheduledMessages.size() && msgIndex < Protocol::MAX_MESSAGES_PER_FRAME) {
-            frame.messages[msgIndex] = _scheduledMessages[msgIndex++];
+            frame.messages.push_back(_scheduledMessages[msgIndex++]);
         }
         for (auto& context : _responseContexts) {
             if (msgIndex >= Protocol::MAX_MESSAGES_PER_FRAME)
@@ -55,7 +55,7 @@ void MessageScheduler::update() {
             message.type = context.messageType;
             message.seqId = context.sequenceId;
             message.status = Protocol::JobStatus::BUSY;
-            frame.messages[msgIndex++] = message;
+            frame.messages.push_back(message);
         }
 
         frame.numMessages = msgIndex;
@@ -64,8 +64,10 @@ void MessageScheduler::update() {
         auto serializedSize = Protocol::encode(frame, encodedFrame);
 
         if (serializedSize.has_value()) {
-            _radio.send(std::span<const uint8_t>(encodedFrame.data(), serializedSize.value()));
-            _scheduledMessages.clear();
+            bool success = _radio.send(std::span<const uint8_t>(encodedFrame.data(), serializedSize.value()));
+            
+            if (success)
+                _scheduledMessages.clear();
         }
     }
 }
@@ -98,6 +100,8 @@ void MessageScheduler::handleIncomingMessage(const Protocol::Message& message) {
 void MessageScheduler::ResponseContext::respond(
     JobResultStatus status,
     std::span<const uint8_t> responsePayload) {
+    if (!inUse)
+        return;
     inUse = false;
     Protocol::Message response;
     response.type = messageType;
@@ -111,6 +115,10 @@ void MessageScheduler::ResponseContext::respond(
 }
 
 void MessageScheduler::scheduleMessage(const Protocol::Message& message) {
+    if (_scheduledMessages.size() >= _scheduledMessages.capacity()) {
+        ++_dropedMessages;
+        return;
+    }
     _scheduledMessages.push_back(message);
 }
 

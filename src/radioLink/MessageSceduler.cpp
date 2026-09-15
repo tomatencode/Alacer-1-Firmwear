@@ -87,8 +87,20 @@ void MessageScheduler::update() {
 
 
 void MessageScheduler::handleIncomingMessage(const Protocol::Message& message) {
-    auto handlerIt = _jobs.find(message.type);
-    if (handlerIt == _jobs.end()) {
+
+    if (message.type == Protocol::MessageType::PING) {
+        // Handle PING message immediately
+        Protocol::Message response;
+        response.type = Protocol::MessageType::PING;
+        response.seqId = message.seqId;
+        response.status = Protocol::RequestStatus::SUCCESS;
+        response.messageLen = 0;
+        scheduleMessage(response);
+        return;
+    }
+
+    auto handlerIt = _handlers.find(message.type);
+    if (handlerIt == _handlers.end()) {
         ++_dropedMessages;
         return;
     }
@@ -137,5 +149,5 @@ void MessageScheduler::scheduleMessage(const Protocol::Message& message) {
 
 
 void MessageScheduler::registerRequestHandler(Protocol::MessageType jobType, Handler job) {
-    _jobs.insert(std::make_pair(jobType, job));
+    _handlers.insert(std::make_pair(jobType, job));
 }

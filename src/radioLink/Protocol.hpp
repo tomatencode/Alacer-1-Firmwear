@@ -13,6 +13,7 @@ const size_t MAX_MESSAGES_PER_FRAME = 16;
 const size_t MAX_FRAME_SIZE = 1024;
 
 enum class MessageType : uint8_t {
+    PING = 0x00,
     TELEMETRY = 0x01,
     SET_GIMBAL = 0x02,
     DO_BEEP = 0x03,

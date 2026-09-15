@@ -59,7 +59,7 @@ private:
 
     uint32_t _dropedMessages;
 
-    etl::map<Protocol::MessageType, Handler, 32> _jobs;
+    etl::map<Protocol::MessageType, Handler, 32> _handlers;
     etl::vector<Protocol::Message, 32> _scheduledMessages;
     std::array<ResponseContext, 32> _responseContexts;
 

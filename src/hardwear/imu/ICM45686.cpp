@@ -5,6 +5,8 @@ namespace {
     const SPISettings kSpiSettings(8000000, MSBFIRST, SPI_MODE0);
 }
 
+namespace hardware {
+
 ICM45686::ICM45686(int csPin, SPIClass &spi)
     : _csPin(csPin), _spi(spi) {
 }
@@ -77,3 +79,5 @@ void ICM45686::readRegisters(uint8_t reg, uint8_t *buffer, size_t length) {
     digitalWrite(_csPin, HIGH);
     _spi.endTransaction();
 }
+
+} // namespace hardware

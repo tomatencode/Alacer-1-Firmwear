@@ -1,5 +1,7 @@
 #pragma once
 
+namespace hardware {
+
 class IMU {
 public:
     struct Accel {
@@ -22,3 +24,5 @@ public:
     // Angular rate in radians per second
     virtual Gyro getGyro() const = 0;
 };
+
+} // namespace hardware

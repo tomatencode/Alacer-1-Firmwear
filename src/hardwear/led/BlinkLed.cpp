@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include "BlinkLed.hpp"
 
+namespace hardware {
+
 BlinkLed::BlinkLed(int pin, uint8_t brightness, uint32_t defaultOnDuration_ms)
     : _pin(pin), _defaultOnDuration_ms(defaultOnDuration_ms), _flashDuration_ms(0), _brightness(brightness) {
 }
@@ -25,3 +27,5 @@ void BlinkLed::flash(uint32_t duration_ms) {
     _flashtime = millis();
     _flashDuration_ms = duration_ms;
 }
+
+} // namespace hardware

@@ -1,6 +1,8 @@
 #include "Buzzer.hpp"
 
-Buzzer::Buzzer(uint8_t pin)
+namespace hardware {
+
+    Buzzer::Buzzer(uint8_t pin)
     : _pin(pin), _active(false),
       _frequency(0), _endTime(0),
       _melodyIndex(0) {}
@@ -69,3 +71,5 @@ void Buzzer::update() {
         off();
     }
 }
+
+} // namespace hardware

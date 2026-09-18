@@ -26,7 +26,7 @@ public:
         std::span<const uint8_t> payload,
         HandlerResult resultCallback)>;
 
-    MessageScheduler(Protocol::Parser& parser, Radio& radio);
+    MessageScheduler(Protocol::Parser& parser, hardware::Radio& radio);
 
     void update();
     
@@ -49,7 +49,7 @@ private:
     };
 
     Protocol::Parser& _parser;
-    Radio& _radio;
+    hardware::Radio& _radio;
 
     void handleIncomingMessage(const Protocol::Message& message);
     void scheduleMessage(const Protocol::Message& message);

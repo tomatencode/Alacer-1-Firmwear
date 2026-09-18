@@ -3,6 +3,8 @@
 #include <Arduino.h>
 #include <etl/vector.h>
 
+namespace hardware {
+
 class Buzzer {
 public:
     struct Note {
@@ -31,3 +33,5 @@ private:
     Melody _melody;
     size_t _melodyIndex;
 };
+
+} // namespace hardware

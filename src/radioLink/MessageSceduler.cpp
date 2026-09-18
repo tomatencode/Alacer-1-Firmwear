@@ -3,7 +3,7 @@
 #include <algorithm>
 
 
-MessageScheduler::MessageScheduler(Protocol::Parser& parser, Radio& radio)
+MessageScheduler::MessageScheduler(Protocol::Parser& parser, hardware::Radio& radio)
         : _parser(parser), _radio(radio), _lastReceived_ms(0),
             _dropedMessages(0), _responseContexts{} {
 }

@@ -4,6 +4,7 @@
 #include <span>
 #include <optional>
 
+namespace hardware {
 
 class Radio {
 public:
@@ -13,3 +14,5 @@ public:
     virtual bool available() = 0;
     virtual std::optional<uint8_t> read() = 0;
 };
+
+} // namespace hardware

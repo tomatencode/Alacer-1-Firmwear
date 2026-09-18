@@ -15,10 +15,11 @@ const size_t MAX_FRAME_SIZE = 1024;
 enum class MessageType : uint8_t {
     PING = 0x00,
     TELEMETRY = 0x01,
-    SET_GIMBAL = 0x02,
-    DO_BEEP = 0x03,
-    FIRE_PYRO = 0x04,
-    GET_IMU = 0x05
+    GET_GIMBAL = 0x02,
+    SET_GIMBAL = 0x03,
+    DO_BEEP = 0x04,
+    FIRE_PYRO = 0x05,
+    GET_IMU = 0x06
 };
 
 enum class RequestStatus : uint8_t {

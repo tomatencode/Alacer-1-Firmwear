@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include "HC12.hpp"
 
+namespace hardware {
+
 HC12::HC12(int setPin, int rxPin, int txPin)
     : _setPin(setPin), _rxPin(rxPin), _txPin(txPin), _serial(_rxPin, _txPin), _atState(ATState::IDLE) {
 }
@@ -115,3 +117,5 @@ std::optional<etl::string<128>> HC12::takeATResponse() {
     }
     return std::nullopt;
 }
+
+} // namespace hardware

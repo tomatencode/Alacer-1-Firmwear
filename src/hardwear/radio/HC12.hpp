@@ -9,6 +9,7 @@
 
 #include "./Radio.hpp"
 
+namespace hardware {
 
 class HC12 : public Radio {
 public:
@@ -46,3 +47,5 @@ private:
     etl::string<128> _atCommand;
     etl::string<128> _atResponse;
 };
+
+} // namespace hardware

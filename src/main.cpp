@@ -17,16 +17,16 @@
 hardware::BlinkLed statusLed(PB14, 35, 50);
 hardware::Buzzer buzzer(PA8);
 
-hardware::Servo pitchServo(PA1, 0.0f, 180.0f, 90.0f, 544, 2400);
-hardware::Servo yawServo(PA2, 0.0f, 180.0f, 90.0f, 544, 2400);
+hardware::Servo pitchServo(PA1, 2, 0.0f, 180.0f, 90.0f, 544, 2400);
+hardware::Servo yawServo(PA2, 3, 0.0f, 180.0f, 90.0f, 544, 2400);
 
 hardware::Gimbal gimbal(
     pitchServo, yawServo,
     hardware::Gimbal::GimbalPos{0.0f, 0.0f},
     -10.0f, 10.0f,
     -10.0f, 10.0f,
-    1.0f, 1.0f,
-    0.0f, 0.0f
+    0.2f, 0.2f,
+    -90.0f, -90.0f
 );
 
 hardware::HC12 radioHC12(PB15, PA9, PA10);
@@ -45,6 +45,7 @@ const hardware::Buzzer::Melody startupMelody = {
 
 void setup() {
     statusLed.begin();
+    statusLed.flash();
     buzzer.begin();
 
     radioHC12.begin();
@@ -82,6 +83,7 @@ void setup() {
             toBytes(static_cast<int16_t>(gyro.z_rad_s * 1000), &payload[10]);
             resultCallback(MessageScheduler::HandlerResultStatus::SUCCESS, payload);
         });
+    
     messageScheduler.registerRequestHandler(
         Protocol::MessageType::GET_GIMBAL,
         [](std::span<const uint8_t>, MessageScheduler::HandlerResult resultCallback) {
@@ -96,6 +98,7 @@ void setup() {
             toBytes(gimbalPos.yaw_deg, &payload[2]);
             resultCallback(MessageScheduler::HandlerResultStatus::SUCCESS, payload);
         });
+
     messageScheduler.registerRequestHandler(
         Protocol::MessageType::SET_GIMBAL,
         [](std::span<const uint8_t> payload, MessageScheduler::HandlerResult resultCallback) {
@@ -103,13 +106,14 @@ void setup() {
                 resultCallback(MessageScheduler::HandlerResultStatus::FAILURE, {});
                 return;
             }
+
             auto fromBytes = [](const uint8_t *buffer) {
                 return static_cast<float>(static_cast<int16_t>(buffer[0] | (buffer[1] << 8))) / 100.0f;
             };
             hardware::Gimbal::GimbalPos targetPos;
             targetPos.pitch_deg = fromBytes(&payload[0]);
             targetPos.yaw_deg = fromBytes(&payload[2]);
-            gimbal.setTarget(targetPos);
+            //gimbal.setTarget(targetPos);
             resultCallback(MessageScheduler::HandlerResultStatus::SUCCESS, {});
         });
 

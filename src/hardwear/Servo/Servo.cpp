@@ -3,8 +3,13 @@
 
 namespace hardware {
 
-Servo::Servo(int pin, float minAngle_deg, float maxAngle_deg, float initialAngle_deg, int minPulse_us, int maxPulse_us, float servoSpeed_deg_s)
+namespace {
+HardwareTimer servoTimer(TIM2);
+}
+
+Servo::Servo(uint32_t pin, uint32_t channel, float minAngle_deg, float maxAngle_deg, float initialAngle_deg, int minPulse_us, int maxPulse_us, float servoSpeed_deg_s)
     : _pin(pin),
+      _channel(channel),
       _minAngle_deg(minAngle_deg),
       _maxAngle_deg(maxAngle_deg),
       _targetAngle_deg(initialAngle_deg),
@@ -16,24 +21,22 @@ Servo::Servo(int pin, float minAngle_deg, float maxAngle_deg, float initialAngle
 {}
 
 void Servo::begin() {
-    if (_servo.attach(_pin, _minPulse_us, _maxPulse_us) == 0) {
-        // Handle attachment failure.
-        return;
-    }
-    _servo.write(_targetAngle_deg);
+    servoTimer.setPWM(
+        _channel,
+        _pin,
+        50,
+        angleToDuty(_targetAngle_deg)
+    );
 }
 
 void Servo::setTarget(float angle_deg) {
     _targetAngle_deg = std::clamp(angle_deg, _minAngle_deg, _maxAngle_deg);
 
-    const float pulseUs =
-        _minPulse_us +
-        (_targetAngle_deg - _minAngle_deg) *
-        (_maxPulse_us - _minPulse_us) /
-        (_maxAngle_deg - _minAngle_deg);
-
-
-    _servo.writeMicroseconds(static_cast<uint16_t>(pulseUs));
+    servoTimer.setCaptureCompare(
+        _channel,
+        angleToDuty(_targetAngle_deg),
+        PERCENT_COMPARE_FORMAT
+    );
 
     _targetSetTime = millis();
     _targetSetPosition_deg = getPosition_deg();
@@ -50,6 +53,16 @@ float Servo::getPosition_deg() const {
     const float clampedDelta = std::clamp(delta, -maxDelta, maxDelta);
 
     return _targetSetPosition_deg + clampedDelta;
+}
+
+float Servo::angleToDuty(float angle_deg) const {
+    const float pulseUs =
+        _minPulse_us +
+        (angle_deg - _minAngle_deg) *
+        (_maxPulse_us - _minPulse_us) /
+        (_maxAngle_deg - _minAngle_deg);
+
+    return pulseUs / 20000.0f * 100.0f;
 }
 
 } // namespace hardware

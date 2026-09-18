@@ -5,7 +5,7 @@
 
 MessageScheduler::MessageScheduler(Protocol::Parser& parser, hardware::Radio& radio)
         : _parser(parser), _radio(radio), _lastReceived_ms(0),
-            _dropedMessages(0), _responseContexts{} {
+            _dropedMessages(0), _responseContexts{}, _didRespond(false) {
 }
 
 void MessageScheduler::update() {

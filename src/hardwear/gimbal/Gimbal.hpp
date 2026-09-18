@@ -32,8 +32,7 @@ public:
     GimbalPos getTarget() const;
 
     GimbalPos getCurrentPos() const; // approximation takes servo speeds into account
-
-    void update();
+    
 private:
     hardware::Servo& _pitchServo;
     hardware::Servo& _yawServo;

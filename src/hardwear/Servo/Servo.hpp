@@ -1,14 +1,15 @@
 #pragma once
 
 #include <Arduino.h>
-#include <Servo.h>
+#include <HardwareTimer.h>
 
 namespace hardware {
 
 class Servo {
 public:
     Servo(
-        int pin,
+        uint32_t pin,
+        uint32_t channel,
         float minAngle_deg,
         float maxAngle_deg,
         float initialAngle_deg,
@@ -36,11 +37,10 @@ public:
     float getSpeed_deg_s() const { return _servoSpeed_deg_s; }
 
 private:
-    int _pin;
+    uint32_t _pin;
+    uint32_t _channel;
 
     float _targetAngle_deg;
-
-    ::Servo _servo;
 
     float _minAngle_deg;
     float _maxAngle_deg;
@@ -51,6 +51,8 @@ private:
     float _servoSpeed_deg_s;
     uint32_t _targetSetTime;
     float _targetSetPosition_deg;
+
+    float angleToDuty(float angle_deg) const;
 };
 
 } // namespace hardware

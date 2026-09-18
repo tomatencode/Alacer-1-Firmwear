@@ -13,8 +13,8 @@ public:
     void begin() override;
     void update() override;
 
-    Vector3 getAccel() const override;
-    Vector3 getGyro() const override;
+    IMU::Accel getAccel() const override;
+    IMU::Gyro getGyro() const override;
 
     // True if WHO_AM_I matched the expected value on begin()
     bool isConnected() const;
@@ -28,8 +28,8 @@ private:
     static constexpr uint8_t WHO_AM_I_VALUE       = 0xE9;
 
     // Configured full-scale ranges: accel ±16g, gyro ±2000dps
-    static constexpr float ACCEL_LSB_PER_G = 2048.0f;
-    static constexpr float GYRO_LSB_PER_DPS = 16.4f;
+    static constexpr float ACCEL_LSB_PER_M_S2 = 208.84f;
+    static constexpr float GYRO_LSB_PER_RAD_S = 939.65f;
 
     void writeRegister(uint8_t reg, uint8_t value);
     void readRegisters(uint8_t reg, uint8_t *buffer, size_t length);
@@ -39,6 +39,6 @@ private:
 
     bool _connected = false;
 
-    Vector3 _accel{0, 0, 0};
-    Vector3 _gyro{0, 0, 0};
+    IMU::Accel _accel{0, 0, 0};
+    IMU::Gyro _gyro{0, 0, 0};
 };

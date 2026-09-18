@@ -37,20 +37,20 @@ void ICM45686::update() {
         return static_cast<int16_t>((static_cast<uint16_t>(msb) << 8) | lsb);
     };
 
-    _accel.x = toInt16(buffer[0], buffer[1]) / ACCEL_LSB_PER_G;
-    _accel.y = toInt16(buffer[2], buffer[3]) / ACCEL_LSB_PER_G;
-    _accel.z = toInt16(buffer[4], buffer[5]) / ACCEL_LSB_PER_G;
+    _accel.x_m_s2 = toInt16(buffer[0], buffer[1]) / ACCEL_LSB_PER_M_S2;
+    _accel.y_m_s2 = toInt16(buffer[2], buffer[3]) / ACCEL_LSB_PER_M_S2;
+    _accel.z_m_s2 = toInt16(buffer[4], buffer[5]) / ACCEL_LSB_PER_M_S2;
 
-    _gyro.x = toInt16(buffer[6], buffer[7]) / GYRO_LSB_PER_DPS;
-    _gyro.y = toInt16(buffer[8], buffer[9]) / GYRO_LSB_PER_DPS;
-    _gyro.z = toInt16(buffer[10], buffer[11]) / GYRO_LSB_PER_DPS;
+    _gyro.x_rad_s = toInt16(buffer[6], buffer[7]) / GYRO_LSB_PER_RAD_S;
+    _gyro.y_rad_s = toInt16(buffer[8], buffer[9]) / GYRO_LSB_PER_RAD_S;
+    _gyro.z_rad_s = toInt16(buffer[10], buffer[11]) / GYRO_LSB_PER_RAD_S;
 }
 
-IMU::Vector3 ICM45686::getAccel() const {
+IMU::Accel ICM45686::getAccel() const {
     return _accel;
 }
 
-IMU::Vector3 ICM45686::getGyro() const {
+IMU::Gyro ICM45686::getGyro() const {
     return _gyro;
 }
 

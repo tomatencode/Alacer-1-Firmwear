@@ -49,19 +49,19 @@ void setup() {
     messageScheduler.registerRequestHandler(
         Protocol::MessageType::GET_IMU,
         [](std::span<const uint8_t>, MessageScheduler::HandlerResult resultCallback) {
-            IMU::Vector3 accel = imu.getAccel();
-            IMU::Vector3 gyro = imu.getGyro();
+            IMU::Accel accel = imu.getAccel();
+            IMU::Gyro gyro = imu.getGyro();
             uint8_t payload[12];
             auto toBytes = [](int16_t value, uint8_t *buffer) {
                 buffer[0] = value & 0xFF;
                 buffer[1] = (value >> 8) & 0xFF;
             };
-            toBytes(static_cast<int16_t>(accel.x * 1000), &payload[0]);
-            toBytes(static_cast<int16_t>(accel.y * 1000), &payload[2]);
-            toBytes(static_cast<int16_t>(accel.z * 1000), &payload[4]);
-            toBytes(static_cast<int16_t>(gyro.x * 1000), &payload[6]);
-            toBytes(static_cast<int16_t>(gyro.y * 1000), &payload[8]);
-            toBytes(static_cast<int16_t>(gyro.z * 1000), &payload[10]);
+            toBytes(static_cast<int16_t>(accel.x_m_s2 * 1000), &payload[0]);
+            toBytes(static_cast<int16_t>(accel.y_m_s2 * 1000), &payload[2]);
+            toBytes(static_cast<int16_t>(accel.z_m_s2 * 1000), &payload[4]);
+            toBytes(static_cast<int16_t>(gyro.x_rad_s * 1000), &payload[6]);
+            toBytes(static_cast<int16_t>(gyro.y_rad_s * 1000), &payload[8]);
+            toBytes(static_cast<int16_t>(gyro.z_rad_s * 1000), &payload[10]);
             resultCallback(MessageScheduler::HandlerResultStatus::SUCCESS, payload);
         });
 
@@ -71,6 +71,6 @@ void loop() {
     buzzer.update();
     statusLed.update();
     radioHC12.update();
+    imu.update();
     messageScheduler.update();
-    // imu.update();
 }

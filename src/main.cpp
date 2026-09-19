@@ -8,6 +8,7 @@
 #include "./hardwear/led/BlinkLed.hpp"
 #include "./hardwear/buzzer/Buzzer.hpp"
 #include "./hardwear/imu/ICM45686.hpp"
+#include "./hardwear/barometer/MS5611.hpp"
 #include "./hardwear/Servo/Servo.hpp"
 #include "./hardwear/gimbal/Gimbal.hpp"
 
@@ -33,6 +34,7 @@ hardware::HC12 radioHC12(PB15, PA9, PA10);
 
 SPIClass sensorSPI(PA7, PA6, PA5);
 hardware::ICM45686 imu(PB10, sensorSPI);
+hardware::MS5611 barometer(PB3, sensorSPI);
 
 Protocol::Parser radiolinkParser;
 MessageScheduler messageScheduler(radiolinkParser, radioHC12);
@@ -45,18 +47,16 @@ const hardware::Buzzer::Melody startupMelody = {
 
 void setup() {
     statusLed.begin();
-    statusLed.flash();
     buzzer.begin();
 
     radioHC12.begin();
 
     imu.begin();
+    barometer.begin();
 
     pitchServo.begin();
     yawServo.begin();
     gimbal.begin();
-
-    buzzer.playMelody(startupMelody);
 
     messageScheduler.registerRequestHandler(
         Protocol::MessageType::DO_BEEP,
@@ -81,6 +81,26 @@ void setup() {
             toBytes(static_cast<int16_t>(gyro.x_rad_s * 1000), &payload[6]);
             toBytes(static_cast<int16_t>(gyro.y_rad_s * 1000), &payload[8]);
             toBytes(static_cast<int16_t>(gyro.z_rad_s * 1000), &payload[10]);
+            resultCallback(MessageScheduler::HandlerResultStatus::SUCCESS, payload);
+        });
+
+    messageScheduler.registerRequestHandler(
+        Protocol::MessageType::GET_BAROMETER,
+        [](std::span<const uint8_t>, MessageScheduler::HandlerResult resultCallback) {
+            float altitude = barometer.getAltitude();
+            float pressure = barometer.getPressure();
+            float temperature = barometer.getTemperature();
+            uint8_t payload[12];
+            auto toBytes = [](float value, uint8_t *buffer) {
+                int32_t scaled = static_cast<int32_t>(value * 100);
+                buffer[0] = scaled & 0xFF;
+                buffer[1] = (scaled >> 8) & 0xFF;
+                buffer[2] = (scaled >> 16) & 0xFF;
+                buffer[3] = (scaled >> 24) & 0xFF;
+            };
+            toBytes(altitude, &payload[0]);
+            toBytes(pressure, &payload[4]);
+            toBytes(temperature, &payload[8]);
             resultCallback(MessageScheduler::HandlerResultStatus::SUCCESS, payload);
         });
     
@@ -117,6 +137,7 @@ void setup() {
             resultCallback(MessageScheduler::HandlerResultStatus::SUCCESS, {});
         });
 
+    buzzer.playMelody(startupMelody);
 }
 
 void loop() {
@@ -124,5 +145,6 @@ void loop() {
     statusLed.update();
     radioHC12.update();
     imu.update();
+    barometer.update();
     messageScheduler.update();
 }

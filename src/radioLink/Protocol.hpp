@@ -19,7 +19,8 @@ enum class MessageType : uint8_t {
     SET_GIMBAL = 0x03,
     DO_BEEP = 0x04,
     FIRE_PYRO = 0x05,
-    GET_IMU = 0x06
+    GET_IMU = 0x06,
+    GET_BAROMETER = 0x07
 };
 
 enum class RequestStatus : uint8_t {

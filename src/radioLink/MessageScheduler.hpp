@@ -7,7 +7,7 @@
 #include "etl/map.h"
 
 #include "Protocol.hpp"
-#include "../hardwear/radio/Radio.hpp"
+#include "../hardware/radio/Radio.hpp"
 
 
 constexpr uint32_t SEND_TIMEOUT_MS = 50;

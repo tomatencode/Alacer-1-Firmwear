@@ -113,7 +113,7 @@ void setup() {
             hardware::Gimbal::GimbalPos targetPos;
             targetPos.pitch_deg = fromBytes(&payload[0]);
             targetPos.yaw_deg = fromBytes(&payload[2]);
-            //gimbal.setTarget(targetPos);
+            gimbal.setTarget(targetPos);
             resultCallback(MessageScheduler::HandlerResultStatus::SUCCESS, {});
         });
 

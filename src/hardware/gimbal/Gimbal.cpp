@@ -31,8 +31,8 @@ void Gimbal::setTarget(const GimbalPos& target) {
     float clampedPitch = std::clamp(target.pitch_deg, _minPitch_deg, _maxPitch_deg);
     float clampedYaw = std::clamp(target.yaw_deg, _minYaw_deg, _maxYaw_deg);
 
-    float pitchServoAngle = clampedPitch/_pitchServoTranslation - _pitchServoTrim_deg;
-    float yawServoAngle = clampedYaw/_yawServoTranslation - _yawServoTrim_deg;
+    float pitchServoAngle = clampedPitch/_pitchServoTranslation + _pitchServoTrim_deg;
+    float yawServoAngle = clampedYaw/_yawServoTranslation + _yawServoTrim_deg;
 
     _pitchServo.setTarget(pitchServoAngle);
     _yawServo.setTarget(yawServoAngle);
@@ -45,8 +45,8 @@ Gimbal::GimbalPos Gimbal::getTarget() const {
 }
 
 Gimbal::GimbalPos Gimbal::getCurrentPos() const {
-    float currentPitch = (_pitchServo.getPosition_deg() + _pitchServoTrim_deg) * _pitchServoTranslation;
-    float currentYaw = (_yawServo.getPosition_deg() + _yawServoTrim_deg) * _yawServoTranslation;
+    float currentPitch = (_pitchServo.getPosition_deg() - _pitchServoTrim_deg) * _pitchServoTranslation;
+    float currentYaw = (_yawServo.getPosition_deg() - _yawServoTrim_deg) * _yawServoTranslation;
 
     return {currentPitch, currentYaw};
 }

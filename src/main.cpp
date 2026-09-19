@@ -27,8 +27,8 @@ hardware::Gimbal gimbal(
     hardware::Gimbal::GimbalPos{0.0f, 0.0f},
     -10.0f, 10.0f,
     -10.0f, 10.0f,
-    0.2f, 0.2f,
-    -90.0f, -90.0f
+    (10.0f/40.0f), (15.0f/80.0f),
+    115.0f, 75.0f
 );
 
 hardware::HC12 radioHC12(PB15, PA9, PA10);

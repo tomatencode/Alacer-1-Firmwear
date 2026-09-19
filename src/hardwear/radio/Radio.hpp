@@ -8,7 +8,7 @@ namespace hardware {
 
 class Radio {
 public:
-    virtual void begin() = 0;
+    virtual ~Radio() = default;
     
     virtual bool send(std::span<const uint8_t> data) = 0;
     virtual bool available() = 0;

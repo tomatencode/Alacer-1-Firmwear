@@ -4,6 +4,8 @@ namespace hardware {
 
 class IMU {
 public:
+    virtual ~IMU() = default;
+    
     struct Accel {
         float x_m_s2;
         float y_m_s2;

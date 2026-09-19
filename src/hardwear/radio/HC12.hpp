@@ -21,9 +21,9 @@ public:
 
     void begin();
     
-    bool send(std::span<const uint8_t> data);
-    bool available();
-    std::optional<uint8_t> read();
+    bool send(std::span<const uint8_t> data) override;
+    bool available() override;
+    std::optional<uint8_t> read() override;
 
     bool sendATCommand(const char* command, uint32_t timeout_ms = 200);
     bool atBusy();

@@ -4,8 +4,9 @@
 
 
 MessageScheduler::MessageScheduler(Protocol::Parser& parser, hardware::Radio& radio)
-        : _parser(parser), _radio(radio), _lastReceived_ms(0),
-            _dropedMessages(0), _responseContexts{}, _didRespond(false) {
+    : _parser(parser), _radio(radio),
+      _lastReceived_ms(0), _didRespond(false), _dropedMessages(0),
+      _responseContexts{} {
 }
 
 void MessageScheduler::update() {
@@ -118,7 +119,7 @@ void MessageScheduler::handleIncomingMessage(const Protocol::Message& message) {
     contextIt->messageType = message.type;
     contextIt->sequenceId = message.seqId;
     contextIt->inUse = true;
-    handler(std::span<const uint8_t>(message.payload.data(), message.payload.size()),
+    handler->handleRequest(std::span<const uint8_t>(message.payload.data(), message.payload.size()),
         HandlerResult::create<ResponseContext, &ResponseContext::respond>(*contextIt));
 }
 
@@ -148,6 +149,6 @@ void MessageScheduler::scheduleMessage(const Protocol::Message& message) {
 }
 
 
-void MessageScheduler::registerRequestHandler(Protocol::MessageType jobType, Handler job) {
-    _handlers.insert(std::make_pair(jobType, job));
+void MessageScheduler::registerRequestHandler(Protocol::MessageType jobType, RequestHandler& job) {
+    _handlers.insert(std::make_pair(jobType, &job));
 }

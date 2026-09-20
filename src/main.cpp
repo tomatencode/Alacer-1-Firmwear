@@ -17,7 +17,13 @@
 
 #include "./radioLink/Protocol.hpp"
 #include "./radioLink/MessageScheduler.hpp"
-#include "./radioLink/RequestHandlers.hpp"
+#include "./radioLink/requestHandlers/DoBeepHandler.hpp"
+#include "./radioLink/requestHandlers/GetImuHandler.hpp"
+#include "./radioLink/requestHandlers/GetBarometerHandler.hpp"
+#include "./radioLink/requestHandlers/GetGimbalHandler.hpp"
+#include "./radioLink/requestHandlers/SetGimbalHandler.hpp"
+#include "./radioLink/requestHandlers/GetRotationHandler.hpp"
+#include "./radioLink/requestHandlers/SetRotationHandler.hpp"
 
 #include "./locationEstimation/IMURocketCoordinateConverter.hpp"
 #include "./locationEstimation/RotationAccumulator.hpp"
@@ -57,6 +63,15 @@ IMURocketCoordinateConverter imuRocketConverter(
 
 RotationAccumulator rotationAccumulator(imu, imuRocketConverter, 10000);
 
+// Radio Request handlers
+DoBeepHandler beepHandler(buzzer);
+GetImuHandler imuHandler(imu);
+GetBarometerHandler barometerHandler(barometer);
+GetGimbalHandler getGimbalHandler(gimbal);
+SetGimbalHandler setGimbalHandler(gimbal);
+GetRotationHandler getRotationHandler(rotationAccumulator);
+SetRotationHandler setRotationHandler(rotationAccumulator);
+
 const hardware::Buzzer::Melody startupMelody = {
     {262, 200},
     {294, 200},
@@ -78,13 +93,13 @@ void setup() {
 
     rotationAccumulator.setRotationQuaternion(Eigen::Quaternionf::Identity());
 
-    requestHandlers::attachDoBeep(messageScheduler, &buzzer);
-    requestHandlers::attachGetImu(messageScheduler, &imu);
-    requestHandlers::attachGetBarometer(messageScheduler, &barometer);
-    requestHandlers::attachGetGimbal(messageScheduler, &gimbal);
-    requestHandlers::attachSetGimbal(messageScheduler, &gimbal);
-    requestHandlers::attachGetRotation(messageScheduler, &rotationAccumulator);
-    requestHandlers::attachSetRotation(messageScheduler, &rotationAccumulator);
+    messageScheduler.registerRequestHandler(Protocol::MessageType::DO_BEEP, beepHandler);
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_IMU, imuHandler);
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_BAROMETER, barometerHandler);
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_GIMBAL, getGimbalHandler);
+    messageScheduler.registerRequestHandler(Protocol::MessageType::SET_GIMBAL, setGimbalHandler);
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_ROTATION, getRotationHandler);
+    messageScheduler.registerRequestHandler(Protocol::MessageType::SET_ROTATION, setRotationHandler);
 
     buzzer.playMelody(startupMelody);
 }

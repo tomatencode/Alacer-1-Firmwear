@@ -6,6 +6,7 @@ hardware::Buzzer* gBuzzer = nullptr;
 hardware::ICM45686* gImu = nullptr;
 hardware::Barometer* gBarometer = nullptr;
 hardware::Gimbal* gGimbal = nullptr;
+RotationAccumulator* gRotationAccumulator = nullptr;
 
 void doBeepRequestHandler(std::span<const uint8_t>, MessageScheduler::HandlerResult resultCallback) {
     if (gBuzzer == nullptr) {
@@ -101,6 +102,48 @@ void setGimbalRequestHandler(std::span<const uint8_t> payload, MessageScheduler:
     resultCallback(MessageScheduler::HandlerResultStatus::SUCCESS, {});
 }
 
+void getRotationRequestHandler(std::span<const uint8_t>, MessageScheduler::HandlerResult resultCallback) {
+    if (gRotationAccumulator == nullptr) {
+        resultCallback(MessageScheduler::HandlerResultStatus::FAILURE, {});
+        return;
+    }
+    Eigen::Vector3f rotation_rad = gRotationAccumulator->getEulerAngles_rad();
+    uint8_t payload[12];
+    auto toBytes = [](float value, uint8_t *buffer) {
+        int32_t scaled = static_cast<int32_t>(value * 100);
+        buffer[0] = scaled & 0xFF;
+        buffer[1] = (scaled >> 8) & 0xFF;
+        buffer[2] = (scaled >> 16) & 0xFF;
+        buffer[3] = (scaled >> 24) & 0xFF;
+    };
+    toBytes(rotation_rad.x(), &payload[0]);
+    toBytes(rotation_rad.y(), &payload[4]);
+    toBytes(rotation_rad.z(), &payload[8]);
+    resultCallback(MessageScheduler::HandlerResultStatus::SUCCESS, payload);
+}
+
+void setRotationRequestHandler(std::span<const uint8_t> payload, MessageScheduler::HandlerResult resultCallback) {
+    if (gRotationAccumulator == nullptr) {
+        resultCallback(MessageScheduler::HandlerResultStatus::FAILURE, {});
+        return;
+    }
+
+    if (payload.size() < 12) {
+        resultCallback(MessageScheduler::HandlerResultStatus::FAILURE, {});
+        return;
+    }
+
+    auto fromBytes = [](const uint8_t *buffer) {
+        return static_cast<float>(static_cast<int32_t>(buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24))) / 100.0f;
+    };
+    Eigen::Vector3f targetRotation_rad;
+    targetRotation_rad.x() = fromBytes(&payload[0]);
+    targetRotation_rad.y() = fromBytes(&payload[4]);
+    targetRotation_rad.z() = fromBytes(&payload[8]);
+    gRotationAccumulator->setEulerAngles_rad(targetRotation_rad);
+    resultCallback(MessageScheduler::HandlerResultStatus::SUCCESS, {});
+}
+
 } // namespace
 
 namespace requestHandlers {
@@ -138,6 +181,20 @@ void attachSetGimbal(MessageScheduler& messageScheduler, hardware::Gimbal* gimba
     messageScheduler.registerRequestHandler(
         Protocol::MessageType::SET_GIMBAL,
         MessageScheduler::Handler::create(setGimbalRequestHandler));
+}
+
+void attachGetRotation(MessageScheduler& messageScheduler, RotationAccumulator* rotationAccumulator) {
+    gRotationAccumulator = rotationAccumulator;
+    messageScheduler.registerRequestHandler(
+        Protocol::MessageType::GET_ROTATION,
+        MessageScheduler::Handler::create(getRotationRequestHandler));
+}
+
+void attachSetRotation(MessageScheduler& messageScheduler, RotationAccumulator* rotationAccumulator) {
+    gRotationAccumulator = rotationAccumulator;
+    messageScheduler.registerRequestHandler(
+        Protocol::MessageType::SET_ROTATION,
+        MessageScheduler::Handler::create(setRotationRequestHandler));
 }
 
 } // namespace requestHandlers

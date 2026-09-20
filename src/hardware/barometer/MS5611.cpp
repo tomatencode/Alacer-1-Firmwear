@@ -5,8 +5,8 @@ namespace hardware {
 MS5611::MS5611(int csPin, SPIClass &spi)
     : _sensor(csPin, &spi), _altitude(0), _pressure(0), _temperature(0) {}
 
-bool MS5611::begin() {
-    return _sensor.begin();
+void MS5611::begin() {
+    _sensor.begin();
 }
 
 float MS5611::getAltitude() const {

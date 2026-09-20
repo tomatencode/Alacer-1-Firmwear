@@ -14,13 +14,12 @@ public:
 
         uint8_t payload[12];
         std::span<uint8_t> buffer(payload);
-        constexpr float kScale = 1000.0f;
-        fixedPoint::encode16(accel.x_m_s2, buffer, 0, kScale);
-        fixedPoint::encode16(accel.y_m_s2, buffer, 2, kScale);
-        fixedPoint::encode16(accel.z_m_s2, buffer, 4, kScale);
-        fixedPoint::encode16(gyro.x_rad_s, buffer, 6, kScale);
-        fixedPoint::encode16(gyro.y_rad_s, buffer, 8, kScale);
-        fixedPoint::encode16(gyro.z_rad_s, buffer, 10, kScale);
+        fixedPoint::encode16(accel.x_m_s2, buffer, 0);
+        fixedPoint::encode16(accel.y_m_s2, buffer, 2);
+        fixedPoint::encode16(accel.z_m_s2, buffer, 4);
+        fixedPoint::encode16(gyro.x_rad_s, buffer, 6);
+        fixedPoint::encode16(gyro.y_rad_s, buffer, 8);
+        fixedPoint::encode16(gyro.z_rad_s, buffer, 10);
 
         resultCallback(MessageScheduler::HandlerResultStatus::SUCCESS, payload);
     }

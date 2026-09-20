@@ -35,9 +35,19 @@ void RotationAccumulator::setEulerAngles_rad(const Eigen::Vector3f& eulerAngles)
     ).normalized();
 }
 
-
 Eigen::Vector3f RotationAccumulator::getAngularVelocity_rad_s() const {
     return _angularVelocity_rad_s;
+}
+
+void RotationAccumulator::holdOrientation() {
+    const auto gyro = _imu.getGyro();
+    _angularVelocity_rad_s = {
+        gyro.x_rad_s,
+        gyro.y_rad_s,
+        gyro.z_rad_s
+    };
+
+    _lastUpdate_us = micros();
 }
 
 void RotationAccumulator::update() {

@@ -18,6 +18,7 @@ public:
 
     Eigen::Vector3f getAngularVelocity_rad_s() const;
 
+    void holdOrientation();
     void update();
 
 private:

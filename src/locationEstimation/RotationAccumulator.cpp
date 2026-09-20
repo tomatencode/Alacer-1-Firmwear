@@ -1,7 +1,7 @@
 #include "RotationAccumulator.hpp"
 
-RotationAccumulator::RotationAccumulator(hardware::IMU& imu, uint32_t maxDt_us)
-    : _imu(imu), _maxDt_us(maxDt_us)
+RotationAccumulator::RotationAccumulator(hardware::IMU& imu, IMURocketCoordinateConverter& imuRocketConverter, uint32_t maxDt_us)
+    : _imu(imu), _imuRocketConverter(imuRocketConverter), _maxDt_us(maxDt_us)
 {}
 
 Eigen::Quaternionf RotationAccumulator::getRotationQuaternion() const {
@@ -41,11 +41,13 @@ Eigen::Vector3f RotationAccumulator::getAngularVelocity_rad_s() const {
 
 void RotationAccumulator::holdOrientation() {
     const auto gyro = _imu.getGyro();
-    _angularVelocity_rad_s = {
+    Eigen::Vector3f angularVelocityIMU_rad_s = {
         gyro.x_rad_s,
         gyro.y_rad_s,
         gyro.z_rad_s
     };
+
+    _angularVelocity_rad_s = _imuRocketConverter.rotateIMUVectorToRocket(angularVelocityIMU_rad_s);
 
     _lastUpdate_us = micros();
 }
@@ -55,11 +57,13 @@ void RotationAccumulator::update() {
 
     auto gyro = _imu.getGyro();
     
-    _angularVelocity_rad_s = {
+    Eigen::Vector3f angularVelocityIMU_rad_s = {
         gyro.x_rad_s,
         gyro.y_rad_s,
         gyro.z_rad_s    
     };
+
+    _angularVelocity_rad_s = _imuRocketConverter.rotateIMUVectorToRocket(angularVelocityIMU_rad_s);
 
 
     if (_lastUpdate_us == 0) { // First update, initialize the last update time

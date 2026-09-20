@@ -2,11 +2,13 @@
 
 #include <ArduinoEigen.h>
 
+#include "IMURocketCoordinateConverter.hpp"
+
 #include "../hardware/imu/IMU.hpp"
 
 class RotationAccumulator {
 public:
-    RotationAccumulator(hardware::IMU& imu, uint32_t maxDt_us);
+    RotationAccumulator(hardware::IMU& imu, IMURocketCoordinateConverter& imuRocketConverter, uint32_t maxDt_us);
 
     Eigen::Quaternionf getRotationQuaternion() const;
     Eigen::Matrix3f getRotationMatrix() const;
@@ -30,4 +32,6 @@ private:
 
     Eigen::Quaternionf _rotation = Eigen::Quaternionf::Identity();
     Eigen::Vector3f _angularVelocity_rad_s = Eigen::Vector3f::Zero();
+
+    IMURocketCoordinateConverter& _imuRocketConverter;
 };

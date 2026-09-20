@@ -11,13 +11,13 @@ class MS5611 : public Barometer {
 public:
     MS5611(int csPin, SPIClass &spi);
 
-    bool begin();
+    void begin() override;
 
     float getAltitude() const override;
     float getPressure() const override;
     float getTemperature() const override;
 
-    void update();
+    void update() override;
 private:
     MS5611_SPI _sensor;
 

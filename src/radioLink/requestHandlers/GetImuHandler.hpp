@@ -1,16 +1,16 @@
 #pragma once
 
 #include "../MessageScheduler.hpp"
-#include "../../hardware/imu/ICM45686.hpp"
+#include "../../hardware/imu/IMU.hpp"
 #include "./helpers/FixedPointCodec.hpp"
 
 class GetImuHandler : public MessageScheduler::RequestHandler {
 public:
-    explicit GetImuHandler(hardware::ICM45686& imu) : _imu(imu) {}
+    explicit GetImuHandler(hardware::IMU& imu) : _imu(imu) {}
 
     void handleRequest(std::span<const uint8_t>, MessageScheduler::HandlerResult resultCallback) override {
-        hardware::ICM45686::Accel accel = _imu.getAccel();
-        hardware::ICM45686::Gyro gyro = _imu.getGyro();
+        hardware::IMU::Accel accel = _imu.getAccel();
+        hardware::IMU::Gyro gyro = _imu.getGyro();
 
         uint8_t payload[12];
         std::span<uint8_t> buffer(payload);
@@ -26,5 +26,5 @@ public:
     }
 
 private:
-    hardware::ICM45686& _imu;
+    hardware::IMU& _imu;
 };

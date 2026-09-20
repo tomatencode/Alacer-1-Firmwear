@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <array>
+#include <numbers>
 #include <span>
 
 #include <etl/vector.h>
@@ -46,9 +47,9 @@ hardware::ICM45686 imu(PB10, sensorSPI);
 hardware::MS5611 barometer(PB3, sensorSPI);
 
 const Eigen::Quaternionf imuToRocketRotation =
-    Eigen::AngleAxisf(IMU_ROLL_RAD, Eigen::Vector3f::UnitX()) *
-    Eigen::AngleAxisf(IMU_PITCH_RAD, Eigen::Vector3f::UnitY()) *
-    Eigen::AngleAxisf(IMU_YAW_RAD, Eigen::Vector3f::UnitZ());
+    Eigen::AngleAxisf(IMU_ROLL_DEG * std::numbers::pi_v<float> / 180.0f, Eigen::Vector3f::UnitX()) *
+    Eigen::AngleAxisf(IMU_PITCH_DEG * std::numbers::pi_v<float> / 180.0f, Eigen::Vector3f::UnitY()) *
+    Eigen::AngleAxisf(IMU_YAW_DEG * std::numbers::pi_v<float> / 180.0f, Eigen::Vector3f::UnitZ());
 
 IMURocketCoordinateConverter imuRocketConverter(
     Eigen::Vector3f{IMU_TO_ROCKET_X, IMU_TO_ROCKET_Y, IMU_TO_ROCKET_Z},

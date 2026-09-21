@@ -21,7 +21,7 @@ public:
     virtual void begin() = 0;
     virtual void update() = 0;
 
-    // Acceleration in m/s²
+    // Acceleration in m/s² (including gravity)
     virtual Accel getAccel() const = 0;
     // Angular rate in radians per second
     virtual Gyro getGyro() const = 0;

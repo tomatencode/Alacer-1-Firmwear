@@ -24,6 +24,9 @@
 #include "./radioLink/requestHandlers/SetGimbalHandler.hpp"
 #include "./radioLink/requestHandlers/GetRotationHandler.hpp"
 #include "./radioLink/requestHandlers/SetRotationHandler.hpp"
+#include "./radioLink/requestHandlers/GetPositionHandler.hpp"
+#include "./radioLink/requestHandlers/SetPositionHandler.hpp"
+
 
 #include "./locationEstimation/IMURocketCoordinateConverter.hpp"
 #include "./locationEstimation/RotationAccumulator.hpp"
@@ -62,8 +65,8 @@ IMURocketCoordinateConverter imuRocketConverter(
     Eigen::Vector3f{IMU_TO_ROCKET_X, IMU_TO_ROCKET_Y, IMU_TO_ROCKET_Z},
     imuToRocketRotation);
 
-RotationAccumulator rotationAccumulator(imu, imuRocketConverter, 1000);
-PositionAccumulator positionAccumulator(imu, imuRocketConverter, 1000, rotationAccumulator);
+RotationAccumulator rotationAccumulator(imu, imuRocketConverter, 10000);
+PositionAccumulator positionAccumulator(imu, imuRocketConverter, rotationAccumulator, 10000);
 
 // Radio Request handlers
 DoBeepHandler beepHandler(buzzer);
@@ -73,6 +76,8 @@ GetGimbalHandler getGimbalHandler(gimbal);
 SetGimbalHandler setGimbalHandler(gimbal);
 GetRotationHandler getRotationHandler(rotationAccumulator);
 SetRotationHandler setRotationHandler(rotationAccumulator);
+GetPositionHandler getPositionHandler(positionAccumulator);
+SetPositionHandler setPositionHandler(positionAccumulator);
 
 const hardware::Buzzer::Melody startupMelody = {
     {262, 200},
@@ -94,7 +99,7 @@ void setup() {
     gimbal.begin();
 
     rotationAccumulator.setRotationQuaternion(Eigen::Quaternionf::Identity());
-    positionAccumulator.setPosition_m(Eigen::Vector3f::Zero());
+    positionAccumulator.setPosition_m_Velocity_m_s(Eigen::Vector3f::Zero(), Eigen::Vector3f::Zero());
 
     messageScheduler.registerRequestHandler(Protocol::MessageType::DO_BEEP, beepHandler);
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_IMU, imuHandler);
@@ -103,6 +108,8 @@ void setup() {
     messageScheduler.registerRequestHandler(Protocol::MessageType::SET_GIMBAL, setGimbalHandler);
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_ROTATION, getRotationHandler);
     messageScheduler.registerRequestHandler(Protocol::MessageType::SET_ROTATION, setRotationHandler);
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_POSITION, getPositionHandler);
+    messageScheduler.registerRequestHandler(Protocol::MessageType::SET_POSITION, setPositionHandler);
 
     buzzer.playMelody(startupMelody);
 }

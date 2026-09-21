@@ -10,12 +10,12 @@
 
 class PositionAccumulator {
 public:
-    PositionAccumulator(hardware::IMU& imu, IMURocketCoordinateConverter& imuRocketConverter, uint32_t maxDt_us, RotationAccumulator& rotationAccumulator);
+    PositionAccumulator(hardware::IMU& imu, IMURocketCoordinateConverter& imuRocketConverter, RotationAccumulator& rotationAccumulator,  uint32_t maxDt_us);
 
     Eigen::Vector3f getPosition_m() const;
     Eigen::Vector3f getVelocity_m_s() const;
 
-    void setPosition_m(const Eigen::Vector3f& position);
+    void setPosition_m_Velocity_m_s(const Eigen::Vector3f& position, const Eigen::Vector3f& velocity);
 
     void holdPosition();
     void updatePosition();
@@ -25,7 +25,7 @@ private:
     IMURocketCoordinateConverter& _imuRocketConverter;
     RotationAccumulator& _rotationAccumulator;
 
-    uint32_t _lastUpdateTime_us;
+    uint32_t _lastUpdateTime_us = 0;
     uint32_t _maxDt_us;
 
     Eigen::Vector3f _position_m;

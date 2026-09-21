@@ -1,18 +1,21 @@
 #include "PositionAccumulator.hpp"
 
-PositionAccumulator::PositionAccumulator(hardware::IMU& imu, IMURocketCoordinateConverter& imuRocketConverter, RotationAccumulator& rotationAccumulator, uint32_t maxDt_us)
-    : _imu(imu),
-      _imuRocketConverter(imuRocketConverter),
-      _rotationAccumulator(rotationAccumulator),
-      _maxDt_us(maxDt_us),
-      _position_m(Eigen::Vector3f::Zero()),
-      _velocity_m_s(Eigen::Vector3f::Zero())
+PositionAccumulator::PositionAccumulator(hardware::IMU& imu,
+    IMURocketCoordinateConverter& imuRocketConverter,
+    uint32_t maxDt_us,
+    RotationAccumulator& rotationAccumulator
+): 
+    _imu(imu),
+    _imuRocketConverter(imuRocketConverter),
+    _maxDt_us(maxDt_us),
+    _rotationAccumulator(rotationAccumulator),
+    _position_m(Eigen::Vector3f::Zero()),
+    _velocity_m_s(Eigen::Vector3f::Zero())
 {}
 
-void PositionAccumulator::setPosition_m_Velocity_m_s(const Eigen::Vector3f& position, const Eigen::Vector3f& velocity) {
-    _lastUpdateTime_us = micros(); // start accumulating from the current time
+void PositionAccumulator::setPosition_m(const Eigen::Vector3f& position) {
+    _lastUpdateTime_us = millis(); // start accumulating from the current time
     _position_m = position;
-    _velocity_m_s = velocity;
 }
 
 Eigen::Vector3f PositionAccumulator::getPosition_m() const {
@@ -34,6 +37,8 @@ void PositionAccumulator::holdPosition() {
     Eigen::Vector3f acceleration_world_m_s2 = getAccelerationWorld_m_s2();
 
     _velocity_m_s += acceleration_world_m_s2 * deltaTime_s;
+
+    _velocity_m_s += acceleration_world_m_s2 * deltaTime_s;
 }
 
 void PositionAccumulator::updatePosition() {
@@ -51,7 +56,7 @@ void PositionAccumulator::updatePosition() {
 }
 
 std::optional<float> PositionAccumulator::tryGetDeltaTime_s() {
-    uint32_t currentTime_us = micros();
+    uint32_t currentTime_us = millis();
 
     if (_lastUpdateTime_us == 0) { // First update, initialize the last update time
         _lastUpdateTime_us = currentTime_us;
@@ -74,9 +79,7 @@ Eigen::Vector3f PositionAccumulator::getAccelerationWorld_m_s2() const {
     };
 
     Eigen::Vector3f acceleration_rocket_m_s2 = _imuRocketConverter.rotateIMUVectorToRocket(acceleration_imu_m_s2);
-    Eigen::Vector3f acceleration_world_m_s2 = _rotationAccumulator.getRotationQuaternion() * acceleration_rocket_m_s2;
-
-    acceleration_world_m_s2 -= Eigen::Vector3f{0.0f, 0.0f, 9.81f};
+    Eigen::Vector3f acceleration_world_m_s2 = _rotationAccumulator.getRotationQuaternion().conjugate() * acceleration_rocket_m_s2;
 
     return acceleration_world_m_s2;
 }

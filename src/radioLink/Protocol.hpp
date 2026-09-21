@@ -23,8 +23,6 @@ enum class MessageType : uint8_t {
     GET_BAROMETER = 0x07,
     GET_ROTATION = 0x08,
     SET_ROTATION = 0x09,
-    GET_POSITION = 0x0A,
-    SET_POSITION = 0x0B,
 };
 
 enum class RequestStatus : uint8_t {

@@ -21,7 +21,7 @@ public:
     Eigen::Vector3f getAngularVelocity_rad_s() const;
 
     void holdOrientation();
-    void updateOrientation();
+    void update();
 
 private:
     hardware::IMU& _imu;

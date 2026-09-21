@@ -27,7 +27,6 @@
 
 #include "./locationEstimation/IMURocketCoordinateConverter.hpp"
 #include "./locationEstimation/RotationAccumulator.hpp"
-#include "./locationEstimation/PositionAccumulator.hpp"
 
 hardware::BlinkLed statusLed(PB14, 35, 50);
 hardware::Buzzer buzzer(PA8);
@@ -62,8 +61,7 @@ IMURocketCoordinateConverter imuRocketConverter(
     Eigen::Vector3f{IMU_TO_ROCKET_X, IMU_TO_ROCKET_Y, IMU_TO_ROCKET_Z},
     imuToRocketRotation);
 
-RotationAccumulator rotationAccumulator(imu, imuRocketConverter, 1000);
-PositionAccumulator positionAccumulator(imu, imuRocketConverter, 1000, rotationAccumulator);
+RotationAccumulator rotationAccumulator(imu, imuRocketConverter, 10000);
 
 // Radio Request handlers
 DoBeepHandler beepHandler(buzzer);
@@ -94,7 +92,6 @@ void setup() {
     gimbal.begin();
 
     rotationAccumulator.setRotationQuaternion(Eigen::Quaternionf::Identity());
-    positionAccumulator.setPosition_m(Eigen::Vector3f::Zero());
 
     messageScheduler.registerRequestHandler(Protocol::MessageType::DO_BEEP, beepHandler);
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_IMU, imuHandler);
@@ -114,8 +111,7 @@ void loop() {
     imu.update();
     barometer.update();
 
-    rotationAccumulator.updateOrientation();
-    positionAccumulator.updatePosition();
+    rotationAccumulator.update();
 
     radioHC12.update();
     messageScheduler.update();

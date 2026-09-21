@@ -52,7 +52,7 @@ void RotationAccumulator::holdOrientation() {
     _lastUpdate_us = micros();
 }
 
-void RotationAccumulator::updateOrientation() {
+void RotationAccumulator::update() {
     const uint32_t currentTime_us = micros();
 
     auto gyro = _imu.getGyro();

@@ -1,7 +1,7 @@
 #include "FlightStateManager.hpp"
 
-FlightStateManager::FlightStateManager(RotationAccumulator& rotationAccumulator) 
-    : _rotationAccumulator(rotationAccumulator) {}
+FlightStateManager::FlightStateManager(RotationAccumulator& rotationAccumulator, VerticalMovementTracker& verticalMovementTracker, MotorIgniter& motorIgniter, Parashoot& parashoot) 
+    : _rotationAccumulator(rotationAccumulator), _verticalMovementTracker(verticalMovementTracker), _motorIgniter(motorIgniter), _parashoot(parashoot) {}
 
 FlightState FlightStateManager::getCurrentState() const {
     return _currentState;
@@ -19,17 +19,24 @@ bool FlightStateManager::trySetIdle() {
     return false; // Deny setting to IDLE if not allowed
 }
 
-bool FlightStateManager::startAbort() {
-    if (_currentState == FlightState::ABORTED || _currentState == FlightState::ABORTING || _currentState == FlightState::LANDED || _currentState == FlightState::IDLE) {
+bool FlightStateManager::abort() {
+    switch (_currentState)
+    {
+    case FlightState::COUNTDOWN:
+        _countdownStartTime = 0;
+        _currentState = FlightState::ABORTED;
+        return true;
+    case FlightState::BURNING:
+    case FlightState::COASTING:
+        _parashoot.deploy();
+        _currentState = FlightState::ABORTED;
+        return true;
+    
+    default:
         return false;
     }
-    _currentState = FlightState::ABORTING;
-    return true;
 }
 
-bool FlightStateManager::isAbortDone() {
-    return _currentState == FlightState::ABORTED;
-}
 
 bool FlightStateManager::startCountdown() {
     if (_currentState != FlightState::IDLE) {
@@ -53,26 +60,30 @@ void FlightStateManager::update() {
         break;
     case FlightState::COUNTDOWN:
         // Handle COUNTDOWN state
-        if (millis() - _countdownStartTime >= COUNTDOWN_DURATION) {
-            // TODO: light motor here
-            _rotationAccumulator.startAccumulation();
+        if (millis() - _countdownStartTime >= COUNTDOWN_DURATION_ms) {
+            launch();
             _currentState = FlightState::BURNING;
         }
         break;
     case FlightState::BURNING:
-        
+        if (millis() - _motorStartBurnTime >= MOTOR_BURN_DURATION_ms) {
+            // stop PID
+            _currentState = FlightState::COASTING;
+        }
         break;
     case FlightState::COASTING:
-        // Handle COASTING state
+        if (_verticalMovementTracker.getVelocity_m_s() <= 0.0f && _verticalMovementTracker.hasVelocityEstimate()) {
+            _parashoot.deploy();
+            _currentState = FlightState::DESCENDING;
+        }
         break;
     case FlightState::DESCENDING:
-        // Handle DESCENDING state
+        if (_verticalMovementTracker.getHeight_m() <= 2.0f && _verticalMovementTracker.hasVelocityEstimate() && _verticalMovementTracker.getVelocity_m_s() <= 1.0f) {
+            _currentState = FlightState::LANDED;
+        }
         break;
     case FlightState::LANDED:
         // Handle LANDED state
-        break;
-    case FlightState::ABORTING:
-        // Handle ABORTING state
         break;
     case FlightState::ABORTED:
         // Handle ABORTED state
@@ -85,7 +96,17 @@ void FlightStateManager::update() {
 
 
 bool FlightStateManager::preflightChecks() {
-    // Perform necessary preflight checks here
-    // Return true if all checks pass, false otherwise
+
+    if (!_motorIgniter.canLight()) return false;
+    if (!_parashoot.isDeployed()) return false;
+
     return true;
+}
+
+void FlightStateManager::launch() {
+    _motorIgniter.light();
+    _rotationAccumulator.startAccumulation();
+    _verticalMovementTracker.reset();
+    _motorStartBurnTime = millis();
+    // start PID
 }

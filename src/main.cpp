@@ -13,7 +13,10 @@
 #include "./hardwareIO/imu/ICM45686.hpp"
 #include "./hardwareIO/barometer/MS5611.hpp"
 #include "./hardwareIO/Servo/Servo.hpp"
+
 #include "./hardwareComponents/gimbal/Gimbal.hpp"
+#include "./hardwareComponents/motor/MotorIgniter.hpp"
+#include "./hardwareComponents/parashoot/Parashoot.hpp"
 
 #include "./radioLink/Protocol.hpp"
 #include "./radioLink/MessageScheduler.hpp"
@@ -27,6 +30,10 @@
 
 #include "./rotationEstimation/IMURocketCoordinateConverter.hpp"
 #include "./rotationEstimation/RotationAccumulator.hpp"
+
+#include "./acentTracking/VerticalMovementTracker.hpp"
+
+#include "./stateManagement/FlightStateManager.hpp"
 
 hardware::BlinkLed statusLed(PB14, 35, 50);
 hardware::Buzzer buzzer(PA8);
@@ -62,6 +69,15 @@ IMURocketCoordinateConverter imuRocketConverter(
     imuToRocketRotation);
 
 RotationAccumulator rotationAccumulator(imu, imuRocketConverter, 10000);
+
+BarometricHeightCalculator barometricHeightCalculator(barometer);
+
+VerticalMovementTracker verticalMovementTracker(barometricHeightCalculator);
+
+Parashoot parashoot;
+MotorIgniter motorIgniter;
+
+FlightStateManager flightStateManager(rotationAccumulator, verticalMovementTracker, motorIgniter, parashoot);
 
 // Radio Request handlers
 DoBeepHandler beepHandler(buzzer);
@@ -112,6 +128,9 @@ void loop() {
     barometer.update();
 
     rotationAccumulator.update();
+    verticalMovementTracker.update();
+    
+    flightStateManager.update();
 
     radioHC12.update();
     messageScheduler.update();

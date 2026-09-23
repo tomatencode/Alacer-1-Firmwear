@@ -5,6 +5,10 @@
 #include <Arduino.h>
 
 #include "../rotationEstimation/RotationAccumulator.hpp"
+#include "../hardwareComponents/parashoot/Parashoot.hpp"
+#include "../hardwareComponents/motor/MotorIgniter.hpp"
+
+#include "../acentTracking/VerticalMovementTracker.hpp"
 
 enum class FlightState {
     IDLE,
@@ -14,33 +18,41 @@ enum class FlightState {
     DESCENDING,
     LANDED,
 
-    ABORTING,
     ABORTED
 };
 
-const uint32_t COUNTDOWN_DURATION = 10000;
-
 class FlightStateManager {
 public:
-    FlightStateManager(RotationAccumulator& rotationAccumulator);
+    FlightStateManager(RotationAccumulator& rotationAccumulator, VerticalMovementTracker& verticalMovementTracker, MotorIgniter& motorIgniter, Parashoot& parashoot);
 
     FlightState getCurrentState() const; // shuld not be used in logic, only for debugging
 
-    bool trySetIdle(); // denyd mid flight
+    // denyd mid flight
+    bool trySetIdle();
 
-    bool startAbort(); // denyd if not mid flight or already aborted
-    bool isAbortDone();
+    // denyd if not mid flight or already aborted
+    bool abort();
 
-    bool startCountdown(); // denyd if not in IDLE state
+    // denyd if not in IDLE state
+    bool startCountdown();
 
     void update();
 private:
+    static constexpr uint32_t COUNTDOWN_DURATION_ms = 10000;
+    static constexpr uint32_t MOTOR_BURN_DURATION_ms = 6500;
+
+
     FlightState _currentState = FlightState::IDLE;
 
     uint32_t _countdownStartTime;
-
+    uint32_t _motorStartBurnTime;
 
     bool preflightChecks();
 
+    void launch();
+
     RotationAccumulator& _rotationAccumulator;
+    VerticalMovementTracker& _verticalMovementTracker;
+    MotorIgniter& _motorIgniter;
+    Parashoot& _parashoot;
 };

@@ -29,6 +29,10 @@
 #include "./radioLink/requestHandlers/SetGimbalHandler.hpp"
 #include "./radioLink/requestHandlers/GetRotationHandler.hpp"
 #include "./radioLink/requestHandlers/SetRotationHandler.hpp"
+#include "./radioLink/requestHandlers/FirePyroHandler.hpp"
+#include "./radioLink/requestHandlers/GetPyroContinuityHandler.hpp"
+#include "./radioLink/requestHandlers/GetPyroSoftwareArmedHandler.hpp"
+#include "./radioLink/requestHandlers/GetPyroHardwareArmedHandler.hpp"
 
 #include "./rotationEstimation/IMURocketCoordinateConverter.hpp"
 #include "./rotationEstimation/RotationAccumulator.hpp"
@@ -47,6 +51,7 @@ PyroManager pyroManager(PC13);
 PyroChannel pyroChanel1(PB5, PB4, pyroManager);
 PyroChannel pyroChanel2(PB6, PB7, pyroManager);
 PyroChannel pyroChanel3(PB8, PB9, pyroManager);
+std::array<PyroChannel*, 3> pyroChannels = {&pyroChanel1, &pyroChanel2, &pyroChanel3};
 
 hardware::HC12 radioHC12(PB15, PA9, PA10);
 
@@ -96,6 +101,10 @@ GetGimbalHandler getGimbalHandler(gimbal);
 SetGimbalHandler setGimbalHandler(gimbal);
 GetRotationHandler getRotationHandler(rotationAccumulator);
 SetRotationHandler setRotationHandler(rotationAccumulator);
+FirePyroHandler firePyroHandler(pyroChannels);
+GetPyroContinuityHandler getPyroContinuityHandler(pyroChannels);
+GetPyroSoftwareArmedHandler getPyroSoftwareArmedHandler(pyroManager);
+GetPyroHardwareArmedHandler getPyroHardwareArmedHandler(pyroManager);
 
 const hardware::Buzzer::Melody startupMelody = {
     {262, 200},
@@ -133,6 +142,10 @@ void setup() {
     messageScheduler.registerRequestHandler(Protocol::MessageType::SET_GIMBAL, setGimbalHandler);
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_ROTATION, getRotationHandler);
     messageScheduler.registerRequestHandler(Protocol::MessageType::SET_ROTATION, setRotationHandler);
+    messageScheduler.registerRequestHandler(Protocol::MessageType::FIRE_PYRO, firePyroHandler);
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_CONTINUITY, getPyroContinuityHandler);
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_SOFTWARE_ARMED, getPyroSoftwareArmedHandler);
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_HARDWARE_ARMED, getPyroHardwareArmedHandler);
 
     buzzer.playMelody(startupMelody);
 }

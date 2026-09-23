@@ -20,11 +20,15 @@ public:
 
     Eigen::Vector3f getAngularVelocity_rad_s() const;
 
-    void holdOrientation();
+    void startAccumulation();
+    void stopAccumulation();
+
     void update();
 
 private:
     hardware::IMU& _imu;
+
+    bool _isAccumulating = false;
 
     uint32_t _lastUpdate_us = 0;
 

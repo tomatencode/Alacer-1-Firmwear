@@ -25,8 +25,8 @@
 #include "./radioLink/requestHandlers/GetRotationHandler.hpp"
 #include "./radioLink/requestHandlers/SetRotationHandler.hpp"
 
-#include "./locationEstimation/IMURocketCoordinateConverter.hpp"
-#include "./locationEstimation/RotationAccumulator.hpp"
+#include "./rotationEstimation/IMURocketCoordinateConverter.hpp"
+#include "./rotationEstimation/RotationAccumulator.hpp"
 
 hardware::BlinkLed statusLed(PB14, 35, 50);
 hardware::Buzzer buzzer(PA8);

@@ -39,20 +39,17 @@ Eigen::Vector3f RotationAccumulator::getAngularVelocity_rad_s() const {
     return _angularVelocity_rad_s;
 }
 
-void RotationAccumulator::holdOrientation() {
-    const auto gyro = _imu.getGyro();
-    Eigen::Vector3f angularVelocityIMU_rad_s = {
-        gyro.x_rad_s,
-        gyro.y_rad_s,
-        gyro.z_rad_s
-    };
-
-    _angularVelocity_rad_s = _imuRocketConverter.rotateIMUVectorToRocket(angularVelocityIMU_rad_s);
-
-    _lastUpdate_us = micros();
+void RotationAccumulator::startAccumulation() {
+    _isAccumulating = true;
+    _lastUpdate_us = micros(); // accumulation should start here
+}
+void RotationAccumulator::stopAccumulation() {
+    _isAccumulating = false;
 }
 
 void RotationAccumulator::update() {
+    if (!_isAccumulating) { return; }
+
     const uint32_t currentTime_us = micros();
 
     auto gyro = _imu.getGyro();

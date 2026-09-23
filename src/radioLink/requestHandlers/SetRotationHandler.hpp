@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../MessageScheduler.hpp"
-#include "../../locationEstimation/RotationAccumulator.hpp"
+#include "../../rotationEstimation/RotationAccumulator.hpp"
 #include "./helpers/FixedPointCodec.hpp"
 
 class SetRotationHandler : public MessageScheduler::RequestHandler {

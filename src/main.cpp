@@ -13,6 +13,8 @@
 #include "./hardwareIO/imu/ICM45686.hpp"
 #include "./hardwareIO/barometer/MS5611.hpp"
 #include "./hardwareIO/Servo/Servo.hpp"
+#include "./hardwareIO/pyro/PyroManager.hpp"
+#include "./hardwareIO/pyro/PyroChanel.hpp"
 
 #include "./hardwareComponents/gimbal/Gimbal.hpp"
 #include "./hardwareComponents/motor/MotorIgniter.hpp"
@@ -68,6 +70,11 @@ IMURocketCoordinateConverter imuRocketConverter(
     Eigen::Vector3f{IMU_TO_ROCKET_X, IMU_TO_ROCKET_Y, IMU_TO_ROCKET_Z},
     imuToRocketRotation);
 
+PyroManager pyroManager(PC13);
+PyroChanel pyroChanel1(PB5, PB4, pyroManager);
+PyroChanel pyroChanel2(PB6, PB7, pyroManager);
+PyroChanel pyroChanel3(PB8, PB9, pyroManager);
+
 RotationAccumulator rotationAccumulator(imu, imuRocketConverter, 10000);
 
 BarometricHeightCalculator barometricHeightCalculator(barometer);
@@ -107,6 +114,9 @@ void setup() {
     yawServo.begin();
     gimbal.begin();
 
+    parashoot.setPyroChanel(pyroChanel1);
+    motorIgniter.setPyroChanel(pyroChanel2);
+
     rotationAccumulator.setRotationQuaternion(Eigen::Quaternionf::Identity());
 
     messageScheduler.registerRequestHandler(Protocol::MessageType::DO_BEEP, beepHandler);
@@ -127,9 +137,13 @@ void loop() {
     imu.update();
     barometer.update();
 
+    pyroChanel1.update();
+    pyroChanel2.update();
+    pyroChanel3.update();
+
     rotationAccumulator.update();
     verticalMovementTracker.update();
-    
+
     flightStateManager.update();
 
     radioHC12.update();

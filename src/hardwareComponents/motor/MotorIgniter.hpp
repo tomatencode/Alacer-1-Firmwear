@@ -1,11 +1,16 @@
 #pragma once
 
+#include "../../hardwareIO/pyro/PyroChanel.hpp"
+
 class MotorIgniter{
 public:
     MotorIgniter();
 
-    bool canLight() { return true; };
-    bool light() { return true; };
+    void setPyroChanel(PyroChanel& pyroChanel) { _pyroChanel = &pyroChanel; };
+    void clearPyroChanel() { _pyroChanel = nullptr; };
 
-    bool didLight() { return true; };
+    bool canLight() { return _pyroChanel && _pyroChanel->canFire(); };
+    bool light() { return _pyroChanel && _pyroChanel->fire(1000); };
+private:
+    PyroChanel* _pyroChanel = nullptr;
 };

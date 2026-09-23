@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../MessageScheduler.hpp"
-#include "../../hardware/buzzer/Buzzer.hpp"
+#include "../../hardwareIO/buzzer/Buzzer.hpp"
 
 class DoBeepHandler : public MessageScheduler::RequestHandler {
 public:

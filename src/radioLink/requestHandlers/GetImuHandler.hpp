@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../MessageScheduler.hpp"
-#include "../../hardware/imu/IMU.hpp"
+#include "../../hardwareIO/imu/IMU.hpp"
 #include "./helpers/FixedPointCodec.hpp"
 
 class GetImuHandler : public MessageScheduler::RequestHandler {

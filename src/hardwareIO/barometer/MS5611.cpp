@@ -22,7 +22,7 @@ void MS5611::update() {
         return;
     }
 
-    _pressure_Pa = _sensor.getPressure() / 100.0f; // mBar to Pa
+    _pressure_Pa = _sensor.getPressurePascal();
     _temperature_C = _sensor.getTemperature();
 }
 

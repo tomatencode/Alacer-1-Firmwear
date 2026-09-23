@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../MessageScheduler.hpp"
-#include "../../hardware/gimbal/Gimbal.hpp"
+#include "../../hardwareComponents/gimbal/Gimbal.hpp"
 #include "./helpers/FixedPointCodec.hpp"
 
 class SetGimbalHandler : public MessageScheduler::RequestHandler {

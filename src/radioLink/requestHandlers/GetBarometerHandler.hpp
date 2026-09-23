@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../MessageScheduler.hpp"
-#include "../../hardware/barometer/Barometer.hpp"
+#include "../../hardwareIO/barometer/Barometer.hpp"
 #include "./helpers/FixedPointCodec.hpp"
 
 class GetBarometerHandler : public MessageScheduler::RequestHandler {

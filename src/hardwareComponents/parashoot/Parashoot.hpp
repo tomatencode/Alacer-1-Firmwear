@@ -7,7 +7,7 @@ public:
     Parachute() = default;
 
     void setPyroChannel(PyroChannel& pyroChanel) { _pyroChanel = &pyroChanel; };
-    void clearPyroChanel() { _pyroChanel = nullptr; };
+    void clearPyroChannel() { _pyroChanel = nullptr; };
 
     bool canDeploy() { return _pyroChanel && _pyroChanel->canFire(); };
     bool deploy() {

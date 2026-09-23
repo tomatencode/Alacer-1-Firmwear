@@ -2,17 +2,19 @@
 
 class PyroManager {
 public:
-    PyroManager(int hardwearArmPin);
+    PyroManager(int hardwareArmPin);
+
+    void begin();
 
     bool isArmed();
 
     bool isHardwareArmed();
 
-    void SoftwearArm();
-    void SoftwearDisarm();
+    void SoftwareArm();
+    void SoftwareDisarm();
     
-    bool isSoftwearArmed();
+    bool isSoftwareArmed();
 private:
-    int _hardwearArmPin;
+    int _hardwareArmPin;
     bool _softwearArm = false;
 };

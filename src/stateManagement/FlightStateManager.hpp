@@ -23,7 +23,7 @@ enum class FlightState {
 
 class FlightStateManager {
 public:
-    FlightStateManager(RotationAccumulator& rotationAccumulator, VerticalMovementTracker& verticalMovementTracker, MotorIgniter& motorIgniter, Parashoot& parashoot);
+    FlightStateManager(RotationAccumulator& rotationAccumulator, VerticalMovementTracker& verticalMovementTracker, MotorIgniter& motorIgniter, Parachute& parashoot);
 
     FlightState getCurrentState() const; // shuld not be used in logic, only for debugging
 
@@ -54,5 +54,5 @@ private:
     RotationAccumulator& _rotationAccumulator;
     VerticalMovementTracker& _verticalMovementTracker;
     MotorIgniter& _motorIgniter;
-    Parashoot& _parashoot;
+    Parachute& _parashoot;
 };

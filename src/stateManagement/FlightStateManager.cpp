@@ -1,6 +1,6 @@
 #include "FlightStateManager.hpp"
 
-FlightStateManager::FlightStateManager(RotationAccumulator& rotationAccumulator, VerticalMovementTracker& verticalMovementTracker, MotorIgniter& motorIgniter, Parashoot& parashoot) 
+FlightStateManager::FlightStateManager(RotationAccumulator& rotationAccumulator, VerticalMovementTracker& verticalMovementTracker, MotorIgniter& motorIgniter, Parachute& parashoot) 
     : _rotationAccumulator(rotationAccumulator), _verticalMovementTracker(verticalMovementTracker), _motorIgniter(motorIgniter), _parashoot(parashoot) {}
 
 FlightState FlightStateManager::getCurrentState() const {
@@ -97,14 +97,14 @@ void FlightStateManager::update() {
 
 bool FlightStateManager::preflightChecks() {
 
-    if (!_motorIgniter.canLight()) return false;
-    if (!_parashoot.isDeployed()) return false;
+    if (!_motorIgniter.canIgnite()) return false;
+    if (!_parashoot.canDeploy()) return false;
 
     return true;
 }
 
 void FlightStateManager::launch() {
-    _motorIgniter.light();
+    _motorIgniter.ignite();
     _rotationAccumulator.startAccumulation();
     _verticalMovementTracker.reset();
     _motorStartBurnTime = millis();

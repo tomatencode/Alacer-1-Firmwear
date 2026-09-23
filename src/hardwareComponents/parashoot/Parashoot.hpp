@@ -1,17 +1,17 @@
 #pragma once
 
-#include "../../hardwareIO/pyro/PyroChanel.hpp"
+#include "../../hardwareIO/pyro/PyroChannel.hpp"
 
-class Parashoot {
+class Parachute {
 public:
-    Parashoot() = default;
+    Parachute() = default;
 
-    void setPyroChanel(PyroChanel& pyroChanel) { _pyroChanel = &pyroChanel; };
+    void setPyroChannel(PyroChannel& pyroChanel) { _pyroChanel = &pyroChanel; };
     void clearPyroChanel() { _pyroChanel = nullptr; };
 
     bool canDeploy() { return _pyroChanel && _pyroChanel->canFire(); };
     bool deploy() {
-        if(_pyroChanel && _pyroChanel->fire(1000)) {
+        if(_pyroChanel && _pyroChanel->fire(DEPLOY_PYRO_FIRE_DURATION_ms)) {
             _didDeploy = true;
             return true;
         }
@@ -21,6 +21,8 @@ public:
     void reset() { _didDeploy = false; };
     bool isDeployed() { return _didDeploy; };
 private:
-    PyroChanel* _pyroChanel = nullptr;
+    static constexpr uint32_t DEPLOY_PYRO_FIRE_DURATION_ms = 1000;
+
+    PyroChannel* _pyroChanel = nullptr;
     bool _didDeploy = false;
 };

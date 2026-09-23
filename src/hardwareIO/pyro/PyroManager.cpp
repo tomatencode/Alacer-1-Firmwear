@@ -3,27 +3,29 @@
 #include <Arduino.h>
 
 PyroManager::PyroManager(int hardwearArmPin)
-    : _hardwearArmPin(hardwearArmPin), _softwearArm(false)
-{
-    pinMode(_hardwearArmPin, INPUT);
+    : _hardwareArmPin(hardwearArmPin), _softwearArm(false)
+{}
+
+void PyroManager::begin() {
+    pinMode(_hardwareArmPin, INPUT);
 }
 
 bool PyroManager::isArmed() {
-    return isHardwareArmed() || isSoftwearArmed();
+    return isHardwareArmed() && isSoftwareArmed();
 }
 
 bool PyroManager::isHardwareArmed() {
-    return digitalRead(_hardwearArmPin) == HIGH;
+    return digitalRead(_hardwareArmPin) == HIGH;
 }
 
-void PyroManager::SoftwearArm() {
+void PyroManager::SoftwareArm() {
     _softwearArm = true;
 }
 
-void PyroManager::SoftwearDisarm() {
+void PyroManager::SoftwareDisarm() {
     _softwearArm = false;
 }
 
-bool PyroManager::isSoftwearArmed() {
+bool PyroManager::isSoftwareArmed() {
     return _softwearArm;
 }

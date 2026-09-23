@@ -14,7 +14,7 @@
 #include "./hardwareIO/barometer/MS5611.hpp"
 #include "./hardwareIO/Servo/Servo.hpp"
 #include "./hardwareIO/pyro/PyroManager.hpp"
-#include "./hardwareIO/pyro/PyroChanel.hpp"
+#include "./hardwareIO/pyro/PyroChannel.hpp"
 
 #include "./hardwareComponents/gimbal/Gimbal.hpp"
 #include "./hardwareComponents/motor/MotorIgniter.hpp"
@@ -43,6 +43,22 @@ hardware::Buzzer buzzer(PA8);
 hardware::Servo pitchServo(PA1, 2, 0.0f, 180.0f, 90.0f, 544, 2400);
 hardware::Servo yawServo(PA2, 3, 0.0f, 180.0f, 90.0f, 544, 2400);
 
+PyroManager pyroManager(PC13);
+PyroChannel pyroChanel1(PB5, PB4, pyroManager);
+PyroChannel pyroChanel2(PB6, PB7, pyroManager);
+PyroChannel pyroChanel3(PB8, PB9, pyroManager);
+
+hardware::HC12 radioHC12(PB15, PA9, PA10);
+
+SPIClass sensorSPI(PA7, PA6, PA5);
+
+hardware::ICM45686 imu(PB10, sensorSPI);
+
+hardware::MS5611 barometer(PB3, sensorSPI);
+
+MotorIgniter motorIgniter;
+Parachute parashoot;
+
 hardware::Gimbal gimbal(
     pitchServo, yawServo,
     hardware::Gimbal::GimbalPos{0.0f, 0.0f},
@@ -52,14 +68,8 @@ hardware::Gimbal gimbal(
     115.0f, 75.0f
 );
 
-hardware::HC12 radioHC12(PB15, PA9, PA10);
-
 Protocol::Parser radiolinkParser;
 MessageScheduler messageScheduler(radiolinkParser, radioHC12);
-
-SPIClass sensorSPI(PA7, PA6, PA5);
-hardware::ICM45686 imu(PB10, sensorSPI);
-hardware::MS5611 barometer(PB3, sensorSPI);
 
 const Eigen::Quaternionf imuToRocketRotation =
     Eigen::AngleAxisf(IMU_ROLL_DEG * std::numbers::pi_v<float> / 180.0f, Eigen::Vector3f::UnitX()) *
@@ -70,19 +80,11 @@ IMURocketCoordinateConverter imuRocketConverter(
     Eigen::Vector3f{IMU_TO_ROCKET_X, IMU_TO_ROCKET_Y, IMU_TO_ROCKET_Z},
     imuToRocketRotation);
 
-PyroManager pyroManager(PC13);
-PyroChanel pyroChanel1(PB5, PB4, pyroManager);
-PyroChanel pyroChanel2(PB6, PB7, pyroManager);
-PyroChanel pyroChanel3(PB8, PB9, pyroManager);
-
 RotationAccumulator rotationAccumulator(imu, imuRocketConverter, 10000);
 
 BarometricHeightCalculator barometricHeightCalculator(barometer);
 
 VerticalMovementTracker verticalMovementTracker(barometricHeightCalculator);
-
-Parashoot parashoot;
-MotorIgniter motorIgniter;
 
 FlightStateManager flightStateManager(rotationAccumulator, verticalMovementTracker, motorIgniter, parashoot);
 
@@ -107,6 +109,11 @@ void setup() {
 
     radioHC12.begin();
 
+    pyroManager.begin();
+    pyroChanel1.begin();
+    pyroChanel2.begin();
+    pyroChanel3.begin();
+
     imu.begin();
     barometer.begin();
 
@@ -114,8 +121,8 @@ void setup() {
     yawServo.begin();
     gimbal.begin();
 
-    parashoot.setPyroChanel(pyroChanel1);
-    motorIgniter.setPyroChanel(pyroChanel2);
+    parashoot.setPyroChannel(pyroChanel1);
+    motorIgniter.setPyroChannel(pyroChanel2);
 
     rotationAccumulator.setRotationQuaternion(Eigen::Quaternionf::Identity());
 

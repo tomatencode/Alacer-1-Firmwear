@@ -3,22 +3,18 @@
 namespace hardware {
 
 MS5611::MS5611(int csPin, SPIClass &spi)
-    : _sensor(csPin, &spi), _altitude(0), _pressure(0), _temperature(0) {}
+    : _sensor(csPin, &spi),  _pressure_Pa(0), _temperature_C(0) {}
 
 void MS5611::begin() {
     _sensor.begin();
 }
 
-float MS5611::getAltitude() const {
-    return _altitude;
+float MS5611::getPressure_Pa() const {
+    return _pressure_Pa;
 }
 
-float MS5611::getPressure() const {
-    return _pressure;
-}
-
-float MS5611::getTemperature() const {
-    return _temperature;
+float MS5611::getTemperature_C() const {
+    return _temperature_C;
 }
 
 void MS5611::update() {
@@ -26,9 +22,8 @@ void MS5611::update() {
         return;
     }
 
-    _pressure = _sensor.getPressure();
-    _temperature = _sensor.getTemperature();
-    _altitude = _sensor.getAltitude();
+    _pressure_Pa = _sensor.getPressure() / 100.0f; // mBar to Pa
+    _temperature_C = _sensor.getTemperature();
 }
 
 } // namespace hardware

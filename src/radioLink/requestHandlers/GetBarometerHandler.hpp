@@ -11,9 +11,8 @@ public:
     void handleRequest(std::span<const uint8_t>, MessageScheduler::HandlerResult resultCallback) override {
         uint8_t payload[12];
         std::span<uint8_t> buffer(payload);
-        fixedPoint::encode32(_barometer.getAltitude(), buffer, 0);
-        fixedPoint::encode32(_barometer.getPressure(), buffer, 4);
-        fixedPoint::encode32(_barometer.getTemperature(), buffer, 8);
+        fixedPoint::encode32(_barometer.getPressure_Pa(), buffer, 4);
+        fixedPoint::encode32(_barometer.getTemperature_C(), buffer, 8);
 
         resultCallback(MessageScheduler::HandlerResultStatus::SUCCESS, payload);
     }

@@ -13,17 +13,15 @@ public:
 
     void begin() override;
 
-    float getAltitude() const override;
-    float getPressure() const override;
-    float getTemperature() const override;
+    float getPressure_Pa() const override;
+    float getTemperature_C() const override;
 
     void update() override;
 private:
     MS5611_SPI _sensor;
-
-    float _altitude;
-    float _pressure;
-    float _temperature;
+    
+    float _pressure_Pa;
+    float _temperature_C;
 };
 
 } // namespace hardware

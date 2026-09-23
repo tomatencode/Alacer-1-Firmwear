@@ -10,9 +10,8 @@ public:
 
     virtual void update() = 0;
 
-    virtual float getAltitude() const = 0;
-    virtual float getPressure() const = 0;
-    virtual float getTemperature() const = 0;
+    virtual float getPressure_Pa() const = 0;
+    virtual float getTemperature_C() const = 0;
 };
 
 } // namespace hardware

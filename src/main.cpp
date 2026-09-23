@@ -7,13 +7,13 @@
 
 #include "./config/hardwearConstants.hpp"
 
-#include "./hardware/led/BlinkLed.hpp"
-#include "./hardware/buzzer/Buzzer.hpp"
-#include "./hardware/radio/HC12.hpp"
-#include "./hardware/imu/ICM45686.hpp"
-#include "./hardware/barometer/MS5611.hpp"
-#include "./hardware/Servo/Servo.hpp"
-#include "./hardware/gimbal/Gimbal.hpp"
+#include "./hardwareIO/led/BlinkLed.hpp"
+#include "./hardwareIO/buzzer/Buzzer.hpp"
+#include "./hardwareIO/radio/HC12.hpp"
+#include "./hardwareIO/imu/ICM45686.hpp"
+#include "./hardwareIO/barometer/MS5611.hpp"
+#include "./hardwareIO/Servo/Servo.hpp"
+#include "./hardwareComponents/gimbal/Gimbal.hpp"
 
 #include "./radioLink/Protocol.hpp"
 #include "./radioLink/MessageScheduler.hpp"

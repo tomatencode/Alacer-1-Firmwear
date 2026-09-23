@@ -4,7 +4,7 @@
 
 #include <Arduino.h>
 
-#include "../rortationEstimation/RotationAccumulator.hpp"
+#include "../rotationEstimation/RotationAccumulator.hpp"
 
 enum class FlightState {
     IDLE,

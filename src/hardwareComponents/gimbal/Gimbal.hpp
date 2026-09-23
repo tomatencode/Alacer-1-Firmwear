@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Servo/Servo.hpp"
+#include "../../hardwareIO/Servo/Servo.hpp"
 
 namespace hardware {
 
@@ -15,7 +15,7 @@ public:
     GimbalPos _target;
 
     Gimbal(
-        Servo& pitchServo, Servo& yawServo,
+        hardware::Servo& pitchServo, hardware::Servo& yawServo,
         
         GimbalPos initialTarget,
 

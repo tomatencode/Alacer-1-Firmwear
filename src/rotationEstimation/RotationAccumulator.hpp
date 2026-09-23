@@ -4,7 +4,7 @@
 
 #include "IMURocketCoordinateConverter.hpp"
 
-#include "../hardware/imu/IMU.hpp"
+#include "../hardwareIO/imu/IMU.hpp"
 
 class RotationAccumulator {
 public:

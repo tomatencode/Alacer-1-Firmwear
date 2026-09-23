@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "../hardware/barometer/Barometer.hpp"
+#include "../hardwareIO/barometer/Barometer.hpp"
 
 
 class BarometricHeightCalculator {

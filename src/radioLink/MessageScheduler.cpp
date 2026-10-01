@@ -1,12 +1,11 @@
 #include "MessageScheduler.hpp"
 
 #include <algorithm>
-
+#include <array>
 
 MessageScheduler::MessageScheduler(Protocol::Parser& parser, hardware::Radio& radio)
     : _parser(parser), _radio(radio),
-      _lastReceived_ms(0), _didRespond(false), _dropedMessages(0),
-      _responseContexts{} {
+      _didRespond(false), _dropedMessages(0) {
 }
 
 void MessageScheduler::update() {
@@ -24,28 +23,20 @@ void MessageScheduler::update() {
         if (!frameOpt.has_value())
             continue;
 
-        _lastReceived_ms = millis();
         _didRespond = false;
         auto frame = frameOpt.value();
 
         for (uint8_t i = 0; i < frame.numMessages; ++i) {
             auto& message = frame.messages[i];
-
             handleIncomingMessage(message);
         }
     }
 
-    bool hasBusyContexts = std::any_of(
-        _responseContexts.begin(), _responseContexts.end(),
-        [](const ResponseContext& context) { return context.inUse; });
-
     bool hasScheduledMessages = !_scheduledMessages.empty();
 
-    bool sendTimoutDone = millis() - _lastReceived_ms >= SEND_TIMEOUT_MS;
-
-    if ((hasScheduledMessages || (hasBusyContexts && sendTimoutDone)) && !_didRespond) {
+    if (hasScheduledMessages && !_didRespond) {
         Protocol::Frame frame;
-        
+
         const auto scheduledMessageCount = std::min(
             _scheduledMessages.size(),
             static_cast<size_t>(Protocol::MAX_MESSAGES_PER_FRAME));
@@ -53,19 +44,6 @@ void MessageScheduler::update() {
         uint8_t msgIndex = 0;
         while (msgIndex < _scheduledMessages.size() && msgIndex < Protocol::MAX_MESSAGES_PER_FRAME) {
             frame.messages.push_back(_scheduledMessages[msgIndex++]);
-        }
-        for (auto& context : _responseContexts) {
-            if (msgIndex >= Protocol::MAX_MESSAGES_PER_FRAME)
-                break;
-            if (!context.inUse)
-                continue;
-            
-            Protocol::Message message = Protocol::Message{};
-            message.type = context.messageType;
-            message.seqId = context.sequenceId;
-            message.status = Protocol::RequestStatus::BUSY;
-            frame.messages.push_back(message);
-            msgIndex++;
         }
 
         frame.numMessages = msgIndex;
@@ -86,11 +64,8 @@ void MessageScheduler::update() {
     }
 }
 
-
 void MessageScheduler::handleIncomingMessage(const Protocol::Message& message) {
-
     if (message.type == Protocol::MessageType::PING) {
-        // Handle PING message immediately
         Protocol::Message response;
         response.type = Protocol::MessageType::PING;
         response.seqId = message.seqId;
@@ -106,38 +81,22 @@ void MessageScheduler::handleIncomingMessage(const Protocol::Message& message) {
         return;
     }
 
-    auto& handler = handlerIt->second;
-    auto contextIt = std::find_if(
-        _responseContexts.begin(), _responseContexts.end(),
-        [](const ResponseContext& context) { return !context.inUse; });
-    if (contextIt == _responseContexts.end()) {
-        ++_dropedMessages;
-        return;
-    }
+    std::array<uint8_t, 256> responseBuffer{};
+    HandlerResult result = handlerIt->second(
+        std::span<const uint8_t>(message.payload.data(), message.payload.size()),
+        std::span<uint8_t>(responseBuffer.data(), responseBuffer.size()));
 
-    contextIt->scheduler = this;
-    contextIt->messageType = message.type;
-    contextIt->sequenceId = message.seqId;
-    contextIt->inUse = true;
-    handler->handleRequest(std::span<const uint8_t>(message.payload.data(), message.payload.size()),
-        HandlerResult::create<ResponseContext, &ResponseContext::respond>(*contextIt));
-}
+    const size_t responseLength = std::min(result.responseLength, responseBuffer.size());
 
-void MessageScheduler::ResponseContext::respond(
-    HandlerResultStatus status,
-    std::span<const uint8_t> responsePayload) {
-    if (!inUse)
-        return;
-    inUse = false;
-    Protocol::Message response;
-    response.type = messageType;
-    response.seqId = sequenceId;
-    response.status = status == HandlerResultStatus::SUCCESS
+    Protocol::Message response{};
+    response.type = message.type;
+    response.seqId = message.seqId;
+    response.status = result.status == HandlerResultStatus::SUCCESS
         ? Protocol::RequestStatus::SUCCESS
         : Protocol::RequestStatus::FAILURE;
-    response.messageLen = responsePayload.size();
-    response.payload.assign(responsePayload.begin(), responsePayload.end());
-    scheduler->scheduleMessage(response);
+    response.messageLen = static_cast<uint8_t>(responseLength);
+    response.payload.assign(responseBuffer.begin(), responseBuffer.begin() + responseLength);
+    scheduleMessage(response);
 }
 
 void MessageScheduler::scheduleMessage(const Protocol::Message& message) {
@@ -148,7 +107,11 @@ void MessageScheduler::scheduleMessage(const Protocol::Message& message) {
     _scheduledMessages.push_back(message);
 }
 
-
-void MessageScheduler::registerRequestHandler(Protocol::MessageType jobType, RequestHandler& job) {
-    _handlers.insert(std::make_pair(jobType, &job));
+void MessageScheduler::registerRequestHandler(Protocol::MessageType requestType, RequestHandler handler) {
+    auto it = _handlers.find(requestType);
+    if (it != _handlers.end()) {
+        it->second = handler;
+    } else {
+        _handlers.insert(std::make_pair(requestType, handler));
+    }
 }

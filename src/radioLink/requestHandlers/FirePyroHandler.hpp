@@ -13,23 +13,21 @@
 //   SUCCESS with empty payload if PyroChannel::fire() started.
 //   FAILURE with empty payload if index out of range, duration invalid,
 //   or channel refused to fire (no continuity / not armed).
-class FirePyroHandler : public MessageScheduler::RequestHandler {
+class FirePyroHandler {
 public:
     static constexpr uint32_t DEFAULT_FIRE_DURATION_MS = 1000;
     static constexpr uint32_t MAX_FIRE_DURATION_MS = 5000;
 
     explicit FirePyroHandler(std::span<PyroChannel*> channels) : _channels(channels) {}
 
-    void handleRequest(std::span<const uint8_t> payload, MessageScheduler::HandlerResult resultCallback) override {
+    MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t>) {
         if (payload.size() < 1) {
-            resultCallback(MessageScheduler::HandlerResultStatus::FAILURE, {});
-            return;
+            return {MessageScheduler::HandlerResultStatus::FAILURE, 0};
         }
 
         const uint8_t channelIndex = payload[0];
         if (channelIndex >= _channels.size() || _channels[channelIndex] == nullptr) {
-            resultCallback(MessageScheduler::HandlerResultStatus::FAILURE, {});
-            return;
+            return {MessageScheduler::HandlerResultStatus::FAILURE, 0};
         }
 
         uint32_t durationMs = DEFAULT_FIRE_DURATION_MS;
@@ -39,14 +37,17 @@ public:
         }
 
         if (durationMs == 0 || durationMs > MAX_FIRE_DURATION_MS) {
-            resultCallback(MessageScheduler::HandlerResultStatus::FAILURE, {});
-            return;
+            return {MessageScheduler::HandlerResultStatus::FAILURE, 0};
         }
 
         const bool fired = _channels[channelIndex]->fire(durationMs);
-        resultCallback(fired ? MessageScheduler::HandlerResultStatus::SUCCESS
-                             : MessageScheduler::HandlerResultStatus::FAILURE,
-                       {});
+        return {fired ? MessageScheduler::HandlerResultStatus::SUCCESS
+                      : MessageScheduler::HandlerResultStatus::FAILURE,
+                0};
+    }
+
+    MessageScheduler::RequestHandler callback() {
+        return MessageScheduler::RequestHandler::create<FirePyroHandler, &FirePyroHandler::handle>(*this);
     }
 
 private:

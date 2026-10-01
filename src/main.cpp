@@ -144,18 +144,18 @@ void setup() {
 
     rotationAccumulator.setRotationQuaternion(Eigen::Quaternionf::Identity());
 
-    messageScheduler.registerRequestHandler(Protocol::MessageType::DO_BEEP, beepHandler);
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_IMU, imuHandler);
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_BAROMETER, barometerHandler);
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_GIMBAL, getGimbalHandler);
-    messageScheduler.registerRequestHandler(Protocol::MessageType::SET_GIMBAL, setGimbalHandler);
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_ROTATION, getRotationHandler);
-    messageScheduler.registerRequestHandler(Protocol::MessageType::SET_ROTATION, setRotationHandler);
-    messageScheduler.registerRequestHandler(Protocol::MessageType::FIRE_PYRO, firePyroHandler);
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_CONTINUITY, getPyroContinuityHandler);
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_SOFTWARE_ARMED, getPyroSoftwareArmedHandler);
-    messageScheduler.registerRequestHandler(Protocol::MessageType::SET_PYRO_SOFTWARE_ARMED, setPyroSoftwareArmedHandler);
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_HARDWARE_ARMED, getPyroHardwareArmedHandler);
+    messageScheduler.registerRequestHandler(Protocol::MessageType::DO_BEEP, beepHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_IMU, imuHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_BAROMETER, barometerHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_GIMBAL, getGimbalHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::SET_GIMBAL, setGimbalHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_ROTATION, getRotationHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::SET_ROTATION, setRotationHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::FIRE_PYRO, firePyroHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_CONTINUITY, getPyroContinuityHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_SOFTWARE_ARMED, getPyroSoftwareArmedHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::SET_PYRO_SOFTWARE_ARMED, setPyroSoftwareArmedHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_HARDWARE_ARMED, getPyroHardwareArmedHandler.callback());
 
     buzzer.playMelody(startupMelody);
 }

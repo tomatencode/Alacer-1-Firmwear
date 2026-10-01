@@ -10,14 +10,13 @@
 // Response:
 //   SUCCESS with empty payload if state was set.
 //   FAILURE with empty payload if payload missing or payload[0] not 0/1.
-class SetPyroSoftwareArmedHandler : public MessageScheduler::RequestHandler {
+class SetPyroSoftwareArmedHandler {
 public:
     explicit SetPyroSoftwareArmedHandler(PyroManager& pyroManager) : _pyroManager(pyroManager) {}
 
-    void handleRequest(std::span<const uint8_t> payload, MessageScheduler::HandlerResult resultCallback) override {
+    MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t>) {
         if (payload.size() < 1) {
-            resultCallback(MessageScheduler::HandlerResultStatus::FAILURE, {});
-            return;
+            return {MessageScheduler::HandlerResultStatus::FAILURE, 0};
         }
 
         if (payload[0] == 1) {
@@ -25,11 +24,14 @@ public:
         } else if (payload[0] == 0) {
             _pyroManager.SoftwareDisarm();
         } else {
-            resultCallback(MessageScheduler::HandlerResultStatus::FAILURE, {});
-            return;
+            return {MessageScheduler::HandlerResultStatus::FAILURE, 0};
         }
 
-        resultCallback(MessageScheduler::HandlerResultStatus::SUCCESS, {});
+        return {MessageScheduler::HandlerResultStatus::SUCCESS, 0};
+    }
+
+    MessageScheduler::RequestHandler callback() {
+        return MessageScheduler::RequestHandler::create<SetPyroSoftwareArmedHandler, &SetPyroSoftwareArmedHandler::handle>(*this);
     }
 
 private:

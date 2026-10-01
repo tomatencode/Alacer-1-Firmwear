@@ -10,25 +10,26 @@
 // Response:
 //   SUCCESS with payload[0] = 1 if channel has continuity, 0 otherwise.
 //   FAILURE with empty payload if index out of range.
-class GetPyroContinuityHandler : public MessageScheduler::RequestHandler {
+class GetPyroContinuityHandler {
 public:
     explicit GetPyroContinuityHandler(std::span<PyroChannel*> channels) : _channels(channels) {}
 
-    void handleRequest(std::span<const uint8_t> payload, MessageScheduler::HandlerResult resultCallback) override {
+    MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t> response) {
         if (payload.size() < 1) {
-            resultCallback(MessageScheduler::HandlerResultStatus::FAILURE, {});
-            return;
+            return {MessageScheduler::HandlerResultStatus::FAILURE, 0};
         }
 
         const uint8_t channelIndex = payload[0];
         if (channelIndex >= _channels.size() || _channels[channelIndex] == nullptr) {
-            resultCallback(MessageScheduler::HandlerResultStatus::FAILURE, {});
-            return;
+            return {MessageScheduler::HandlerResultStatus::FAILURE, 0};
         }
 
-        const uint8_t hasContinuity = _channels[channelIndex]->hasContinuity() ? 1 : 0;
-        resultCallback(MessageScheduler::HandlerResultStatus::SUCCESS,
-                       std::span<const uint8_t>(&hasContinuity, 1));
+        response[0] = _channels[channelIndex]->hasContinuity() ? 1 : 0;
+        return {MessageScheduler::HandlerResultStatus::SUCCESS, 1};
+    }
+
+    MessageScheduler::RequestHandler callback() {
+        return MessageScheduler::RequestHandler::create<GetPyroContinuityHandler, &GetPyroContinuityHandler::handle>(*this);
     }
 
 private:

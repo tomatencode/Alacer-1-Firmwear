@@ -32,6 +32,7 @@
 #include "./radioLink/requestHandlers/FirePyroHandler.hpp"
 #include "./radioLink/requestHandlers/GetPyroContinuityHandler.hpp"
 #include "./radioLink/requestHandlers/GetPyroSoftwareArmedHandler.hpp"
+#include "./radioLink/requestHandlers/SetPyroSoftwareArmedHandler.hpp"
 #include "./radioLink/requestHandlers/GetPyroHardwareArmedHandler.hpp"
 
 #include "./rotationEstimation/IMURocketCoordinateConverter.hpp"
@@ -108,6 +109,7 @@ SetRotationHandler setRotationHandler(rotationAccumulator);
 FirePyroHandler firePyroHandler(pyroChannels);
 GetPyroContinuityHandler getPyroContinuityHandler(pyroChannels);
 GetPyroSoftwareArmedHandler getPyroSoftwareArmedHandler(pyroManager);
+SetPyroSoftwareArmedHandler setPyroSoftwareArmedHandler(pyroManager);
 GetPyroHardwareArmedHandler getPyroHardwareArmedHandler(pyroManager);
 
 const hardware::Buzzer::Melody startupMelody = {
@@ -123,7 +125,6 @@ void setup() {
     radioHC12.begin();
 
     pyroManager.begin();
-    pyroManager.SoftwareArm();
     pyroChanel1.begin();
     pyroChanel2.begin();
     pyroChanel3.begin();
@@ -153,6 +154,7 @@ void setup() {
     messageScheduler.registerRequestHandler(Protocol::MessageType::FIRE_PYRO, firePyroHandler);
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_CONTINUITY, getPyroContinuityHandler);
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_SOFTWARE_ARMED, getPyroSoftwareArmedHandler);
+    messageScheduler.registerRequestHandler(Protocol::MessageType::SET_PYRO_SOFTWARE_ARMED, setPyroSoftwareArmedHandler);
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_HARDWARE_ARMED, getPyroHardwareArmedHandler);
 
     buzzer.playMelody(startupMelody);

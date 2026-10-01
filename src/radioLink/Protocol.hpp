@@ -26,6 +26,7 @@ enum class MessageType : uint8_t {
     GET_BAROMETER = 0x0A,
     GET_ROTATION = 0x0B,
     SET_ROTATION = 0x0C,
+    SET_PYRO_SOFTWARE_ARMED = 0x0D,
 };
 
 enum class RequestStatus : uint8_t {

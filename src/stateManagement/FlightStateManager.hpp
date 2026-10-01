@@ -9,6 +9,8 @@
 #include "../hardwareComponents/motor/MotorIgniter.hpp"
 
 #include "../acentTracking/VerticalMovementTracker.hpp"
+#include "../controlPID/ControlPID.hpp"
+
 
 enum class FlightState {
     IDLE,
@@ -23,7 +25,7 @@ enum class FlightState {
 
 class FlightStateManager {
 public:
-    FlightStateManager(RotationAccumulator& rotationAccumulator, VerticalMovementTracker& verticalMovementTracker, MotorIgniter& motorIgniter, Parachute& parashoot);
+    FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, VerticalMovementTracker& verticalMovementTracker, MotorIgniter& motorIgniter, Parachute& parashoot);
 
     FlightState getCurrentState() const; // shuld not be used in logic, only for debugging
 
@@ -51,6 +53,7 @@ private:
 
     void launch();
 
+    ControlPID& _controlPID;
     RotationAccumulator& _rotationAccumulator;
     VerticalMovementTracker& _verticalMovementTracker;
     MotorIgniter& _motorIgniter;

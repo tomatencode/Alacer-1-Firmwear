@@ -1,7 +1,7 @@
 #include "FlightStateManager.hpp"
 
-FlightStateManager::FlightStateManager(RotationAccumulator& rotationAccumulator, VerticalMovementTracker& verticalMovementTracker, MotorIgniter& motorIgniter, Parachute& parashoot) 
-    : _rotationAccumulator(rotationAccumulator), _verticalMovementTracker(verticalMovementTracker), _motorIgniter(motorIgniter), _parashoot(parashoot) {}
+FlightStateManager::FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, VerticalMovementTracker& verticalMovementTracker, MotorIgniter& motorIgniter, Parachute& parashoot) 
+    : _controlPID(controlPID), _rotationAccumulator(rotationAccumulator), _verticalMovementTracker(verticalMovementTracker), _motorIgniter(motorIgniter), _parashoot(parashoot) {}
 
 FlightState FlightStateManager::getCurrentState() const {
     return _currentState;
@@ -27,6 +27,10 @@ bool FlightStateManager::abort() {
         _currentState = FlightState::ABORTED;
         return true;
     case FlightState::BURNING:
+        _controlPID.stopControlling();
+        _parashoot.deploy();
+        _currentState = FlightState::ABORTED;
+        return true;
     case FlightState::COASTING:
         _parashoot.deploy();
         _currentState = FlightState::ABORTED;
@@ -67,7 +71,7 @@ void FlightStateManager::update() {
         break;
     case FlightState::BURNING:
         if (millis() - _motorStartBurnTime >= MOTOR_BURN_DURATION_ms) {
-            // stop PID
+            _controlPID.stopControlling();
             _currentState = FlightState::COASTING;
         }
         break;
@@ -99,6 +103,7 @@ bool FlightStateManager::preflightChecks() {
 
     if (!_motorIgniter.canIgnite()) return false;
     if (!_parashoot.canDeploy()) return false;
+    if (!_controlPID.canStartControlling()) return false;
 
     return true;
 }
@@ -108,5 +113,5 @@ void FlightStateManager::launch() {
     _rotationAccumulator.startAccumulation();
     _verticalMovementTracker.reset();
     _motorStartBurnTime = millis();
-    // start PID
+    _controlPID.startControlling();
 }

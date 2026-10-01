@@ -37,6 +37,8 @@
 #include "./rotationEstimation/IMURocketCoordinateConverter.hpp"
 #include "./rotationEstimation/RotationAccumulator.hpp"
 
+#include "./controlPID/ControlPID.hpp"
+
 #include "./acentTracking/VerticalMovementTracker.hpp"
 
 #include "./stateManagement/FlightStateManager.hpp"
@@ -91,7 +93,9 @@ BarometricHeightCalculator barometricHeightCalculator(barometer);
 
 VerticalMovementTracker verticalMovementTracker(barometricHeightCalculator);
 
-FlightStateManager flightStateManager(rotationAccumulator, verticalMovementTracker, motorIgniter, parashoot);
+ControlPID controlPID(rotationAccumulator, gimbal);
+
+FlightStateManager flightStateManager(controlPID, rotationAccumulator, verticalMovementTracker, motorIgniter, parashoot);
 
 // Radio Request handlers
 DoBeepHandler beepHandler(buzzer);
@@ -129,6 +133,9 @@ void setup() {
     pitchServo.begin();
     yawServo.begin();
     gimbal.begin();
+
+    controlPID.setPIDParameters(1.0f, 0.0f, 0.0f); // Example PID parameters
+    controlPID.setTarget(Eigen::Quaternionf::Identity()); // Example target angle
 
     parashoot.setPyroChannel(pyroChanel1);
     motorIgniter.setPyroChannel(pyroChanel2);
@@ -168,4 +175,5 @@ void loop() {
 
     radioHC12.update();
     messageScheduler.update();
+    controlPID.update();
 }

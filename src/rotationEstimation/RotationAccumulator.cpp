@@ -17,17 +17,17 @@ Eigen::Vector3f RotationAccumulator::getEulerAngles_rad() const {
 }
 
 void RotationAccumulator::setRotationQuaternion(const Eigen::Quaternionf& rotation) {
-    _lastUpdate_us = micros(); // accumulation shuld start here
+    _lastUpdate_us = micros(); // accumulation should start here
     _rotation = rotation.normalized();
 }
 
 void RotationAccumulator::setRotationMatrix(const Eigen::Matrix3f& rotationMatrix) {
-    _lastUpdate_us = micros(); // accumulation shuld start here
+    _lastUpdate_us = micros(); // accumulation should start here
     _rotation = Eigen::Quaternionf(rotationMatrix).normalized();
 }
 
 void RotationAccumulator::setEulerAngles_rad(const Eigen::Vector3f& eulerAngles) {
-    _lastUpdate_us = micros(); // accumulation shuld start here
+    _lastUpdate_us = micros(); // accumulation should start here
     _rotation = Eigen::Quaternionf(
         Eigen::AngleAxisf(eulerAngles[0], Eigen::Vector3f::UnitX()) *
         Eigen::AngleAxisf(eulerAngles[1], Eigen::Vector3f::UnitY()) *

@@ -5,10 +5,10 @@
 #include <Arduino.h>
 
 #include "../rotationEstimation/RotationAccumulator.hpp"
-#include "../hardwareComponents/parashoot/Parashoot.hpp"
+#include "../hardwareComponents/parachute/Parachute.hpp"
 #include "../hardwareComponents/motor/MotorIgniter.hpp"
 
-#include "../acentTracking/VerticalMovementTracker.hpp"
+#include "../ascentTracking/VerticalMovementTracker.hpp"
 #include "../controlPID/ControlPID.hpp"
 
 
@@ -25,17 +25,17 @@ enum class FlightState {
 
 class FlightStateManager {
 public:
-    FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, VerticalMovementTracker& verticalMovementTracker, MotorIgniter& motorIgniter, Parachute& parashoot);
+    FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, VerticalMovementTracker& verticalMovementTracker, MotorIgniter& motorIgniter, Parachute& parachute);
 
-    FlightState getCurrentState() const; // shuld not be used in logic, only for debugging
+    FlightState getCurrentState() const; // should not be used in logic, only for debugging
 
-    // denyd mid flight
+    // denied mid flight
     bool trySetIdle();
 
-    // denyd if not mid flight or already aborted
+    // denied if not mid flight or already aborted
     bool abort();
 
-    // denyd if not in IDLE state
+    // denied if not in IDLE state
     bool startCountdown();
 
     void update();
@@ -57,5 +57,5 @@ private:
     RotationAccumulator& _rotationAccumulator;
     VerticalMovementTracker& _verticalMovementTracker;
     MotorIgniter& _motorIgniter;
-    Parachute& _parashoot;
+    Parachute& _parachute;
 };

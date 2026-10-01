@@ -5,7 +5,7 @@
 
 MessageScheduler::MessageScheduler(Protocol::Parser& parser, hardware::Radio& radio)
     : _parser(parser), _radio(radio),
-      _didRespond(false), _dropedMessages(0) {
+      _didRespond(false), _droppedMessages(0) {
 }
 
 void MessageScheduler::update() {
@@ -77,7 +77,7 @@ void MessageScheduler::handleIncomingMessage(const Protocol::Message& message) {
 
     auto handlerIt = _handlers.find(message.type);
     if (handlerIt == _handlers.end()) {
-        ++_dropedMessages;
+        ++_droppedMessages;
         return;
     }
 
@@ -101,7 +101,7 @@ void MessageScheduler::handleIncomingMessage(const Protocol::Message& message) {
 
 void MessageScheduler::scheduleMessage(const Protocol::Message& message) {
     if (_scheduledMessages.size() >= _scheduledMessages.capacity()) {
-        ++_dropedMessages;
+        ++_droppedMessages;
         return;
     }
     _scheduledMessages.push_back(message);

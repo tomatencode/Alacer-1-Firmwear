@@ -2,8 +2,8 @@
 
 #include <Arduino.h>
 
-PyroManager::PyroManager(int hardwearArmPin)
-    : _hardwareArmPin(hardwearArmPin), _softwearArm(false)
+PyroManager::PyroManager(int hardwareArmPin)
+    : _hardwareArmPin(hardwareArmPin), _softwareArm(false)
 {}
 
 void PyroManager::begin() {
@@ -18,14 +18,14 @@ bool PyroManager::isHardwareArmed() {
     return digitalRead(_hardwareArmPin) == HIGH;
 }
 
-void PyroManager::SoftwareArm() {
-    _softwearArm = true;
+void PyroManager::softwareArm() {
+    _softwareArm = true;
 }
 
-void PyroManager::SoftwareDisarm() {
-    _softwearArm = false;
+void PyroManager::softwareDisarm() {
+    _softwareArm = false;
 }
 
 bool PyroManager::isSoftwareArmed() {
-    return _softwearArm;
+    return _softwareArm;
 }

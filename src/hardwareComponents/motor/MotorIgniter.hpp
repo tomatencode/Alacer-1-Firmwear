@@ -6,13 +6,13 @@ class MotorIgniter{
 public:
     MotorIgniter() = default;
 
-    void setPyroChannel(PyroChannel& pyroChanel) { _pyroChanel = &pyroChanel; };
-    void clearPyroChannel() { _pyroChanel = nullptr; };
+    void setPyroChannel(PyroChannel& pyroChannel) { _pyroChannel = &pyroChannel; };
+    void clearPyroChannel() { _pyroChannel = nullptr; };
 
-    bool canIgnite() { return _pyroChanel && _pyroChanel->canFire(); };
-    bool ignite() { return _pyroChanel && _pyroChanel->fire(IGNITE_DURATION_ms); };
+    bool canIgnite() { return _pyroChannel && _pyroChannel->canFire(); };
+    bool ignite() { return _pyroChannel && _pyroChannel->fire(IGNITE_DURATION_ms); };
 private:
     static constexpr uint32_t IGNITE_DURATION_ms = 1000;
 
-    PyroChannel* _pyroChanel = nullptr;
+    PyroChannel* _pyroChannel = nullptr;
 };

@@ -6,7 +6,7 @@
 
 class PyroChannel {
 public:
-    PyroChannel(int mosfetPin, int contPin, PyroManager& pyroManger);
+    PyroChannel(int mosfetPin, int contPin, PyroManager& pyroManager);
 
     void begin();
 

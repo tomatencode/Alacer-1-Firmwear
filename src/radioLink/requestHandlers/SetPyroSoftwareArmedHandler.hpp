@@ -20,9 +20,9 @@ public:
         }
 
         if (payload[0] == 1) {
-            _pyroManager.SoftwareArm();
+            _pyroManager.softwareArm();
         } else if (payload[0] == 0) {
-            _pyroManager.SoftwareDisarm();
+            _pyroManager.softwareDisarm();
         } else {
             return {MessageScheduler::HandlerResultStatus::FAILURE, 0};
         }

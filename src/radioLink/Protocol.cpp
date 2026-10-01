@@ -12,13 +12,13 @@ void Protocol::Parser::feed(uint8_t byte) {
     }
     case WAITING_FOR_FRAME_LEN_LOW: {
         _currentCrc = updateCrc16(_currentCrc, byte);
-        _MessagesExpectedLen = byte;
+        _messagesExpectedLen = byte;
         _frameState = WAITING_FOR_FRAME_LEN_HIGH;
         break;
     }
     case WAITING_FOR_FRAME_LEN_HIGH: {
         _currentCrc = updateCrc16(_currentCrc, byte);
-        _MessagesExpectedLen |= static_cast<uint16_t>(byte) << 8;
+        _messagesExpectedLen |= static_cast<uint16_t>(byte) << 8;
         _frameState = WAITING_FOR_NUM_MESSAGES;
         break;
     }
@@ -42,19 +42,19 @@ void Protocol::Parser::feed(uint8_t byte) {
     }
     case WAITING_FOR_MESSAGE: {
         _currentCrc = updateCrc16(_currentCrc, byte);
-        _MessagesBytesCount++;
+        _messagesBytesCount++;
         auto msg = feedMessage(byte);
         if (msg.has_value()) {
             _currentFrame.messages.push_back(msg.value());
         }
         if (_currentFrame.messages.size() == _currentFrame.numMessages) {
-            if (_MessagesBytesCount == _MessagesExpectedLen) {
+            if (_messagesBytesCount == _messagesExpectedLen) {
                 _frameState = WAITING_FOR_CRC_LOW;
             } else {
                 _lenErrorCount++;
                 _frameState = WAITING_FOR_START_BYTE;
             }
-        } else if (_MessagesBytesCount > _MessagesExpectedLen) {
+        } else if (_messagesBytesCount > _messagesExpectedLen) {
             _lenErrorCount++;
             _frameState = WAITING_FOR_START_BYTE;
         }
@@ -137,7 +137,7 @@ void Protocol::Parser::reset() {
     _currentCrc = CRC16_INITIAL;
     _crcLow = 0;
     _messagePayloadIndex = 0;
-    _MessagesBytesCount = 0;
+    _messagesBytesCount = 0;
     _pendingFrame = std::nullopt;
 }
 
@@ -149,7 +149,7 @@ void Protocol::Parser::resetParseState() {
     _currentCrc = CRC16_INITIAL;
     _crcLow = 0;
     _messagePayloadIndex = 0;
-    _MessagesBytesCount = 0;
+    _messagesBytesCount = 0;
 }
 
 uint16_t Protocol::updateCrc16(uint16_t crc, uint8_t byte) {

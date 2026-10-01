@@ -35,7 +35,7 @@ public:
     void registerRequestHandler(Protocol::MessageType requestType, RequestHandler handler);
 
     uint32_t getDroppedMessages() const { // for diagnostics
-        return _dropedMessages;
+        return _droppedMessages;
     }
 
 private:
@@ -47,7 +47,7 @@ private:
 
     bool _didRespond;
 
-    uint32_t _dropedMessages;
+    uint32_t _droppedMessages;
 
     etl::map<Protocol::MessageType, RequestHandler, 32> _handlers;
     etl::vector<Protocol::Message, 32> _scheduledMessages;

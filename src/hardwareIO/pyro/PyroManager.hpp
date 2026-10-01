@@ -10,11 +10,11 @@ public:
 
     bool isHardwareArmed();
 
-    void SoftwareArm();
-    void SoftwareDisarm();
+    void softwareArm();
+    void softwareDisarm();
     
     bool isSoftwareArmed();
 private:
     int _hardwareArmPin;
-    bool _softwearArm = false;
+    bool _softwareArm = false;
 };

@@ -6,12 +6,12 @@ class Parachute {
 public:
     Parachute() = default;
 
-    void setPyroChannel(PyroChannel& pyroChanel) { _pyroChanel = &pyroChanel; };
-    void clearPyroChannel() { _pyroChanel = nullptr; };
+    void setPyroChannel(PyroChannel& pyroChannel) { _pyroChannel = &pyroChannel; };
+    void clearPyroChannel() { _pyroChannel = nullptr; };
 
-    bool canDeploy() { return _pyroChanel && _pyroChanel->canFire(); };
+    bool canDeploy() { return _pyroChannel && _pyroChannel->canFire(); };
     bool deploy() {
-        if(_pyroChanel && _pyroChanel->fire(DEPLOY_PYRO_FIRE_DURATION_ms)) {
+        if(_pyroChannel && _pyroChannel->fire(DEPLOY_PYRO_FIRE_DURATION_ms)) {
             _didDeploy = true;
             return true;
         }
@@ -23,6 +23,6 @@ public:
 private:
     static constexpr uint32_t DEPLOY_PYRO_FIRE_DURATION_ms = 1000;
 
-    PyroChannel* _pyroChanel = nullptr;
+    PyroChannel* _pyroChannel = nullptr;
     bool _didDeploy = false;
 };

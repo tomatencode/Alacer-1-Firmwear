@@ -2,8 +2,8 @@
 
 #include <Arduino.h>
 
-PyroChannel::PyroChannel(int mosfetPin, int contPin, PyroManager& pyroManger)
-    : _mosfetPin(mosfetPin), _contPin(contPin), _pyroManager(pyroManger)
+PyroChannel::PyroChannel(int mosfetPin, int contPin, PyroManager& pyroManager)
+    : _mosfetPin(mosfetPin), _contPin(contPin), _pyroManager(pyroManager)
 {}
 
 void PyroChannel::begin() {
@@ -33,9 +33,9 @@ void PyroChannel::stopFiring() {
 void PyroChannel::update() {
     bool firing = _fireTime > 0;
     bool expired = _fireTime > 0 && (millis() - _fireTime >= _fireDuration);
-    bool unArmed = !_pyroManager.isArmed();
+    bool unarmed = !_pyroManager.isArmed();
 
-    if (firing && (expired || unArmed)) {
+    if (firing && (expired || unarmed)) {
         stopFiring();
     }
 }

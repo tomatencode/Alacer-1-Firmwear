@@ -1,7 +1,7 @@
 #include "FlightStateManager.hpp"
 
-FlightStateManager::FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, VerticalMovementTracker& verticalMovementTracker, MotorIgniter& motorIgniter, Parachute& parashoot) 
-    : _controlPID(controlPID), _rotationAccumulator(rotationAccumulator), _verticalMovementTracker(verticalMovementTracker), _motorIgniter(motorIgniter), _parashoot(parashoot) {}
+FlightStateManager::FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, VerticalMovementTracker& verticalMovementTracker, MotorIgniter& motorIgniter, Parachute& parachute) 
+    : _controlPID(controlPID), _rotationAccumulator(rotationAccumulator), _verticalMovementTracker(verticalMovementTracker), _motorIgniter(motorIgniter), _parachute(parachute) {}
 
 FlightState FlightStateManager::getCurrentState() const {
     return _currentState;
@@ -28,11 +28,11 @@ bool FlightStateManager::abort() {
         return true;
     case FlightState::BURNING:
         _controlPID.stopControlling();
-        _parashoot.deploy();
+        _parachute.deploy();
         _currentState = FlightState::ABORTED;
         return true;
     case FlightState::COASTING:
-        _parashoot.deploy();
+        _parachute.deploy();
         _currentState = FlightState::ABORTED;
         return true;
     
@@ -77,7 +77,7 @@ void FlightStateManager::update() {
         break;
     case FlightState::COASTING:
         if (_verticalMovementTracker.getVelocity_m_s() <= 0.0f && _verticalMovementTracker.hasVelocityEstimate()) {
-            _parashoot.deploy();
+            _parachute.deploy();
             _currentState = FlightState::DESCENDING;
         }
         break;
@@ -102,7 +102,7 @@ void FlightStateManager::update() {
 bool FlightStateManager::preflightChecks() {
 
     if (!_motorIgniter.canIgnite()) return false;
-    if (!_parashoot.canDeploy()) return false;
+    if (!_parachute.canDeploy()) return false;
     if (!_controlPID.canStartControlling()) return false;
 
     return true;

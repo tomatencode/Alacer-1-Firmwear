@@ -17,7 +17,7 @@ private:
     uint32_t _defaultOnDuration_ms;
     uint8_t _brightness;
 
-    uint32_t _flashtime = 0;
+    uint32_t _flashTime = 0;
     uint32_t _flashDuration_ms = 0;
 };
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../hardwareIO/Servo/Servo.hpp"
+#include "../../hardwareIO/servo/Servo.hpp"
 
 namespace hardware {
 

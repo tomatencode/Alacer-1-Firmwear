@@ -38,7 +38,7 @@ enum class RequestStatus : uint8_t {
 struct Message {
     MessageType type;
     uint8_t seqId;
-    RequestStatus status; // only meaningfull on responses
+    RequestStatus status; // only meaningful on responses
     uint8_t messageLen;
     etl::vector<uint8_t, 256> payload;
 };
@@ -105,8 +105,8 @@ private:
 
     uint8_t _messagePayloadIndex = 0;
 
-    uint16_t _MessagesExpectedLen = 0;
-    uint16_t _MessagesBytesCount = 0;
+    uint16_t _messagesExpectedLen = 0;
+    uint16_t _messagesBytesCount = 0;
 
     uint32_t _crcErrorCount = 0;
     uint32_t _lenErrorCount = 0;

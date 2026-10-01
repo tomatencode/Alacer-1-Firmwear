@@ -9,10 +9,10 @@ public:
     explicit GetBarometerHandler(hardware::Barometer& barometer) : _barometer(barometer) {}
 
     void handleRequest(std::span<const uint8_t>, MessageScheduler::HandlerResult resultCallback) override {
-        uint8_t payload[12];
+        uint8_t payload[8];
         std::span<uint8_t> buffer(payload);
-        fixedPoint::encode32(_barometer.getPressure_Pa(), buffer, 4);
-        fixedPoint::encode32(_barometer.getTemperature_C(), buffer, 8);
+        fixedPoint::encode32(_barometer.getPressure_Pa(), buffer, 0);
+        fixedPoint::encode32(_barometer.getTemperature_C(), buffer, 4);
 
         resultCallback(MessageScheduler::HandlerResultStatus::SUCCESS, payload);
     }

@@ -5,7 +5,8 @@
 
 #include <etl/vector.h>
 
-#include "./config/hardwareConstants.hpp"
+#include "./config/IMUPos.hpp"
+#include "./config/GimbalGears.hpp"
 
 #include "./hardwareIO/led/BlinkLed.hpp"
 #include "./hardwareIO/buzzer/Buzzer.hpp"
@@ -47,8 +48,8 @@
 hardware::BlinkLed statusLed(PB14, 35, 50);
 hardware::Buzzer buzzer(PA8);
 
-hardware::Servo pitchServo(PA1, 2, 0.0f, 180.0f, 90.0f, 544, 2400);
-hardware::Servo yawServo(PA2, 3, 0.0f, 180.0f, 90.0f, 544, 2400);
+hardware::Servo pitchServo(PA1, 2, 0.0f, 180.0f, 90.0f, 544, 2400, 180.0);
+hardware::Servo yawServo(PA2, 3, 0.0f, 180.0f, 90.0f, 544, 2400, 180.0);
 
 PyroManager pyroManager(PC13);
 PyroChannel pyroChannel1(PB5, PB4, pyroManager);
@@ -70,10 +71,10 @@ Parachute parachute;
 hardware::Gimbal gimbal(
     pitchServo, yawServo,
     hardware::Gimbal::GimbalPos{0.0f, 0.0f},
-    -10.0f, 10.0f,
-    -10.0f, 10.0f,
-    (10.0f/40.0f), -(15.0f/80.0f),
-    115.0f, 75.0f
+    -GIMBAL_LIMIT_deg, GIMBAL_LIMIT_deg,
+    -GIMBAL_LIMIT_deg, GIMBAL_LIMIT_deg,
+    GIMBAL_PITCH_GEAR_RATIO, GIMBAL_YAW_GEAR_RATIO,
+    GIMBAL_PITCH_SERVO_OFFSET_deg, GIMBAL_YAW_SERVO_OFFSET_deg
 );
 
 Protocol::Parser radioLinkParser;

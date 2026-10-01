@@ -12,7 +12,7 @@ void PyroChannel::begin() {
 }
 
 bool PyroChannel::hasContinuity() {
-    return digitalRead(_contPin) == HIGH;
+    return digitalRead(_contPin) == HIGH || _fireTime > 0; // assume continuity if currently firing
 }
 
 bool PyroChannel::fire(uint32_t duration) {

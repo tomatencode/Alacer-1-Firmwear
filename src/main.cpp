@@ -123,6 +123,7 @@ void setup() {
     radioHC12.begin();
 
     pyroManager.begin();
+    pyroManager.SoftwareArm();
     pyroChanel1.begin();
     pyroChanel2.begin();
     pyroChanel3.begin();

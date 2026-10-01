@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "../BarometricHeightCalculation/BarometricHeightCalculator.hpp"
+#include "../barometricHeightCalculation/BarometricHeightCalculator.hpp"
 
 
 class VerticalMovementTracker {

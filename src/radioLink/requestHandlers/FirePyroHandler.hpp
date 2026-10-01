@@ -4,6 +4,7 @@
 
 #include "../MessageScheduler.hpp"
 #include "../../hardwareIO/pyro/PyroChannel.hpp"
+#include "./helpers/LittleEndianCodec.hpp"
 
 // FIRE_PYRO request:
 //   payload[0] = channel index (0-based into the channels array given at construction)
@@ -32,8 +33,7 @@ public:
 
         uint32_t durationMs = DEFAULT_FIRE_DURATION_MS;
         if (payload.size() >= 3) {
-            durationMs = static_cast<uint32_t>(payload[1]) |
-                         (static_cast<uint32_t>(payload[2]) << 8);
+            durationMs = littleEndian::decodeU16(payload, 1);
         }
 
         if (durationMs == 0 || durationMs > MAX_FIRE_DURATION_MS) {

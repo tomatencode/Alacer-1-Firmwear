@@ -30,6 +30,12 @@ void Servo::begin() {
 }
 
 void Servo::setTarget(float angle_deg) {
+    // Latch where we actually are right now, computed from the *previous* target and the
+    // time it was set, before either is overwritten. Otherwise getPosition_deg() runs with
+    // a zero elapsed time and the reference never moves, so reported positions drift.
+    _targetSetPosition_deg = getPosition_deg();
+    _targetSetTime = millis();
+
     _targetAngle_deg = std::clamp(angle_deg, _minAngle_deg, _maxAngle_deg);
 
     servoTimer.setCaptureCompare(
@@ -37,9 +43,6 @@ void Servo::setTarget(float angle_deg) {
         angleToDuty(_targetAngle_deg),
         PERCENT_COMPARE_FORMAT
     );
-
-    _targetSetTime = millis();
-    _targetSetPosition_deg = getPosition_deg();
 }
 
 float Servo::getTarget_deg() const {

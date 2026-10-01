@@ -17,8 +17,8 @@ public:
         hardware::Gimbal::GimbalPos target;
         target.pitch_deg = fixedPoint::decode16(payload, 0);
         target.yaw_deg = fixedPoint::decode16(payload, 2);
-        _gimbal.setTarget(target);
-        return {MessageScheduler::HandlerResultStatus::SUCCESS, 0};
+        bool success = _gimbal.setTarget(target);
+        return {success ? MessageScheduler::HandlerResultStatus::SUCCESS : MessageScheduler::HandlerResultStatus::FAILURE, 0};
     }
 
     MessageScheduler::RequestHandler callback() {

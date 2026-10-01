@@ -27,7 +27,13 @@ void Gimbal::begin() {
     setTarget(_target);
 }
 
-void Gimbal::setTarget(const GimbalPos& target) {
+bool Gimbal::setTarget(const GimbalPos& target) {
+    if (_exclusiveControl) return false;
+    setTargetForced(target);
+    return true;
+}
+
+void Gimbal::setTargetForced(const GimbalPos& target) {
     float clampedPitch = std::clamp(target.pitch_deg, _minPitch_deg, _maxPitch_deg);
     float clampedYaw = std::clamp(target.yaw_deg, _minYaw_deg, _maxYaw_deg);
 
@@ -45,6 +51,8 @@ Gimbal::GimbalPos Gimbal::getTarget() const {
 }
 
 Gimbal::GimbalPos Gimbal::getCurrentPos() const {
+    // Use the servo's estimated current position (which accounts for its slew speed) rather
+    // than the instantaneous target, so the gimbal reports where it is, not where it is going.
     float currentPitch = (_pitchServo.getPosition_deg() - _pitchServoTrim_deg) * _pitchServoTranslation;
     float currentYaw = (_yawServo.getPosition_deg() - _yawServoTrim_deg) * _yawServoTranslation;
 

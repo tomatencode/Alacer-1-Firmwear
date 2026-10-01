@@ -2,6 +2,8 @@
 
 #include "../../hardwareIO/servo/Servo.hpp"
 
+class ControlPID; // forward declaration
+
 namespace hardware {
 
 class Gimbal {
@@ -11,8 +13,6 @@ public:
         float pitch_deg;
         float yaw_deg;
     };
-
-    GimbalPos _target;
 
     Gimbal(
         hardware::Servo& pitchServo, hardware::Servo& yawServo,
@@ -28,14 +28,26 @@ public:
 
     void begin();
 
-    void setTarget(const GimbalPos& target);
+    bool setTarget(const GimbalPos& target);
+    bool isLocked() const { return _exclusiveControl; }
+
     GimbalPos getTarget() const;
 
     GimbalPos getCurrentPos() const; // approximation takes servo speeds into account
     
 private:
+
+    friend class ::ControlPID; // only PID can force/lock
+
+    void setExclusiveControl(bool l) { _exclusiveControl = l; }
+    void setTargetForced(const GimbalPos& target); // bypasses lock
+
+    bool _exclusiveControl = false;
+
     hardware::Servo& _pitchServo;
     hardware::Servo& _yawServo;
+
+    GimbalPos _target;
 
     float _minPitch_deg;
     float _maxPitch_deg;

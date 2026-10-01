@@ -19,8 +19,8 @@ public:
 
     bool canStartControlling() const;
 
-    void startControlling() {  if (canStartControlling()) _isControlling = true; }
-    void stopControlling() { _isControlling = false; }
+    void startControlling();
+    void stopControlling();
     bool isControlling() const { return _isControlling; }
 
     void update();

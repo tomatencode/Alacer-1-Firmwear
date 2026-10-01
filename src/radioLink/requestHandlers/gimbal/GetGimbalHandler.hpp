@@ -2,9 +2,9 @@
 
 #include <span>
 
-#include "../MessageScheduler.hpp"
-#include "../../hardwareComponents/gimbal/Gimbal.hpp"
-#include "./helpers/FixedPointCodec.hpp"
+#include "../../MessageScheduler.hpp"
+#include "../../../hardwareComponents/gimbal/Gimbal.hpp"
+#include "../FixedPointCodec.hpp"
 
 class GetGimbalHandler {
 public:

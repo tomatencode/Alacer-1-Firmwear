@@ -2,8 +2,8 @@
 
 #include <span>
 
-#include "../MessageScheduler.hpp"
-#include "../../hardwareIO/pyro/PyroManager.hpp"
+#include "../../MessageScheduler.hpp"
+#include "../../../hardwareIO/pyro/PyroManager.hpp"
 
 // GET_PYRO_HARDWARE_ARMED request: empty payload.
 // Response: SUCCESS with payload[0] = 1 if hardware arm pin reads armed, 0 otherwise.

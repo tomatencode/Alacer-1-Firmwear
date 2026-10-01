@@ -2,8 +2,8 @@
 
 #include <span>
 
-#include "../MessageScheduler.hpp"
-#include "../../hardwareIO/buzzer/Buzzer.hpp"
+#include "../../MessageScheduler.hpp"
+#include "../../../hardwareIO/buzzer/Buzzer.hpp"
 
 class DoBeepHandler {
 public:

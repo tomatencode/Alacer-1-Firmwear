@@ -2,9 +2,9 @@
 
 #include <span>
 
-#include "../MessageScheduler.hpp"
-#include "../../hardwareIO/barometer/Barometer.hpp"
-#include "./helpers/FixedPointCodec.hpp"
+#include "../../MessageScheduler.hpp"
+#include "../../../hardwareIO/barometer/Barometer.hpp"
+#include "../FixedPointCodec.hpp"
 
 class GetBarometerHandler {
 public:

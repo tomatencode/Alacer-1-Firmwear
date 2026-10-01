@@ -2,8 +2,8 @@
 
 #include <span>
 
-#include "../MessageScheduler.hpp"
-#include "../../hardwareIO/pyro/PyroChannel.hpp"
+#include "../../MessageScheduler.hpp"
+#include "../../../hardwareIO/pyro/PyroChannel.hpp"
 
 // GET_PYRO_CONTINUITY request:
 //   payload[0] = channel index (0-based into the channels array given at construction)

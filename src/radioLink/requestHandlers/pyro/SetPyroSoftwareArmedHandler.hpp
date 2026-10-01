@@ -2,8 +2,8 @@
 
 #include <span>
 
-#include "../MessageScheduler.hpp"
-#include "../../hardwareIO/pyro/PyroManager.hpp"
+#include "../../MessageScheduler.hpp"
+#include "../../../hardwareIO/pyro/PyroManager.hpp"
 
 // SET_PYRO_SOFTWARE_ARMED request:
 //   payload[0] = 1 to software-arm, 0 to software-disarm.

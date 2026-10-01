@@ -2,9 +2,9 @@
 
 #include <span>
 
-#include "../MessageScheduler.hpp"
-#include "../../hardwareIO/imu/IMU.hpp"
-#include "./helpers/FixedPointCodec.hpp"
+#include "../../MessageScheduler.hpp"
+#include "../../../hardwareIO/imu/IMU.hpp"
+#include "../FixedPointCodec.hpp"
 
 class GetImuHandler {
 public:

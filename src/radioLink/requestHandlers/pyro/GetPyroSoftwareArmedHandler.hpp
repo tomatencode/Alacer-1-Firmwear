@@ -2,8 +2,8 @@
 
 #include <span>
 
-#include "../MessageScheduler.hpp"
-#include "../../hardwareIO/pyro/PyroManager.hpp"
+#include "../../MessageScheduler.hpp"
+#include "../../../hardwareIO/pyro/PyroManager.hpp"
 
 // GET_PYRO_SOFTWARE_ARMED request: empty payload.
 // Response: SUCCESS with payload[0] = 1 if software-armed, 0 otherwise.

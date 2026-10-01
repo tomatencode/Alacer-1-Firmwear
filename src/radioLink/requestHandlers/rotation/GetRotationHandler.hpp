@@ -2,9 +2,9 @@
 
 #include <span>
 
-#include "../MessageScheduler.hpp"
-#include "../../rotationEstimation/RotationAccumulator.hpp"
-#include "./helpers/FixedPointCodec.hpp"
+#include "../../MessageScheduler.hpp"
+#include "../../../rotationEstimation/RotationAccumulator.hpp"
+#include "../FixedPointCodec.hpp"
 
 class GetRotationHandler {
 public:

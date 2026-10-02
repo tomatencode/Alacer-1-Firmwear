@@ -32,6 +32,7 @@ void VerticalMovementTracker::reset() {
     _hasSampled = false;
     _oldestSampleIndex = 0;
     _sampleCount = 0;
+    _tracking = false;
 }
 
 void VerticalMovementTracker::pushHeightSample(float height_m, uint32_t time_us) {

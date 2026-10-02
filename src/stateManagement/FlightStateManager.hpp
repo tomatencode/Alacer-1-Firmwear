@@ -55,7 +55,9 @@ private:
 
     bool preflightChecks();
 
-    void launch();
+    void startCountdownSequence();
+
+    void launchSequence();
 
     ControlPID& _controlPID;
     RotationAccumulator& _rotationAccumulator;

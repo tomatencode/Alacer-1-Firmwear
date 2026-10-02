@@ -26,6 +26,7 @@ void HorizontalMovementTracker::startTracking() {
 }
 
 void HorizontalMovementTracker::reset() {
+    _tracking = false;
     _totalMovement = Eigen::Vector2f::Zero();
     _velocity_m_s = Eigen::Vector2f::Zero();
     _hasVelocityEstimate = false;

@@ -42,6 +42,7 @@
 #include "./controlPID/ControlPID.hpp"
 
 #include "./ascentTracking/VerticalMovementTracker.hpp"
+#include "./ascentTracking/HorizontalMovementTracker.hpp"
 
 #include "./stateManagement/FlightStateManager.hpp"
 
@@ -94,10 +95,11 @@ RotationAccumulator rotationAccumulator(imu, imuRocketConverter, 10000);
 BarometricHeightCalculator barometricHeightCalculator(barometer);
 
 VerticalMovementTracker verticalMovementTracker(barometricHeightCalculator);
+HorizontalMovementTracker horizontalMovementTracker(verticalMovementTracker, rotationAccumulator);
 
 ControlPID controlPID(rotationAccumulator, gimbal);
 
-FlightStateManager flightStateManager(controlPID, rotationAccumulator, verticalMovementTracker, motorIgniter, parachute);
+FlightStateManager flightStateManager(controlPID, rotationAccumulator, verticalMovementTracker, horizontalMovementTracker, motorIgniter, parachute);
 
 // Radio Request handlers
 DoBeepHandler beepHandler(buzzer);
@@ -174,6 +176,7 @@ void loop() {
 
     rotationAccumulator.update();
     verticalMovementTracker.update();
+    horizontalMovementTracker.update();
 
     flightStateManager.update();
 

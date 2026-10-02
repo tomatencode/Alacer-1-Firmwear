@@ -22,6 +22,7 @@ void HorizontalMovementTracker::stopTracking() {
 
 void HorizontalMovementTracker::startTracking() {
     _tracking = true;
+    _lastUpdateTime_us = 0; // // dont integrate the paused interval
 }
 
 void HorizontalMovementTracker::reset() {
@@ -31,6 +32,10 @@ void HorizontalMovementTracker::reset() {
     _lastHeight_m = std::nullopt;
     _oldestSampleIndex = 0;
     _sampleCount = 0;
+    // Stage and clock must restart too, otherwise a second flight would begin in
+    // DESCENDING_CHUTE and integrate a zero velocity forever, recording no movement.
+    _currentAscentStage = AscentStage::ASCENDING;
+    _lastUpdateTime_us = 0;
 }
 
 void HorizontalMovementTracker::setAscentStage(AscentStage stage) {
@@ -38,6 +43,8 @@ void HorizontalMovementTracker::setAscentStage(AscentStage stage) {
 }
 
 void HorizontalMovementTracker::update() {
+    if (!_tracking) { return; }
+
     const uint32_t currentTime_us = micros();
     
     if (_lastUpdateTime_us == 0) {

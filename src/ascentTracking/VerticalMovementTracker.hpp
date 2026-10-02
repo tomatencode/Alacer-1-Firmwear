@@ -11,6 +11,9 @@ public:
     explicit VerticalMovementTracker(BarometricHeightCalculator& heightSource)
         : _heightSource(heightSource) {}
 
+    void stopTracking();
+    void startTracking();
+
     void reset();
 
     float getHeight_m() const { return _height_m; }
@@ -36,6 +39,8 @@ private:
     void updateEstimates();
 
     BarometricHeightCalculator& _heightSource;
+
+    bool _tracking = false;
 
     float _height_m = 0.0f;
     float _velocity_m_s = 0.0f;

@@ -3,6 +3,7 @@
 #include <Arduino.h>
 
 void VerticalMovementTracker::update() {
+    if (!_tracking) { return; }
     const float height_m = _heightSource.getHeight_m();
 
     // The main loop runs far more often than the barometer produces fresh readings, a
@@ -13,6 +14,14 @@ void VerticalMovementTracker::update() {
 
     pushHeightSample(height_m, micros());
     updateEstimates();
+}
+
+void VerticalMovementTracker::stopTracking() {
+    _tracking = false;
+}
+
+void VerticalMovementTracker::startTracking() {
+    _tracking = true;
 }
 
 void VerticalMovementTracker::reset() {

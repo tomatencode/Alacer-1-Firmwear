@@ -1,7 +1,7 @@
 #include "FlightStateManager.hpp"
 
-FlightStateManager::FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, VerticalMovementTracker& verticalMovementTracker, MotorIgniter& motorIgniter, Parachute& parachute) 
-    : _controlPID(controlPID), _rotationAccumulator(rotationAccumulator), _verticalMovementTracker(verticalMovementTracker), _motorIgniter(motorIgniter), _parachute(parachute) {}
+FlightStateManager::FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, VerticalMovementTracker& verticalMovementTracker, HorizontalMovementTracker& horizontalMovementTracker, MotorIgniter& motorIgniter, Parachute& parachute) 
+    : _controlPID(controlPID), _rotationAccumulator(rotationAccumulator), _verticalMovementTracker(verticalMovementTracker), _horizontalMovementTracker(horizontalMovementTracker), _motorIgniter(motorIgniter), _parachute(parachute) {}
 
 FlightState FlightStateManager::getCurrentState() const {
     return _currentState;
@@ -72,17 +72,21 @@ void FlightStateManager::update() {
     case FlightState::BURNING:
         if (millis() - _motorStartBurnTime >= MOTOR_BURN_DURATION_ms) {
             _controlPID.stopControlling();
+            _horizontalMovementTracker.setAscentStage(HorizontalMovementTracker::AscentStage::COASTING);
             _currentState = FlightState::COASTING;
         }
         break;
     case FlightState::COASTING:
         if (_verticalMovementTracker.getVelocity_m_s() <= 0.0f && _verticalMovementTracker.hasVelocityEstimate()) {
             _parachute.deploy();
+            _horizontalMovementTracker.setAscentStage(HorizontalMovementTracker::AscentStage::DESCENDING_CHUTE);
             _currentState = FlightState::DESCENDING;
         }
         break;
     case FlightState::DESCENDING:
         if (_verticalMovementTracker.getHeight_m() <= 2.0f && _verticalMovementTracker.hasVelocityEstimate() && _verticalMovementTracker.getVelocity_m_s() <= 1.0f) {
+            _verticalMovementTracker.stopTracking();
+            _horizontalMovementTracker.stopTracking();
             _currentState = FlightState::LANDED;
         }
         break;
@@ -112,6 +116,9 @@ void FlightStateManager::launch() {
     _motorIgniter.ignite();
     _rotationAccumulator.startAccumulation();
     _verticalMovementTracker.reset();
+    _verticalMovementTracker.startTracking();
+    _horizontalMovementTracker.reset();
+    _horizontalMovementTracker.startTracking();
     _motorStartBurnTime = millis();
     _controlPID.startControlling();
 }

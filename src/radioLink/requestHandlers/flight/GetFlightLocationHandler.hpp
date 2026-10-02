@@ -27,7 +27,7 @@ public:
           _horizontalMovementTracker(horizontalMovementTracker) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t>, std::span<uint8_t> response) {
-        const Eigen::Vector2f position = _horizontalMovementTracker.getTotalMovement();
+        const Eigen::Vector2f position = _horizontalMovementTracker.getTotalMovement_m();
         const Eigen::Vector2f horizontalVelocity = _horizontalMovementTracker.getVelocity_m_s();
 
         fixedPoint::encode32(position.x(), response, 0);

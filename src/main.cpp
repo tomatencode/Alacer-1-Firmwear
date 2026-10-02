@@ -36,6 +36,7 @@
 #include "./radioLink/requestHandlers/pyro/SetPyroSoftwareArmedHandler.hpp"
 #include "./radioLink/requestHandlers/pyro/GetPyroHardwareArmedHandler.hpp"
 #include "./radioLink/requestHandlers/sensors/GetBaroHeightHandler.hpp"
+#include "./radioLink/requestHandlers/sensors/CalibrateBaroHeightHandler.hpp"
 #include "./radioLink/requestHandlers/flight/AbortFlightHandler.hpp"
 #include "./radioLink/requestHandlers/flight/EndFlightHandler.hpp"
 #include "./radioLink/requestHandlers/flight/GetFlightStateHandler.hpp"
@@ -106,7 +107,7 @@ HorizontalMovementTracker horizontalMovementTracker(verticalMovementTracker, rot
 
 ControlPID controlPID(rotationAccumulator, gimbal);
 
-FlightStateManager flightStateManager(controlPID, rotationAccumulator, verticalMovementTracker, horizontalMovementTracker, motorIgniter, parachute);
+FlightStateManager flightStateManager(controlPID, rotationAccumulator, barometricHeightCalculator, verticalMovementTracker, horizontalMovementTracker, motorIgniter, parachute);
 
 // Radio Request handlers
 DoBeepHandler beepHandler(buzzer);
@@ -124,6 +125,7 @@ GetPyroHardwareArmedHandler getPyroHardwareArmedHandler(pyroManager);
 AbortFlightHandler abortFlightHandler(flightStateManager);
 EndFlightHandler endFlightHandler(flightStateManager);
 GetBaroHeightHandler baroHeightHandler(barometricHeightCalculator);
+CalibrateBaroHeightHandler calibrateBaroHeightHandler(barometricHeightCalculator);
 GetFlightLocationHandler flightLocationHandler(verticalMovementTracker, horizontalMovementTracker);
 GetFlightStateHandler flightStateHandler(flightStateManager);
 GetCountdownTimeHandler countdownTimeHandler(flightStateManager);
@@ -176,6 +178,7 @@ void setup() {
     messageScheduler.registerRequestHandler(Protocol::MessageType::ABORT_FLIGHT, abortFlightHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::END_FLIGHT, endFlightHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_BARO_HEIGHT, baroHeightHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::CALIBRATE_BARO_HEIGHT, calibrateBaroHeightHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_FLIGHT_LOCATION, flightLocationHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_FLIGHT_STATE, flightStateHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_COUNTDOWN_TIME, countdownTimeHandler.callback());

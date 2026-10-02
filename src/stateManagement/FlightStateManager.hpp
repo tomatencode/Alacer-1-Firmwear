@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 
 #include <Arduino.h>
 
@@ -8,6 +9,7 @@
 #include "../hardwareComponents/parachute/Parachute.hpp"
 #include "../hardwareComponents/motor/MotorIgniter.hpp"
 
+#include "../barometricHeightCalculation/BarometricHeightCalculator.hpp"
 #include "../ascentTracking/VerticalMovementTracker.hpp"
 #include "../ascentTracking/HorizontalMovementTracker.hpp"
 #include "../controlPID/ControlPID.hpp"
@@ -26,7 +28,7 @@ enum class FlightState {
 
 class FlightStateManager {
 public:
-    FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, VerticalMovementTracker& verticalMovementTracker, HorizontalMovementTracker& horizontalMovementTracker, MotorIgniter& motorIgniter, Parachute& parachute);
+    FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, BarometricHeightCalculator& barometricHeightCalculator, VerticalMovementTracker& verticalMovementTracker, HorizontalMovementTracker& horizontalMovementTracker, MotorIgniter& motorIgniter, Parachute& parachute);
 
     FlightState getCurrentState() const; // should not be used in logic, only for debugging
 
@@ -39,8 +41,9 @@ public:
     // denied if not in IDLE state
     bool startCountdown();
 
-    // remaining COUNTDOWN time in ms, 0 when not counting down
-    uint32_t getCountdownRemaining_ms() const;
+    std::optional<uint32_t> getCountdownRemaining_ms() const;
+
+    bool isMidFlight() const;
 
     void update();
 private:
@@ -61,6 +64,7 @@ private:
 
     ControlPID& _controlPID;
     RotationAccumulator& _rotationAccumulator;
+    BarometricHeightCalculator& _barometricHeightCalculator;
     VerticalMovementTracker& _verticalMovementTracker;
     HorizontalMovementTracker& _horizontalMovementTracker;
     MotorIgniter& _motorIgniter;

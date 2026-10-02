@@ -14,8 +14,9 @@ const size_t MAX_FRAME_SIZE = 1024;
 
 enum class MessageType : uint8_t {
     PING = 0x00,
-    GET_GIMBAL = 0x02,
-    SET_GIMBAL = 0x03,
+    GET_GIMBAL = 0x01,
+    SET_GIMBAL = 0x02,
+    FLASH_LED = 0x03,
     DO_BEEP = 0x04,
     FIRE_PYRO = 0x05,
     GET_PYRO_CONTINUITY = 0x06,
@@ -32,7 +33,7 @@ enum class MessageType : uint8_t {
     GET_FLIGHT_LOCATION = 0x11,
     GET_FLIGHT_STATE = 0x12,
     GET_COUNTDOWN_TIME = 0x13,
-    FLASH_LED = 0x14,
+    CALIBRATE_BARO_HEIGHT = 0x15,
 };
 
 enum class RequestStatus : uint8_t {

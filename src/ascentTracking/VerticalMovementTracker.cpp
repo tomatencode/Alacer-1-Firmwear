@@ -4,7 +4,10 @@
 
 void VerticalMovementTracker::update() {
     if (!_tracking) { return; }
-    const float height_m = _heightSource.getHeight_m();
+    
+    const std::optional<float> height_m_opt = _heightSource.getHeight_m();
+    if (!height_m_opt.has_value()) { return; }
+    const float height_m = height_m_opt.value();
 
     // The main loop runs far more often than the barometer produces fresh readings, a
     // height that did not change carries no new information about the movement.

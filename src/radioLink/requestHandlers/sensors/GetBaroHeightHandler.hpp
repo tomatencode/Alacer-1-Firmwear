@@ -10,14 +10,19 @@
 //   empty payload.
 // Response:
 //   4 bytes, fixed-point int32 scaled by 100: height above the calibration
-//   point (launch pad) in metres. Stays 0 until the calculator is calibrated.
+//   point (launch pad) in metres.
+//   fails if the height is not available.
 class GetBaroHeightHandler {
 public:
     explicit GetBaroHeightHandler(BarometricHeightCalculator& heightCalculator)
         : _heightCalculator(heightCalculator) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t>, std::span<uint8_t> response) {
-        fixedPoint::encode32(_heightCalculator.getHeight_m(), response, 0);
+        const std::optional<float> height_m_opt = _heightCalculator.getHeight_m();
+        if (!height_m_opt.has_value()) { return {MessageScheduler::HandlerResultStatus::FAILURE, 0}; }
+        const float height_m = height_m_opt.value();
+
+        fixedPoint::encode32(height_m, response, 0);
         return {MessageScheduler::HandlerResultStatus::SUCCESS, 4};
     }
 

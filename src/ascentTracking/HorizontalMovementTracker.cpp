@@ -12,7 +12,7 @@ HorizontalMovementTracker::HorizontalMovementTracker(VerticalMovementTracker& ve
 {
 }
 
-Eigen::Vector2f HorizontalMovementTracker::getTotalMovement() const {
+Eigen::Vector2f HorizontalMovementTracker::getTotalMovement_m() const {
     return _totalMovement;
 }
 

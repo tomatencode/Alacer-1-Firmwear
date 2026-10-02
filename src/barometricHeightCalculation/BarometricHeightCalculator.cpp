@@ -2,10 +2,10 @@
 
 #include <cmath>
 
-void BarometricHeightCalculator::calibrateTo(float height_m) {
+bool BarometricHeightCalculator::calibrateTo(float height_m) {
     const float pressure_Pa = _barometer.getPressure_Pa();
 
-    if (pressure_Pa <= 0.0f) { return; } // no valid measurement yet, keep the old reference
+    if (pressure_Pa <= 0.0f) { return false; } // no valid measurement yet, keep the old reference
 
     _referencePressure_Pa = pressure_Pa;
     // The temperature at the reference point sets the height scale of the atmosphere
@@ -14,14 +14,15 @@ void BarometricHeightCalculator::calibrateTo(float height_m) {
     _referenceHeight_m = height_m;
 
     _isCalibrated = true;
+    return true;
 }
 
-float BarometricHeightCalculator::getHeight_m() const {
+std::optional<float> BarometricHeightCalculator::getHeight_m() const {
     const float pressure_Pa = _barometer.getPressure_Pa();
 
-    if (pressure_Pa <= 0.0f) { return _referenceHeight_m; } // no valid measurement yet
+    if (pressure_Pa <= 0.0f || !_isCalibrated) { return std::nullopt; } // no valid measurement yet
 
-    return _referenceHeight_m + pressureToHeight_m(pressure_Pa);
+    return _referenceHeight_m + pressureToHeight_m(pressure_Pa); // valid measurement
 }
 
 float BarometricHeightCalculator::pressureToHeight_m(float pressure_Pa) const {

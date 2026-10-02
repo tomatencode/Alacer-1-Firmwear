@@ -1,7 +1,7 @@
 #include "FlightStateManager.hpp"
 
-FlightStateManager::FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, VerticalMovementTracker& verticalMovementTracker, HorizontalMovementTracker& horizontalMovementTracker, MotorIgniter& motorIgniter, Parachute& parachute) 
-    : _controlPID(controlPID), _rotationAccumulator(rotationAccumulator), _verticalMovementTracker(verticalMovementTracker), _horizontalMovementTracker(horizontalMovementTracker), _motorIgniter(motorIgniter), _parachute(parachute) {}
+FlightStateManager::FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, BarometricHeightCalculator& barometricHeightCalculator, VerticalMovementTracker& verticalMovementTracker, HorizontalMovementTracker& horizontalMovementTracker, MotorIgniter& motorIgniter, Parachute& parachute) 
+    : _controlPID(controlPID), _rotationAccumulator(rotationAccumulator), _barometricHeightCalculator(barometricHeightCalculator), _verticalMovementTracker(verticalMovementTracker), _horizontalMovementTracker(horizontalMovementTracker), _motorIgniter(motorIgniter), _parachute(parachute) {}
 
 FlightState FlightStateManager::getCurrentState() const {
     return _currentState;
@@ -51,19 +51,19 @@ bool FlightStateManager::startCountdown() {
         return false;
     }
 
-    _currentState = FlightState::COUNTDOWN;
-    _countdownStartTime = millis();
+    startCountdownSequence();
+
     return true;
 }
 
-uint32_t FlightStateManager::getCountdownRemaining_ms() const {
+std::optional<uint32_t> FlightStateManager::getCountdownRemaining_ms() const {
     if (_currentState != FlightState::COUNTDOWN) {
-        return 0;
+        return std::nullopt;
     }
 
     const uint32_t elapsed = millis() - _countdownStartTime;
     if (elapsed >= COUNTDOWN_DURATION_ms) {
-        return 0;
+        return std::nullopt;
     }
     return COUNTDOWN_DURATION_ms - elapsed;
 }
@@ -77,7 +77,7 @@ void FlightStateManager::update() {
     case FlightState::COUNTDOWN:
         // Handle COUNTDOWN state
         if (millis() - _countdownStartTime >= COUNTDOWN_DURATION_ms) {
-            launch();
+            launchSequence();
             _currentState = FlightState::BURNING;
         }
         break;
@@ -113,7 +113,9 @@ void FlightStateManager::update() {
         break;
     }
 }
-
+bool FlightStateManager::isMidFlight() const {
+    return _currentState == FlightState::BURNING || _currentState == FlightState::COASTING || _currentState == FlightState::DESCENDING;
+}
 
 bool FlightStateManager::preflightChecks() {
 
@@ -124,13 +126,22 @@ bool FlightStateManager::preflightChecks() {
     return true;
 }
 
-void FlightStateManager::launch() {
-    _motorIgniter.ignite();
-    _rotationAccumulator.startAccumulation();
+void FlightStateManager::startCountdownSequence() {
+    _countdownStartTime = millis();
+    _currentState = FlightState::COUNTDOWN;
+
+    _barometricHeightCalculator.calibrateTo(0);
+
     _verticalMovementTracker.reset();
-    _verticalMovementTracker.startTracking();
     _horizontalMovementTracker.reset();
+}
+
+void FlightStateManager::launchSequence() {
+    _rotationAccumulator.startAccumulation();
+    _verticalMovementTracker.startTracking();
     _horizontalMovementTracker.startTracking();
-    _motorStartBurnTime = millis();
     _controlPID.startControlling();
+    
+    _motorStartBurnTime = millis();
+    _motorIgniter.ignite();
 }

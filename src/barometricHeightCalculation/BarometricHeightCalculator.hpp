@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 
 #include "../hardwareIO/barometer/Barometer.hpp"
 
@@ -30,13 +31,14 @@ public:
         : _barometer(barometer) {}
 
     // Height above the calibration point, calculated from the current measurement.
-    float getHeight_m() const;
+    std::optional<float> getHeight_m() const;
 
     bool isCalibrated() const { return _isCalibrated; }
 
     // Sets the currently measured height to height_m, e.g. calibrateTo(0.0f) on the pad.
-    // Does nothing while the barometer has not produced a valid measurement yet.
-    void calibrateTo(float height_m);
+    // Returns false (and keeps the old reference) while the barometer has not
+    // produced a valid measurement yet, true once the new reference was applied.
+    bool calibrateTo(float height_m);
 
 private:
     // Troposphere model constants (International Standard Atmosphere).

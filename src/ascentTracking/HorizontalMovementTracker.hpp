@@ -27,7 +27,7 @@ public:
     void startTracking();
     void reset();
 
-    Eigen::Vector2f getTotalMovement() const;
+    Eigen::Vector2f getTotalMovement_m() const;
 
     Eigen::Vector2f getVelocity_m_s() const { return _velocity_m_s; }
     bool hasVelocityEstimate() const { return _hasVelocityEstimate; }

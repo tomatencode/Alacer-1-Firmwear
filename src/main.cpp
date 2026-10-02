@@ -35,6 +35,13 @@
 #include "./radioLink/requestHandlers/pyro/GetPyroSoftwareArmedHandler.hpp"
 #include "./radioLink/requestHandlers/pyro/SetPyroSoftwareArmedHandler.hpp"
 #include "./radioLink/requestHandlers/pyro/GetPyroHardwareArmedHandler.hpp"
+#include "./radioLink/requestHandlers/sensors/GetBaroHeightHandler.hpp"
+#include "./radioLink/requestHandlers/flight/AbortFlightHandler.hpp"
+#include "./radioLink/requestHandlers/flight/EndFlightHandler.hpp"
+#include "./radioLink/requestHandlers/flight/GetFlightStateHandler.hpp"
+#include "./radioLink/requestHandlers/flight/GetCountdownTimeHandler.hpp"
+#include "./radioLink/requestHandlers/flight/GetFlightLocationHandler.hpp"
+#include "./radioLink/requestHandlers/led/FlashLedHandler.hpp"
 
 #include "./rotationEstimation/IMURocketCoordinateConverter.hpp"
 #include "./rotationEstimation/RotationAccumulator.hpp"
@@ -114,6 +121,13 @@ GetPyroContinuityHandler getPyroContinuityHandler(pyroChannels);
 GetPyroSoftwareArmedHandler getPyroSoftwareArmedHandler(pyroManager);
 SetPyroSoftwareArmedHandler setPyroSoftwareArmedHandler(pyroManager);
 GetPyroHardwareArmedHandler getPyroHardwareArmedHandler(pyroManager);
+AbortFlightHandler abortFlightHandler(flightStateManager);
+EndFlightHandler endFlightHandler(flightStateManager);
+GetBaroHeightHandler baroHeightHandler(barometricHeightCalculator);
+GetFlightLocationHandler flightLocationHandler(verticalMovementTracker, horizontalMovementTracker);
+GetFlightStateHandler flightStateHandler(flightStateManager);
+GetCountdownTimeHandler countdownTimeHandler(flightStateManager);
+FlashLedHandler flashLedHandler(statusLed);
 
 const hardware::Buzzer::Melody startupMelody = {
     {262, 200},
@@ -159,6 +173,13 @@ void setup() {
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_SOFTWARE_ARMED, getPyroSoftwareArmedHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::SET_PYRO_SOFTWARE_ARMED, setPyroSoftwareArmedHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_HARDWARE_ARMED, getPyroHardwareArmedHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::ABORT_FLIGHT, abortFlightHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::END_FLIGHT, endFlightHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_BARO_HEIGHT, baroHeightHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_FLIGHT_LOCATION, flightLocationHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_FLIGHT_STATE, flightStateHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_COUNTDOWN_TIME, countdownTimeHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::FLASH_LED, flashLedHandler.callback());
 
     buzzer.playMelody(startupMelody);
 }

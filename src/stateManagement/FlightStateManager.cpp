@@ -56,6 +56,18 @@ bool FlightStateManager::startCountdown() {
     return true;
 }
 
+uint32_t FlightStateManager::getCountdownRemaining_ms() const {
+    if (_currentState != FlightState::COUNTDOWN) {
+        return 0;
+    }
+
+    const uint32_t elapsed = millis() - _countdownStartTime;
+    if (elapsed >= COUNTDOWN_DURATION_ms) {
+        return 0;
+    }
+    return COUNTDOWN_DURATION_ms - elapsed;
+}
+
 void FlightStateManager::update() {
     switch (_currentState)
     {

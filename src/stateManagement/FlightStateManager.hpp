@@ -39,6 +39,9 @@ public:
     // denied if not in IDLE state
     bool startCountdown();
 
+    // remaining COUNTDOWN time in ms, 0 when not counting down
+    uint32_t getCountdownRemaining_ms() const;
+
     void update();
 private:
     static constexpr uint32_t COUNTDOWN_DURATION_ms = 10000;
@@ -47,7 +50,7 @@ private:
 
     FlightState _currentState = FlightState::IDLE;
 
-    uint32_t _countdownStartTime;
+    uint32_t _countdownStartTime = 0;
     uint32_t _motorStartBurnTime;
 
     bool preflightChecks();

@@ -27,13 +27,7 @@ void Gimbal::begin() {
     setTarget(_target);
 }
 
-bool Gimbal::setTarget(const GimbalPos& target) {
-    if (_exclusiveControl) return false;
-    setTargetForced(target);
-    return true;
-}
-
-void Gimbal::setTargetForced(const GimbalPos& target) {
+void Gimbal::setTarget(const GimbalPos& target) {
     float clampedPitch = std::clamp(target.pitch_deg, _minPitch_deg, _maxPitch_deg);
     float clampedYaw = std::clamp(target.yaw_deg, _minYaw_deg, _maxYaw_deg);
 

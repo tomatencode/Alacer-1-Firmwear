@@ -31,11 +31,9 @@ void ControlPID::setTarget(const Eigen::Quaternionf& targetAngle) {
 void ControlPID::startControlling() {
   if (!canStartControlling()) return;
   _isControlling = true;
-  _gimbal.setExclusiveControl(true);
 }
 void ControlPID::stopControlling() {
   _isControlling = false;
-  _gimbal.setExclusiveControl(false);
 }
 
 void ControlPID::clearConfig() {
@@ -116,5 +114,5 @@ void ControlPID::update() {
         .yaw_deg = yawOutput_rad * 180.0f / std::numbers::pi_v<float>
     };
 
-    _gimbal.setTargetForced(targetPos);
+    _gimbal.setTarget(targetPos);
 }

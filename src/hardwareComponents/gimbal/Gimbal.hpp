@@ -28,21 +28,13 @@ public:
 
     void begin();
 
-    bool setTarget(const GimbalPos& target);
-    bool isLocked() const { return _exclusiveControl; }
+    void setTarget(const GimbalPos& target);
 
     GimbalPos getTarget() const;
 
     GimbalPos getCurrentPos() const; // approximation takes servo speeds into account
     
 private:
-
-    friend class ::ControlPID; // only PID can force/lock
-
-    void setExclusiveControl(bool l) { _exclusiveControl = l; }
-    void setTargetForced(const GimbalPos& target); // bypasses lock
-
-    bool _exclusiveControl = false;
 
     hardware::Servo& _pitchServo;
     hardware::Servo& _yawServo;

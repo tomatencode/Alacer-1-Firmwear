@@ -28,11 +28,18 @@ public:
     // - return: status + number of valid bytes in responseBuffer.
     using RequestHandler = etl::delegate<HandlerResult(std::span<const uint8_t> requestPayload, std::span<uint8_t> responseBuffer)>;
 
-    MessageScheduler(Protocol::Parser& parser, hardware::Radio& radio);
+    MessageScheduler(Protocol::Parser& parser, hardware::Radio& radio, etl::delegate<bool()> isMidFlightCb = {});
+
+    void setMidFlightCallback(etl::delegate<bool()> isMidFlightCb) { _isMidFlightCb = isMidFlightCb; }
 
     void update();
 
-    void registerRequestHandler(Protocol::MessageType requestType, RequestHandler handler);
+    struct HandlerOptions {
+        bool groundOnly = true; // fail-closed: must opt OUT with {.groundOnly = false}
+    };
+
+    void registerRequestHandler(Protocol::MessageType requestType, RequestHandler handler, HandlerOptions options);
+    void registerRequestHandler(Protocol::MessageType requestType, RequestHandler handler); // groundOnly=true
 
     uint32_t getDroppedMessages() const { // for diagnostics
         return _droppedMessages;
@@ -50,5 +57,7 @@ private:
     uint32_t _droppedMessages;
 
     etl::map<Protocol::MessageType, RequestHandler, 32> _handlers;
+    etl::map<Protocol::MessageType, bool, 32> _groundOnlyHandlers;
+    etl::delegate<bool()> _isMidFlightCb;
     etl::vector<Protocol::Message, 32> _scheduledMessages;
 };

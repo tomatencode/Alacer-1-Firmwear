@@ -86,9 +86,6 @@ hardware::Gimbal gimbal(
     GIMBAL_PITCH_SERVO_OFFSET_deg, GIMBAL_YAW_SERVO_OFFSET_deg
 );
 
-Protocol::Parser radioLinkParser;
-MessageScheduler messageScheduler(radioLinkParser, radioHC12);
-
 const Eigen::Quaternionf imuToRocketRotation =
     Eigen::AngleAxisf(IMU_ROLL_DEG * std::numbers::pi_v<float> / 180.0f, Eigen::Vector3f::UnitX()) *
     Eigen::AngleAxisf(IMU_PITCH_DEG * std::numbers::pi_v<float> / 180.0f, Eigen::Vector3f::UnitY()) *
@@ -108,6 +105,9 @@ HorizontalMovementTracker horizontalMovementTracker(verticalMovementTracker, rot
 ControlPID controlPID(rotationAccumulator, gimbal);
 
 FlightStateManager flightStateManager(controlPID, rotationAccumulator, barometricHeightCalculator, verticalMovementTracker, horizontalMovementTracker, motorIgniter, parachute);
+
+Protocol::Parser radioLinkParser;
+MessageScheduler messageScheduler(radioLinkParser, radioHC12);
 
 // Radio Request handlers
 DoBeepHandler beepHandler(buzzer);
@@ -163,26 +163,29 @@ void setup() {
 
     rotationAccumulator.setRotationQuaternion(Eigen::Quaternionf::Identity());
 
+    messageScheduler.setMidFlightCallback(
+        etl::delegate<bool()>::create<FlightStateManager, &FlightStateManager::isMidFlight>(flightStateManager));
+
     messageScheduler.registerRequestHandler(Protocol::MessageType::DO_BEEP, beepHandler.callback());
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_IMU, imuHandler.callback());
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_BAROMETER, barometerHandler.callback());
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_GIMBAL, getGimbalHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_IMU, imuHandler.callback(), {.groundOnly = false});
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_BAROMETER, barometerHandler.callback(), {.groundOnly = false});
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_GIMBAL, getGimbalHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::SET_GIMBAL, setGimbalHandler.callback());
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_ROTATION, getRotationHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_ROTATION, getRotationHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::SET_ROTATION, setRotationHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::FIRE_PYRO, firePyroHandler.callback());
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_CONTINUITY, getPyroContinuityHandler.callback());
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_SOFTWARE_ARMED, getPyroSoftwareArmedHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_CONTINUITY, getPyroContinuityHandler.callback(), {.groundOnly = false});
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_SOFTWARE_ARMED, getPyroSoftwareArmedHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::SET_PYRO_SOFTWARE_ARMED, setPyroSoftwareArmedHandler.callback());
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_HARDWARE_ARMED, getPyroHardwareArmedHandler.callback());
-    messageScheduler.registerRequestHandler(Protocol::MessageType::ABORT_FLIGHT, abortFlightHandler.callback());
-    messageScheduler.registerRequestHandler(Protocol::MessageType::END_FLIGHT, endFlightHandler.callback());
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_BARO_HEIGHT, baroHeightHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_HARDWARE_ARMED, getPyroHardwareArmedHandler.callback(), {.groundOnly = false});
+    messageScheduler.registerRequestHandler(Protocol::MessageType::ABORT_FLIGHT, abortFlightHandler.callback(), {.groundOnly = false});
+    messageScheduler.registerRequestHandler(Protocol::MessageType::END_FLIGHT, endFlightHandler.callback(), {.groundOnly = false});
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_BARO_HEIGHT, baroHeightHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::CALIBRATE_BARO_HEIGHT, calibrateBaroHeightHandler.callback());
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_FLIGHT_LOCATION, flightLocationHandler.callback());
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_FLIGHT_STATE, flightStateHandler.callback());
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_COUNTDOWN_TIME, countdownTimeHandler.callback());
-    messageScheduler.registerRequestHandler(Protocol::MessageType::FLASH_LED, flashLedHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_FLIGHT_LOCATION, flightLocationHandler.callback(), {.groundOnly = false});
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_FLIGHT_STATE, flightStateHandler.callback(), {.groundOnly = false});
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_COUNTDOWN_TIME, countdownTimeHandler.callback(), {.groundOnly = false});
+    messageScheduler.registerRequestHandler(Protocol::MessageType::FLASH_LED, flashLedHandler.callback(), {.groundOnly = false});
 
     buzzer.playMelody(startupMelody);
 }

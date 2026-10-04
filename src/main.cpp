@@ -42,6 +42,14 @@
 #include "./radioLink/requestHandlers/flight/GetFlightStateHandler.hpp"
 #include "./radioLink/requestHandlers/flight/GetCountdownTimeHandler.hpp"
 #include "./radioLink/requestHandlers/flight/GetFlightLocationHandler.hpp"
+#include "./radioLink/requestHandlers/flight/StartCountdownHandler.hpp"
+#include "./radioLink/requestHandlers/flight/RetryDeployParachuteHandler.hpp"
+#include "./radioLink/requestHandlers/controlPID/SetPIDParametersHandler.hpp"
+#include "./radioLink/requestHandlers/controlPID/GetPIDParametersHandler.hpp"
+#include "./radioLink/requestHandlers/controlPID/SetControllingHandler.hpp"
+#include "./radioLink/requestHandlers/controlPID/GetControllingHandler.hpp"
+#include "./radioLink/requestHandlers/controlPID/SetPIDTargetHandler.hpp"
+#include "./radioLink/requestHandlers/controlPID/GetPIDTargetHandler.hpp"
 #include "./radioLink/requestHandlers/led/FlashLedHandler.hpp"
 
 #include "./rotationEstimation/IMURocketCoordinateConverter.hpp"
@@ -135,6 +143,14 @@ CalibrateBaroHeightHandler calibrateBaroHeightHandler(barometricHeightCalculator
 GetFlightLocationHandler flightLocationHandler(verticalMovementTracker, horizontalMovementTracker);
 GetFlightStateHandler flightStateHandler(flightStateManager);
 GetCountdownTimeHandler countdownTimeHandler(flightStateManager);
+StartCountdownHandler startCountdownHandler(flightStateManager);
+RetryDeployParachuteHandler retryDeployParachuteHandler(flightStateManager);
+SetPIDParametersHandler setPIDParametersHandler(controlPID);
+GetPIDParametersHandler getPIDParametersHandler(controlPID);
+SetControllingHandler setControllingHandler(controlPID);
+GetControllingHandler getControllingHandler(controlPID);
+SetPIDTargetHandler setPIDTargetHandler(controlPID);
+GetPIDTargetHandler getPIDTargetHandler(controlPID);
 FlashLedHandler flashLedHandler(statusLed);
 
 const hardware::Buzzer::Melody startupMelody = {
@@ -191,6 +207,14 @@ void setup() {
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_FLIGHT_LOCATION, flightLocationHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_FLIGHT_STATE, flightStateHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_COUNTDOWN_TIME, countdownTimeHandler.callback(), {.groundOnly = false});
+    messageScheduler.registerRequestHandler(Protocol::MessageType::START_COUNTDOWN, startCountdownHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::RETRY_DEPLOY_PARACHUTE, retryDeployParachuteHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::SET_PID_PARAMETERS, setPIDParametersHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PID_PARAMETERS, getPIDParametersHandler.callback(), {.groundOnly = false});
+    messageScheduler.registerRequestHandler(Protocol::MessageType::SET_CONTROLLING, setControllingHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_CONTROLLING, getControllingHandler.callback(), {.groundOnly = false});
+    messageScheduler.registerRequestHandler(Protocol::MessageType::SET_PID_TARGET, setPIDTargetHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PID_TARGET, getPIDTargetHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::FLASH_LED, flashLedHandler.callback(), {.groundOnly = false});
 
     buzzer.playMelody(startupMelody);

@@ -2,6 +2,8 @@
 
 #include <Arduino.h>
 
+#include "PyroChannel.hpp"
+
 PyroManager::PyroManager(int hardwareArmPin, std::span<PyroChannel*> pyroChannels)
     : _hardwareArmPin(hardwareArmPin), _softwareArm(false), _pyroChannels(pyroChannels)
 {

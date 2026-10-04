@@ -29,8 +29,7 @@ bool FlightStateManager::abort() {
     case FlightState::BURNING:
         _controlPID.stopControlling();
         _motorIgniter.stopIgniting();
-        bool success = _parachute.deploy();
-        if (!success) {
+        if (!_parachute.deploy()) {
             return false;
         }
         _currentState = FlightState::ABORTED;
@@ -38,8 +37,7 @@ bool FlightStateManager::abort() {
     case FlightState::COASTING:
     case FlightState::DESCENDING: // parachute deployment might have failed
     case FlightState::LANDED: // parachute deployment might have failed and falsely enterd landed state
-        bool success = _parachute.deploy();
-        if (!success) {
+        if (!_parachute.deploy()) {
             return false;
         }
         _currentState = FlightState::ABORTED;

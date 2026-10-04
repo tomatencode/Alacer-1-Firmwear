@@ -10,10 +10,19 @@
 
 class ControlPID {
 public:
+    struct PIDParameters {
+        float kp;
+        float ki;
+        float kd;
+    };
+
     ControlPID(RotationAccumulator& rotationAccumulator, hardware::Gimbal& gimbal);
 
     void setPIDParameters(float kp, float ki, float kd);
+    std::optional<PIDParameters> getPIDParameters() const; // std::nullopt until all three are set
+
     void setTarget(const Eigen::Quaternionf& targetAngle);
+    std::optional<Eigen::Quaternionf> getTarget() const; // std::nullopt until a target is set
 
     void clearConfig();
 
@@ -21,6 +30,7 @@ public:
 
     void startControlling();
     void stopControlling();
+    bool setControlling(bool controlling); // true once the requested state is reached
     bool isControlling() const { return _isControlling; }
 
     void update();

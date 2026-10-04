@@ -24,8 +24,19 @@ void ControlPID::setPIDParameters(float kp, float ki, float kd) {
     _kd = kd;
 }
 
+std::optional<ControlPID::PIDParameters> ControlPID::getPIDParameters() const {
+    if (!_kp.has_value() || !_ki.has_value() || !_kd.has_value()) {
+        return std::nullopt;
+    }
+    return PIDParameters{_kp.value(), _ki.value(), _kd.value()};
+}
+
 void ControlPID::setTarget(const Eigen::Quaternionf& targetAngle) {
     _targetAngle = targetAngle;
+}
+
+std::optional<Eigen::Quaternionf> ControlPID::getTarget() const {
+    return _targetAngle;
 }
 
 void ControlPID::startControlling() {
@@ -34,6 +45,15 @@ void ControlPID::startControlling() {
 }
 void ControlPID::stopControlling() {
   _isControlling = false;
+}
+
+bool ControlPID::setControlling(bool controlling) {
+  if (controlling) {
+    startControlling();
+  } else {
+    stopControlling();
+  }
+  return _isControlling == controlling;
 }
 
 void ControlPID::clearConfig() {

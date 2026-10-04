@@ -10,6 +10,7 @@
 
 #include "./hardwareIO/led/BlinkLed.hpp"
 #include "./hardwareIO/buzzer/Buzzer.hpp"
+#include "./hardwareIO/battery/Battery.hpp"
 #include "./hardwareIO/radio/HC12.hpp"
 #include "./hardwareIO/imu/ICM45686.hpp"
 #include "./hardwareIO/barometer/MS5611.hpp"
@@ -51,6 +52,7 @@
 #include "./radioLink/requestHandlers/controlPID/SetPIDTargetHandler.hpp"
 #include "./radioLink/requestHandlers/controlPID/GetPIDTargetHandler.hpp"
 #include "./radioLink/requestHandlers/led/FlashLedHandler.hpp"
+#include "./radioLink/requestHandlers/battery/GetBatteryVoltageHandler.hpp"
 
 #include "./rotationEstimation/IMURocketCoordinateConverter.hpp"
 #include "./rotationEstimation/RotationAccumulator.hpp"
@@ -64,6 +66,8 @@
 
 hardware::BlinkLed statusLed(PB14, 35, 50);
 hardware::Buzzer buzzer(PA8);
+
+hardware::Battery battery(PB1);
 
 hardware::Servo pitchServo(PA1, 2, 0.0f, 180.0f, 90.0f, 544, 2400, 180.0);
 hardware::Servo yawServo(PA2, 3, 0.0f, 180.0f, 90.0f, 544, 2400, 180.0);
@@ -152,6 +156,7 @@ GetControllingHandler getControllingHandler(controlPID);
 SetPIDTargetHandler setPIDTargetHandler(controlPID);
 GetPIDTargetHandler getPIDTargetHandler(controlPID);
 FlashLedHandler flashLedHandler(statusLed);
+GetBatteryVoltageHandler getBatteryVoltageHandler(battery);
 
 const hardware::Buzzer::Melody startupMelody = {
     {262, 200},
@@ -162,6 +167,8 @@ const hardware::Buzzer::Melody startupMelody = {
 void setup() {
     statusLed.begin();
     buzzer.begin();
+
+    battery.begin();
 
     radioHC12.begin();
 
@@ -193,6 +200,7 @@ void setup() {
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_BAROMETER, barometerHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_GIMBAL, getGimbalHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::SET_GIMBAL, setGimbalHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_BATTERY_VOLTAGE, getBatteryVoltageHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_ROTATION, getRotationHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::SET_ROTATION, setRotationHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::FIRE_PYRO, firePyroHandler.callback());

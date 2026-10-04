@@ -4,19 +4,21 @@
 
 #include "../../MessageScheduler.hpp"
 #include "../../../rotationEstimation/RotationAccumulator.hpp"
-#include "../FixedPointCodec.hpp"
+#include "../QuaternionCodec.hpp"
 
+// GET_ROTATION request:
+//   empty payload.
+// Response:
+//   16 bytes: current orientation quaternion (x, y, z, w), each an int32
+//   fixed-point value scaled by 100 (fixedPoint::kScale).
 class GetRotationHandler {
 public:
     explicit GetRotationHandler(RotationAccumulator& rotationAccumulator)
         : _rotationAccumulator(rotationAccumulator) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t>, std::span<uint8_t> response) {
-        Eigen::Vector3f rotation_rad = _rotationAccumulator.getEulerAngles_rad();
-        fixedPoint::encode32(rotation_rad.x(), response, 0);
-        fixedPoint::encode32(rotation_rad.y(), response, 4);
-        fixedPoint::encode32(rotation_rad.z(), response, 8);
-        return {MessageScheduler::HandlerResultStatus::SUCCESS, 12};
+        quaternionCodec::encode(_rotationAccumulator.getRotationQuaternion(), response, 0);
+        return {MessageScheduler::HandlerResultStatus::SUCCESS, quaternionCodec::ENCODED_SIZE};
     }
 
     MessageScheduler::RequestHandler callback() {

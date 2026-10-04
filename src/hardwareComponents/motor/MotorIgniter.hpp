@@ -11,6 +11,8 @@ public:
 
     bool canIgnite() { return _pyroChannel && _pyroChannel->canFire(); };
     bool ignite() { return _pyroChannel && _pyroChannel->fire(IGNITE_DURATION_ms); };
+    bool stopIgniting() { if (_pyroChannel)  { _pyroChannel->stopFiring(); return true; } return false; };
+    
 private:
     static constexpr uint32_t IGNITE_DURATION_ms = 1000;
 

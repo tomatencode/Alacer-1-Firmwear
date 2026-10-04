@@ -2,9 +2,15 @@
 
 #include <Arduino.h>
 
-PyroManager::PyroManager(int hardwareArmPin)
-    : _hardwareArmPin(hardwareArmPin), _softwareArm(false)
-{}
+PyroManager::PyroManager(int hardwareArmPin, std::span<PyroChannel*> pyroChannels)
+    : _hardwareArmPin(hardwareArmPin), _softwareArm(false), _pyroChannels(pyroChannels)
+{
+    for (auto& channel : _pyroChannels) {
+        if (channel) {
+            channel->setPyroManager(this);
+        }
+    }
+}
 
 void PyroManager::begin() {
     pinMode(_hardwareArmPin, INPUT);
@@ -28,4 +34,16 @@ void PyroManager::softwareDisarm() {
 
 bool PyroManager::isSoftwareArmed() {
     return _softwareArm;
+}
+
+std::optional<PyroChannel*> PyroManager::getPyroChannel(size_t index) {
+    if (index < _pyroChannels.size()) {
+        return _pyroChannels[index];
+    } else {
+        return std::nullopt;
+    }
+}
+
+std::span<PyroChannel*> PyroManager::getPyroChannels() {
+    return _pyroChannels;
 }

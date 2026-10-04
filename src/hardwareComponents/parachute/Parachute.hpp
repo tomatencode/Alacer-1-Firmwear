@@ -17,6 +17,7 @@ public:
         }
         return false;
     };
+    bool stopDeploying() { if (_pyroChannel)  { _pyroChannel->stopFiring(); return true; } return false; };
 
     void reset() { _didDeploy = false; };
     bool isDeployed() { return _didDeploy; };

@@ -1,7 +1,7 @@
 #include "FlightStateManager.hpp"
 
-FlightStateManager::FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, BarometricHeightCalculator& barometricHeightCalculator, VerticalMovementTracker& verticalMovementTracker, HorizontalMovementTracker& horizontalMovementTracker, MotorIgniter& motorIgniter, Parachute& parachute) 
-    : _controlPID(controlPID), _rotationAccumulator(rotationAccumulator), _barometricHeightCalculator(barometricHeightCalculator), _verticalMovementTracker(verticalMovementTracker), _horizontalMovementTracker(horizontalMovementTracker), _motorIgniter(motorIgniter), _parachute(parachute) {}
+FlightStateManager::FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, BarometricHeightCalculator& barometricHeightCalculator, VerticalMovementTracker& verticalMovementTracker, HorizontalMovementTracker& horizontalMovementTracker, PyroManager& pyroManager, MotorIgniter& motorIgniter, Parachute& parachute) 
+    : _controlPID(controlPID), _rotationAccumulator(rotationAccumulator), _barometricHeightCalculator(barometricHeightCalculator), _verticalMovementTracker(verticalMovementTracker), _horizontalMovementTracker(horizontalMovementTracker), _pyroManager(pyroManager), _motorIgniter(motorIgniter), _parachute(parachute) {}
 
 FlightState FlightStateManager::getCurrentState() const {
     return _currentState;
@@ -28,11 +28,18 @@ bool FlightStateManager::abort() {
         return true;
     case FlightState::BURNING:
         _controlPID.stopControlling();
-        _parachute.deploy();
+        _motorIgniter.stopIgniting();
+        bool success = _parachute.deploy();
+        if (!success) {
+            return false;
+        }
         _currentState = FlightState::ABORTED;
         return true;
     case FlightState::COASTING:
-        _parachute.deploy();
+        bool success = _parachute.deploy();
+        if (!success) {
+            return false;
+        }
         _currentState = FlightState::ABORTED;
         return true;
     
@@ -42,18 +49,24 @@ bool FlightStateManager::abort() {
 }
 
 
-bool FlightStateManager::startCountdown() {
+bool FlightStateManager::startCountdown(FlightProfile flightProfile) {
     if (_currentState != FlightState::IDLE) {
         return false;
     }
 
-    if (!preflightChecks()) {
-        return false;
+    _flightProfile = flightProfile;
+    
+    bool configSuccess = configureForFlight();
+    bool checksSuccess = preflightChecks();
+
+    if (configSuccess && checksSuccess) {
+        _hasFlightProfile = true; // Flight profile successfully set
+        _countdownStartTime = millis();
+        _currentState = FlightState::COUNTDOWN;
+        return true; // Countdown successfully started
     }
 
-    startCountdownSequence();
-
-    return true;
+    return false; // Failed to start countdown
 }
 
 std::optional<uint32_t> FlightStateManager::getCountdownRemaining_ms() const {
@@ -62,10 +75,10 @@ std::optional<uint32_t> FlightStateManager::getCountdownRemaining_ms() const {
     }
 
     const uint32_t elapsed = millis() - _countdownStartTime;
-    if (elapsed >= COUNTDOWN_DURATION_ms) {
+    if (elapsed >= _flightProfile.countdownDuration_ms) {
         return std::nullopt;
     }
-    return COUNTDOWN_DURATION_ms - elapsed;
+    return _flightProfile.countdownDuration_ms - elapsed;
 }
 
 void FlightStateManager::update() {
@@ -76,13 +89,13 @@ void FlightStateManager::update() {
         break;
     case FlightState::COUNTDOWN:
         // Handle COUNTDOWN state
-        if (millis() - _countdownStartTime >= COUNTDOWN_DURATION_ms) {
+        if (millis() - _countdownStartTime >= _flightProfile.countdownDuration_ms) {
             launchSequence();
             _currentState = FlightState::BURNING;
         }
         break;
     case FlightState::BURNING:
-        if (millis() - _motorStartBurnTime >= MOTOR_BURN_DURATION_ms) {
+        if (millis() - _motorStartBurnTime >= _flightProfile.motorBurnDuration_ms) {
             _controlPID.stopControlling();
             _horizontalMovementTracker.setAscentStage(HorizontalMovementTracker::AscentStage::COASTING);
             _currentState = FlightState::COASTING;
@@ -96,7 +109,7 @@ void FlightStateManager::update() {
         }
         break;
     case FlightState::DESCENDING:
-        if (_verticalMovementTracker.getHeight_m() <= 2.0f && _verticalMovementTracker.hasVelocityEstimate() && _verticalMovementTracker.getVelocity_m_s() <= 1.0f) {
+        if (_verticalMovementTracker.getHeight_m() <= _flightProfile.initialHeight_m + 3.0f && _verticalMovementTracker.hasVelocityEstimate() && _verticalMovementTracker.getVelocity_m_s() <= 1.0f) {
             _verticalMovementTracker.stopTracking();
             _horizontalMovementTracker.stopTracking();
             _currentState = FlightState::LANDED;
@@ -114,7 +127,7 @@ void FlightStateManager::update() {
     }
 }
 bool FlightStateManager::isMidFlight() const {
-    return _currentState == FlightState::BURNING || _currentState == FlightState::COASTING || _currentState == FlightState::DESCENDING;
+    return _currentState != FlightState::IDLE && _currentState != FlightState::LANDED && _currentState != FlightState::ABORTED;
 }
 
 bool FlightStateManager::preflightChecks() {
@@ -126,22 +139,51 @@ bool FlightStateManager::preflightChecks() {
     return true;
 }
 
-void FlightStateManager::startCountdownSequence() {
-    _countdownStartTime = millis();
-    _currentState = FlightState::COUNTDOWN;
+bool FlightStateManager::configureForFlight() {
+    std::optional<PyroChannel*> parachuteChannelOpt = _pyroManager.getPyroChannel(_flightProfile.parachutePyroChannel);
+    std::optional<PyroChannel*> motorChannelOpt = _pyroManager.getPyroChannel(_flightProfile.motorIgniterChannel);
+    
+    if (!parachuteChannelOpt.has_value() || !motorChannelOpt.has_value()) {
+        return false;
+    }
 
-    _barometricHeightCalculator.calibrateTo(0);
+    PyroChannel* parachuteChannel = parachuteChannelOpt.value();
+    PyroChannel* motorChannel = motorChannelOpt.value();
+
+    if (parachuteChannel == nullptr || motorChannel == nullptr) {
+        return false;
+    }
+
+    _parachute.setPyroChannel(*parachuteChannel);
+    _motorIgniter.setPyroChannel(*motorChannel);
+
+    _barometricHeightCalculator.calibrateTo(_flightProfile.initialHeight_m);
+
+    _rotationAccumulator.stopAccumulation();
+    _rotationAccumulator.setRotationQuaternion(_flightProfile.initialRotation);
+
+    _controlPID.setPIDParameters(_flightProfile.pidKp, _flightProfile.pidKi, _flightProfile.pidKd);
+    _controlPID.setTarget(_flightProfile.targetAngle);
 
     _verticalMovementTracker.reset();
     _horizontalMovementTracker.reset();
+
+    return true;
 }
 
-void FlightStateManager::launchSequence() {
+bool FlightStateManager::launchSequence() {
+    bool success = _motorIgniter.ignite();
+
+    if (!success) {
+        return false;
+    }
+
     _rotationAccumulator.startAccumulation();
     _verticalMovementTracker.startTracking();
     _horizontalMovementTracker.startTracking();
     _controlPID.startControlling();
     
     _motorStartBurnTime = millis();
-    _motorIgniter.ignite();
+
+    return true;
 }

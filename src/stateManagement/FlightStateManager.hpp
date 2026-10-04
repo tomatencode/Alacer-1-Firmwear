@@ -5,6 +5,8 @@
 
 #include <Arduino.h>
 
+#include "../hardwareIO/pyro/PyroManager.hpp"
+
 #include "../rotationEstimation/RotationAccumulator.hpp"
 #include "../hardwareComponents/parachute/Parachute.hpp"
 #include "../hardwareComponents/motor/MotorIgniter.hpp"
@@ -26,9 +28,26 @@ enum class FlightState {
     ABORTED
 };
 
+struct FlightProfile {
+    uint32_t countdownDuration_ms;
+    uint32_t motorBurnDuration_ms;
+
+    Eigen::Quaternionf initialRotation;
+    Eigen::Quaternionf targetAngle;
+
+    float pidKp;
+    float pidKi;
+    float pidKd;
+
+    int motorIgniterChannel;
+    int parachutePyroChannel;
+
+    float initialHeight_m;
+};
+
 class FlightStateManager {
 public:
-    FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, BarometricHeightCalculator& barometricHeightCalculator, VerticalMovementTracker& verticalMovementTracker, HorizontalMovementTracker& horizontalMovementTracker, MotorIgniter& motorIgniter, Parachute& parachute);
+    FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, BarometricHeightCalculator& barometricHeightCalculator, VerticalMovementTracker& verticalMovementTracker, HorizontalMovementTracker& horizontalMovementTracker, PyroManager& pyroManager, MotorIgniter& motorIgniter, Parachute& parachute);
 
     FlightState getCurrentState() const; // should not be used in logic, only for debugging
 
@@ -39,7 +58,7 @@ public:
     bool abort();
 
     // denied if not in IDLE state
-    bool startCountdown();
+    bool startCountdown(FlightProfile flightProfile);
 
     std::optional<uint32_t> getCountdownRemaining_ms() const;
 
@@ -47,9 +66,8 @@ public:
 
     void update();
 private:
-    static constexpr uint32_t COUNTDOWN_DURATION_ms = 10000;
-    static constexpr uint32_t MOTOR_BURN_DURATION_ms = 6500;
-
+    bool _hasFlightProfile = false;
+    FlightProfile _flightProfile;
 
     FlightState _currentState = FlightState::IDLE;
 
@@ -58,15 +76,16 @@ private:
 
     bool preflightChecks();
 
-    void startCountdownSequence();
+    bool configureForFlight();
 
-    void launchSequence();
+    bool launchSequence();
 
     ControlPID& _controlPID;
     RotationAccumulator& _rotationAccumulator;
     BarometricHeightCalculator& _barometricHeightCalculator;
     VerticalMovementTracker& _verticalMovementTracker;
     HorizontalMovementTracker& _horizontalMovementTracker;
+    PyroManager& _pyroManager;
     MotorIgniter& _motorIgniter;
     Parachute& _parachute;
 };

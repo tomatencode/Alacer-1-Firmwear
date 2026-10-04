@@ -60,11 +60,17 @@ hardware::Buzzer buzzer(PA8);
 hardware::Servo pitchServo(PA1, 2, 0.0f, 180.0f, 90.0f, 544, 2400, 180.0);
 hardware::Servo yawServo(PA2, 3, 0.0f, 180.0f, 90.0f, 544, 2400, 180.0);
 
-PyroManager pyroManager(PC13);
-PyroChannel pyroChannel1(PB5, PB4, pyroManager);
-PyroChannel pyroChannel2(PB6, PB7, pyroManager);
-PyroChannel pyroChannel3(PB8, PB9, pyroManager);
-std::array<PyroChannel*, 3> pyroChannels = {&pyroChannel1, &pyroChannel2, &pyroChannel3};
+PyroChannel pyroChannel1(PB5, PB4);
+PyroChannel pyroChannel2(PB6, PB7);
+PyroChannel pyroChannel3(PB8, PB9);
+
+std::array<PyroChannel*, 3> pyroChannels = {
+    &pyroChannel1,
+    &pyroChannel2,
+    &pyroChannel3
+};
+
+PyroManager pyroManager(PC13, pyroChannels);
 
 hardware::HC12 radioHC12(PB15, PA9, PA10);
 
@@ -104,7 +110,7 @@ HorizontalMovementTracker horizontalMovementTracker(verticalMovementTracker, rot
 
 ControlPID controlPID(rotationAccumulator, gimbal);
 
-FlightStateManager flightStateManager(controlPID, rotationAccumulator, barometricHeightCalculator, verticalMovementTracker, horizontalMovementTracker, motorIgniter, parachute);
+FlightStateManager flightStateManager(controlPID, rotationAccumulator, barometricHeightCalculator, verticalMovementTracker, horizontalMovementTracker, pyroManager, motorIgniter, parachute);
 
 Protocol::Parser radioLinkParser;
 MessageScheduler messageScheduler(radioLinkParser, radioHC12);
@@ -117,8 +123,8 @@ GetGimbalHandler getGimbalHandler(gimbal);
 SetGimbalHandler setGimbalHandler(gimbal);
 GetRotationHandler getRotationHandler(rotationAccumulator);
 SetRotationHandler setRotationHandler(rotationAccumulator);
-FirePyroHandler firePyroHandler(pyroChannels);
-GetPyroContinuityHandler getPyroContinuityHandler(pyroChannels);
+FirePyroHandler firePyroHandler(pyroManager.getPyroChannels());
+GetPyroContinuityHandler getPyroContinuityHandler(pyroManager.getPyroChannels());
 GetPyroSoftwareArmedHandler getPyroSoftwareArmedHandler(pyroManager);
 SetPyroSoftwareArmedHandler setPyroSoftwareArmedHandler(pyroManager);
 GetPyroHardwareArmedHandler getPyroHardwareArmedHandler(pyroManager);

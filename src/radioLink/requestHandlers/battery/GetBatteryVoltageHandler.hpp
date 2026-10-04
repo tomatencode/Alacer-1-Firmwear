@@ -11,7 +11,7 @@ public:
     MessageScheduler::HandlerResult handle(std::span<const uint8_t>, std::span<uint8_t> response) {
         float voltage = _battery.getVoltage_v();
         fixedPoint::encode16(voltage, response, 0);
-        return {MessageScheduler::HandlerResultStatus::SUCCESS, sizeof(voltage) };
+        return {MessageScheduler::HandlerResultStatus::SUCCESS, 2 };
     }
 
     MessageScheduler::RequestHandler callback() {

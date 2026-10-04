@@ -62,8 +62,8 @@ void ControlPID::clearConfig() {
     _kp = std::nullopt;
     _ki = std::nullopt;
     _kd = std::nullopt;
-    _integralPitch_rad = 0.0f;
     _integralYaw_rad = 0.0f;
+    _integralPitch_rad = 0.0f;
 }
 
 void ControlPID::update() {
@@ -85,8 +85,9 @@ void ControlPID::update() {
     // qCurrent maps body -> world, qTarget is the desired body -> world.
     // qErr = qCurrent^-1 * qTarget is the rotation that takes the current
     // body frame to the target frame. Its rotation-vector (angle * axis)
-    // gives a singularity-free, wrap-free error. X = pitch, Y = yaw,
-    // Z (roll) is intentionally ignored: axisymmetric rocket, no roll control.
+    // gives a singularity-free, wrap-free error. Rocket +X is yaw, +Y is
+    // pitch, and +Z is roll. Roll is intentionally ignored because the rocket
+    // is axisymmetric.
     Eigen::Quaternionf qCurrent = _rotationAccumulator.getRotationQuaternion().normalized();
     Eigen::Quaternionf qTarget = _targetAngle->normalized();
     Eigen::Quaternionf qErr = qCurrent.conjugate() * qTarget;
@@ -95,8 +96,8 @@ void ControlPID::update() {
         qErr.coeffs() = -qErr.coeffs();
     }
 
-    float pitchError_rad = 0.0f;
     float yawError_rad = 0.0f;
+    float pitchError_rad = 0.0f;
     {
         float w = qErr.w();
         if (w > 1.0f) w = 1.0f;
@@ -107,31 +108,33 @@ void ControlPID::update() {
             const float invSin = 1.0f / sinHalfAngle;
             Eigen::Vector3f axis(qErr.x() * invSin, qErr.y() * invSin, qErr.z() * invSin);
             Eigen::Vector3f errRotVec = angle_rad * axis;
-            pitchError_rad = errRotVec.x();
-            yawError_rad = errRotVec.y();
+            yawError_rad = errRotVec.x();
+            pitchError_rad = errRotVec.y();
             // errRotVec.z() is roll error: measured but not controlled.
         }
         // else: angle ~0 or ~2pi, error stays zero.
     }
 
-    _integralPitch_rad += pitchError_rad * deltaTime_s;
     _integralYaw_rad += yawError_rad * deltaTime_s;
+    _integralPitch_rad += pitchError_rad * deltaTime_s;
 
     Eigen::Vector3f angularVelocity_rad_s = _rotationAccumulator.getAngularVelocity_rad_s();
-    float pitchRate_rad_s = angularVelocity_rad_s[0];
-    float yawRate_rad_s = angularVelocity_rad_s[1];
-
-    float pitchOutput_rad = _kp.value() * pitchError_rad
-                          + _ki.value() * _integralPitch_rad
-                          - _kd.value() * pitchRate_rad_s;
+    float yawRate_rad_s = angularVelocity_rad_s[0];
+    float pitchRate_rad_s = angularVelocity_rad_s[1];
 
     float yawOutput_rad = _kp.value() * yawError_rad
                         + _ki.value() * _integralYaw_rad
                         - _kd.value() * yawRate_rad_s;
 
+    float pitchOutput_rad = _kp.value() * pitchError_rad
+                          + _ki.value() * _integralPitch_rad
+                          - _kd.value() * pitchRate_rad_s;
+
     hardware::Gimbal::GimbalPos targetPos{
-        .pitch_deg = pitchOutput_rad * 180.0f / std::numbers::pi_v<float>,
-        .yaw_deg = yawOutput_rad * 180.0f / std::numbers::pi_v<float>
+        // Preserve the installed hardware mapping: rocket yaw uses the pitch
+        // gimbal channel and rocket pitch uses the yaw gimbal channel.
+        .pitch_deg = yawOutput_rad * 180.0f / std::numbers::pi_v<float>,
+        .yaw_deg = pitchOutput_rad * 180.0f / std::numbers::pi_v<float>
     };
 
     _gimbal.setTarget(targetPos);

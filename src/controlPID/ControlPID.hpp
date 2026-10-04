@@ -51,6 +51,6 @@ private:
     std::optional<float> _ki;
     std::optional<float> _kd;
 
-    float _integralPitch_rad = 0.0f;
     float _integralYaw_rad = 0.0f;
+    float _integralPitch_rad = 0.0f;
 };

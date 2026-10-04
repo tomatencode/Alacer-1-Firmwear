@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include <array>
-#include <numbers>
 #include <span>
 
 #include <etl/vector.h>
@@ -105,10 +104,12 @@ hardware::Gimbal gimbal(
     GIMBAL_PITCH_SERVO_OFFSET_deg, GIMBAL_YAW_SERVO_OFFSET_deg
 );
 
-const Eigen::Quaternionf imuToRocketRotation =
-    Eigen::AngleAxisf(IMU_ROLL_DEG * std::numbers::pi_v<float> / 180.0f, Eigen::Vector3f::UnitX()) *
-    Eigen::AngleAxisf(IMU_PITCH_DEG * std::numbers::pi_v<float> / 180.0f, Eigen::Vector3f::UnitY()) *
-    Eigen::AngleAxisf(IMU_YAW_DEG * std::numbers::pi_v<float> / 180.0f, Eigen::Vector3f::UnitZ());
+const Eigen::Matrix3f imuToRocketRotationMatrix = (Eigen::Matrix3f() <<
+    IMU_TO_ROCKET_ROTATION_MATRIX[0][0], IMU_TO_ROCKET_ROTATION_MATRIX[0][1], IMU_TO_ROCKET_ROTATION_MATRIX[0][2],
+    IMU_TO_ROCKET_ROTATION_MATRIX[1][0], IMU_TO_ROCKET_ROTATION_MATRIX[1][1], IMU_TO_ROCKET_ROTATION_MATRIX[1][2],
+    IMU_TO_ROCKET_ROTATION_MATRIX[2][0], IMU_TO_ROCKET_ROTATION_MATRIX[2][1], IMU_TO_ROCKET_ROTATION_MATRIX[2][2]).finished();
+
+const Eigen::Quaternionf imuToRocketRotation(imuToRocketRotationMatrix);
 
 IMURocketCoordinateConverter imuRocketConverter(
     Eigen::Vector3f{IMU_TO_ROCKET_X, IMU_TO_ROCKET_Y, IMU_TO_ROCKET_Z},

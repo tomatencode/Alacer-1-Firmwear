@@ -60,6 +60,8 @@ public:
     // denied if not in IDLE state
     bool startCountdown(FlightProfile flightProfile);
 
+    bool retryDeployParachute();
+
     std::optional<uint32_t> getCountdownRemaining_ms() const;
 
     bool isMidFlight() const;

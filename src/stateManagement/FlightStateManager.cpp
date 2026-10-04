@@ -36,6 +36,8 @@ bool FlightStateManager::abort() {
         _currentState = FlightState::ABORTED;
         return true;
     case FlightState::COASTING:
+    case FlightState::DESCENDING: // parachute deployment might have failed
+    case FlightState::LANDED: // parachute deployment might have failed and falsely enterd landed state
         bool success = _parachute.deploy();
         if (!success) {
             return false;
@@ -46,6 +48,13 @@ bool FlightStateManager::abort() {
     default:
         return false;
     }
+}
+
+bool FlightStateManager::retryDeployParachute() {
+    if (_currentState != FlightState::ABORTED) {
+        return false;
+    }
+    return _parachute.deploy();
 }
 
 

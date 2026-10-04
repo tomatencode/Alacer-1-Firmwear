@@ -31,6 +31,7 @@
 #include "./radioLink/requestHandlers/gimbal/SetGimbalHandler.hpp"
 #include "./radioLink/requestHandlers/rotation/GetRotationHandler.hpp"
 #include "./radioLink/requestHandlers/rotation/SetRotationHandler.hpp"
+#include "./radioLink/requestHandlers/rotation/SetAccumulatingRotationHandler.hpp"
 #include "./radioLink/requestHandlers/pyro/FirePyroHandler.hpp"
 #include "./radioLink/requestHandlers/pyro/GetPyroContinuityHandler.hpp"
 #include "./radioLink/requestHandlers/pyro/GetPyroSoftwareArmedHandler.hpp"
@@ -135,6 +136,7 @@ GetGimbalHandler getGimbalHandler(gimbal);
 SetGimbalHandler setGimbalHandler(gimbal);
 GetRotationHandler getRotationHandler(rotationAccumulator);
 SetRotationHandler setRotationHandler(rotationAccumulator);
+SetAccumulatingRotationHandler setAccumulatingRotationHandler(rotationAccumulator);
 FirePyroHandler firePyroHandler(pyroManager.getPyroChannels());
 GetPyroContinuityHandler getPyroContinuityHandler(pyroManager.getPyroChannels());
 GetPyroSoftwareArmedHandler getPyroSoftwareArmedHandler(pyroManager);
@@ -203,6 +205,7 @@ void setup() {
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_BATTERY_VOLTAGE, getBatteryVoltageHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_ROTATION, getRotationHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::SET_ROTATION, setRotationHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::SET_ACCUMULATING_ROTATION, setAccumulatingRotationHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::FIRE_PYRO, firePyroHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_CONTINUITY, getPyroContinuityHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PYRO_SOFTWARE_ARMED, getPyroSoftwareArmedHandler.callback(), {.groundOnly = false});

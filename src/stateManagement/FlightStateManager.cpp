@@ -60,7 +60,6 @@ bool FlightStateManager::startCountdown(FlightProfile flightProfile) {
     bool checksSuccess = preflightChecks();
 
     if (configSuccess && checksSuccess) {
-        _hasFlightProfile = true; // Flight profile successfully set
         _countdownStartTime = millis();
         _currentState = FlightState::COUNTDOWN;
         return true; // Countdown successfully started

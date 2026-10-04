@@ -66,7 +66,6 @@ public:
 
     void update();
 private:
-    bool _hasFlightProfile = false;
     FlightProfile _flightProfile;
 
     FlightState _currentState = FlightState::IDLE;

@@ -5,6 +5,9 @@
 
 #include <Arduino.h>
 
+#include "FlightTypes.hpp"
+#include "FlightSequenceExecutor.hpp"
+
 #include "../rotationEstimation/RotationAccumulator.hpp"
 #include "../hardwareComponents/parachute/Parachute.hpp"
 #include "../hardwareComponents/motor/MotorIgniter.hpp"
@@ -14,35 +17,9 @@
 #include "../ascentTracking/HorizontalMovementTracker.hpp"
 #include "../controlPID/ControlPID.hpp"
 
-
-enum class FlightState {
-    IDLE,
-    COUNTDOWN,
-    BURNING,
-    COASTING,
-    DESCENDING,
-    LANDED,
-
-    ABORTED
-};
-
-struct FlightProfile {
-    uint32_t countdownDuration_ms;
-    uint32_t motorBurnDuration_ms;
-
-    Eigen::Quaternionf initialRotation;
-    Eigen::Quaternionf targetAngle;
-
-    float pidKp;
-    float pidKi;
-    float pidKd;
-
-    PyroChannel* motorIgniterChannel;
-    PyroChannel* parachutePyroChannel;
-
-    float initialHeight_m;
-};
-
+// FlightStateManager owns the state machine only: guards + timing + transitions.
+// All hardware effects go through _executor, which is owned by value and private,
+// so no other code can reach it (option C). The executor never writes _currentState.
 class FlightStateManager {
 public:
     FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, BarometricHeightCalculator& barometricHeightCalculator, VerticalMovementTracker& verticalMovementTracker, HorizontalMovementTracker& horizontalMovementTracker, MotorIgniter& motorIgniter, Parachute& parachute);
@@ -71,19 +48,7 @@ private:
     FlightState _currentState = FlightState::IDLE;
 
     uint32_t _countdownStartTime = 0;
-    uint32_t _motorStartBurnTime;
+    uint32_t _motorStartBurnTime = 0;
 
-    bool preflightChecks();
-
-    bool configureForFlight();
-
-    bool launchSequence();
-
-    ControlPID& _controlPID;
-    RotationAccumulator& _rotationAccumulator;
-    BarometricHeightCalculator& _barometricHeightCalculator;
-    VerticalMovementTracker& _verticalMovementTracker;
-    HorizontalMovementTracker& _horizontalMovementTracker;
-    MotorIgniter& _motorIgniter;
-    Parachute& _parachute;
+    FlightSequenceExecutor _executor;
 };

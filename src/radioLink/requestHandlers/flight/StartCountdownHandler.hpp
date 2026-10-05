@@ -30,8 +30,8 @@ class StartCountdownHandler {
 public:
     static constexpr size_t PAYLOAD_SIZE = 58;
 
-    explicit StartCountdownHandler(FlightStateManager& flightStateManager)
-        : _flightStateManager(flightStateManager) {}
+    explicit StartCountdownHandler(FlightStateManager& flightStateManager, std::span<PyroChannel*> pyroChannels)
+        : _flightStateManager(flightStateManager), _pyroChannels(pyroChannels) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t>) {
         if (payload.size() < PAYLOAD_SIZE) {
@@ -46,8 +46,8 @@ public:
         flightProfile.pidKp = fixedPoint::decode32(payload, 40);
         flightProfile.pidKi = fixedPoint::decode32(payload, 44);
         flightProfile.pidKd = fixedPoint::decode32(payload, 48);
-        flightProfile.motorIgniterChannel = static_cast<int>(payload[52]);
-        flightProfile.parachutePyroChannel = static_cast<int>(payload[53]);
+        flightProfile.motorIgniterChannel = _pyroChannels[payload[52]];
+        flightProfile.parachutePyroChannel = _pyroChannels[payload[53]];
         flightProfile.initialHeight_m = fixedPoint::decode32(payload, 54);
 
         const bool started = _flightStateManager.startCountdown(flightProfile);
@@ -62,4 +62,5 @@ public:
 
 private:
     FlightStateManager& _flightStateManager;
+    std::span<PyroChannel*> _pyroChannels;
 };

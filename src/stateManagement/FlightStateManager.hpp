@@ -5,8 +5,6 @@
 
 #include <Arduino.h>
 
-#include "../hardwareIO/pyro/PyroManager.hpp"
-
 #include "../rotationEstimation/RotationAccumulator.hpp"
 #include "../hardwareComponents/parachute/Parachute.hpp"
 #include "../hardwareComponents/motor/MotorIgniter.hpp"
@@ -39,15 +37,15 @@ struct FlightProfile {
     float pidKi;
     float pidKd;
 
-    int motorIgniterChannel;
-    int parachutePyroChannel;
+    PyroChannel* motorIgniterChannel;
+    PyroChannel* parachutePyroChannel;
 
     float initialHeight_m;
 };
 
 class FlightStateManager {
 public:
-    FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, BarometricHeightCalculator& barometricHeightCalculator, VerticalMovementTracker& verticalMovementTracker, HorizontalMovementTracker& horizontalMovementTracker, PyroManager& pyroManager, MotorIgniter& motorIgniter, Parachute& parachute);
+    FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, BarometricHeightCalculator& barometricHeightCalculator, VerticalMovementTracker& verticalMovementTracker, HorizontalMovementTracker& horizontalMovementTracker, MotorIgniter& motorIgniter, Parachute& parachute);
 
     FlightState getCurrentState() const; // should not be used in logic, only for debugging
 
@@ -86,7 +84,6 @@ private:
     BarometricHeightCalculator& _barometricHeightCalculator;
     VerticalMovementTracker& _verticalMovementTracker;
     HorizontalMovementTracker& _horizontalMovementTracker;
-    PyroManager& _pyroManager;
     MotorIgniter& _motorIgniter;
     Parachute& _parachute;
 };

@@ -2,15 +2,15 @@
 
 #include <cstdint>
 
-#include "PyroManager.hpp"
+#include "PyroArmManager.hpp"
 
 class PyroChannel {
 public:
-    PyroChannel(int mosfetPin, int contPin);
+    PyroChannel(int mosfetPin, int contPin, PyroArmManager& pyroArmManager);
 
     void begin();
 
-    bool canFire() { return hasContinuity() && _pyroManager && _pyroManager->isArmed(); };
+    bool canFire() { return hasContinuity() && _pyroArmManager.isArmed(); };
     bool fire(uint32_t duration);
     void stopFiring();
 
@@ -19,8 +19,6 @@ public:
     void update();
 private:
 
-    friend class PyroManager;
-    void setPyroManager(PyroManager* pyroManager) { _pyroManager = pyroManager; }
 
     int _mosfetPin;
     int _contPin;
@@ -28,5 +26,5 @@ private:
     uint32_t _fireTime = 0;
     uint32_t _fireDuration = 0;
 
-    PyroManager* _pyroManager;
+    PyroArmManager& _pyroArmManager;
 };

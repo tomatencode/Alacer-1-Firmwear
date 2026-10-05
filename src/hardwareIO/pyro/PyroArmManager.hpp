@@ -3,16 +3,12 @@
 #include <span>
 #include <optional>
 
-class PyroChannel;
 
-class PyroManager {
+class PyroArmManager {
 public:
-    PyroManager(int hardwareArmPin, std::span<PyroChannel*> pyroChannels);
+    PyroArmManager(int hardwareArmPin);
 
     void begin();
-
-    std::optional<PyroChannel*> getPyroChannel(size_t index);
-    std::span<PyroChannel*> getPyroChannels();
 
     bool isArmed();
 
@@ -25,6 +21,4 @@ public:
 private:
     int _hardwareArmPin;
     bool _softwareArm = false;
-
-    std::span<PyroChannel*> _pyroChannels;
 };

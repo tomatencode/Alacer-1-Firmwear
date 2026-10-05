@@ -3,16 +3,16 @@
 #include <span>
 
 #include "../../MessageScheduler.hpp"
-#include "../../../hardwareIO/pyro/PyroManager.hpp"
+#include "../../../hardwareIO/pyro/PyroArmManager.hpp"
 
 // GET_PYRO_SOFTWARE_ARMED request: empty payload.
 // Response: SUCCESS with payload[0] = 1 if software-armed, 0 otherwise.
 class GetPyroSoftwareArmedHandler {
 public:
-    explicit GetPyroSoftwareArmedHandler(PyroManager& pyroManager) : _pyroManager(pyroManager) {}
+    explicit GetPyroSoftwareArmedHandler(PyroArmManager& pyroArmManager) : _pyroArmManager(pyroArmManager) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t>, std::span<uint8_t> response) {
-        response[0] = _pyroManager.isSoftwareArmed() ? 1 : 0;
+        response[0] = _pyroArmManager.isSoftwareArmed() ? 1 : 0;
         return {MessageScheduler::HandlerResultStatus::SUCCESS, 1};
     }
 
@@ -21,5 +21,5 @@ public:
     }
 
 private:
-    PyroManager& _pyroManager;
+    PyroArmManager& _pyroArmManager;
 };

@@ -3,7 +3,7 @@
 #include <span>
 
 #include "../../MessageScheduler.hpp"
-#include "../../../hardwareIO/pyro/PyroManager.hpp"
+#include "../../../hardwareIO/pyro/PyroArmManager.hpp"
 
 // SET_PYRO_SOFTWARE_ARMED request:
 //   payload[0] = 1 to software-arm, 0 to software-disarm.
@@ -12,7 +12,7 @@
 //   FAILURE with empty payload if payload missing or payload[0] not 0/1.
 class SetPyroSoftwareArmedHandler {
 public:
-    explicit SetPyroSoftwareArmedHandler(PyroManager& pyroManager) : _pyroManager(pyroManager) {}
+    explicit SetPyroSoftwareArmedHandler(PyroArmManager& pyroArmManager) : _pyroArmManager(pyroArmManager) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t>) {
         if (payload.size() < 1) {
@@ -20,9 +20,9 @@ public:
         }
 
         if (payload[0] == 1) {
-            _pyroManager.softwareArm();
+            _pyroArmManager.softwareArm();
         } else if (payload[0] == 0) {
-            _pyroManager.softwareDisarm();
+            _pyroArmManager.softwareDisarm();
         } else {
             return {MessageScheduler::HandlerResultStatus::FAILURE, 0};
         }
@@ -35,5 +35,5 @@ public:
     }
 
 private:
-    PyroManager& _pyroManager;
+    PyroArmManager& _pyroArmManager;
 };

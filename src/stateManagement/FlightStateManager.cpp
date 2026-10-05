@@ -1,7 +1,7 @@
 #include "FlightStateManager.hpp"
 
-FlightStateManager::FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, BarometricHeightCalculator& barometricHeightCalculator, VerticalMovementTracker& verticalMovementTracker, HorizontalMovementTracker& horizontalMovementTracker, PyroManager& pyroManager, MotorIgniter& motorIgniter, Parachute& parachute) 
-    : _controlPID(controlPID), _rotationAccumulator(rotationAccumulator), _barometricHeightCalculator(barometricHeightCalculator), _verticalMovementTracker(verticalMovementTracker), _horizontalMovementTracker(horizontalMovementTracker), _pyroManager(pyroManager), _motorIgniter(motorIgniter), _parachute(parachute) {}
+FlightStateManager::FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, BarometricHeightCalculator& barometricHeightCalculator, VerticalMovementTracker& verticalMovementTracker, HorizontalMovementTracker& horizontalMovementTracker, MotorIgniter& motorIgniter, Parachute& parachute) 
+    : _controlPID(controlPID), _rotationAccumulator(rotationAccumulator), _barometricHeightCalculator(barometricHeightCalculator), _verticalMovementTracker(verticalMovementTracker), _horizontalMovementTracker(horizontalMovementTracker), _motorIgniter(motorIgniter), _parachute(parachute) {}
 
 FlightState FlightStateManager::getCurrentState() const {
     return _currentState;
@@ -146,22 +146,13 @@ bool FlightStateManager::preflightChecks() {
 }
 
 bool FlightStateManager::configureForFlight() {
-    std::optional<PyroChannel*> parachuteChannelOpt = _pyroManager.getPyroChannel(_flightProfile.parachutePyroChannel);
-    std::optional<PyroChannel*> motorChannelOpt = _pyroManager.getPyroChannel(_flightProfile.motorIgniterChannel);
-    
-    if (!parachuteChannelOpt.has_value() || !motorChannelOpt.has_value()) {
+
+    if (_flightProfile.parachutePyroChannel == nullptr || _flightProfile.motorIgniterChannel == nullptr) {
         return false;
     }
 
-    PyroChannel* parachuteChannel = parachuteChannelOpt.value();
-    PyroChannel* motorChannel = motorChannelOpt.value();
-
-    if (parachuteChannel == nullptr || motorChannel == nullptr) {
-        return false;
-    }
-
-    _parachute.setPyroChannel(*parachuteChannel);
-    _motorIgniter.setPyroChannel(*motorChannel);
+    _parachute.setPyroChannel(*_flightProfile.parachutePyroChannel);
+    _motorIgniter.setPyroChannel(*_flightProfile.motorIgniterChannel);
 
     _barometricHeightCalculator.calibrateTo(_flightProfile.initialHeight_m);
 

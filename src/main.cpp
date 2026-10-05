@@ -14,7 +14,7 @@
 #include "./hardwareIO/imu/ICM45686.hpp"
 #include "./hardwareIO/barometer/MS5611.hpp"
 #include "./hardwareIO/servo/Servo.hpp"
-#include "./hardwareIO/pyro/PyroManager.hpp"
+#include "./hardwareIO/pyro/PyroArmManager.hpp"
 #include "./hardwareIO/pyro/PyroChannel.hpp"
 
 #include "./hardwareComponents/gimbal/Gimbal.hpp"
@@ -72,17 +72,17 @@ hardware::Battery battery(PB1);
 hardware::Servo pitchServo(PA1, 2, 0.0f, 180.0f, 90.0f, 544, 2400, 180.0);
 hardware::Servo yawServo(PA2, 3, 0.0f, 180.0f, 90.0f, 544, 2400, 180.0);
 
-PyroChannel pyroChannel1(PB5, PB4);
-PyroChannel pyroChannel2(PB6, PB7);
-PyroChannel pyroChannel3(PB8, PB9);
+PyroArmManager pyroArmManager(PC13);
+
+PyroChannel pyroChannel1(PB5, PB4, pyroArmManager);
+PyroChannel pyroChannel2(PB6, PB7, pyroArmManager);
+PyroChannel pyroChannel3(PB8, PB9, pyroArmManager);
 
 std::array<PyroChannel*, 3> pyroChannels = {
     &pyroChannel1,
     &pyroChannel2,
     &pyroChannel3
 };
-
-PyroManager pyroManager(PC13, pyroChannels);
 
 hardware::HC12 radioHC12(PB15, PA9, PA10);
 
@@ -124,7 +124,7 @@ HorizontalMovementTracker horizontalMovementTracker(verticalMovementTracker, rot
 
 ControlPID controlPID(rotationAccumulator, gimbal);
 
-FlightStateManager flightStateManager(controlPID, rotationAccumulator, barometricHeightCalculator, verticalMovementTracker, horizontalMovementTracker, pyroManager, motorIgniter, parachute);
+FlightStateManager flightStateManager(controlPID, rotationAccumulator, barometricHeightCalculator, verticalMovementTracker, horizontalMovementTracker, motorIgniter, parachute);
 
 Protocol::Parser radioLinkParser;
 MessageScheduler messageScheduler(radioLinkParser, radioHC12);
@@ -138,11 +138,11 @@ SetGimbalHandler setGimbalHandler(gimbal);
 GetRotationHandler getRotationHandler(rotationAccumulator);
 SetRotationHandler setRotationHandler(rotationAccumulator);
 SetAccumulatingRotationHandler setAccumulatingRotationHandler(rotationAccumulator);
-FirePyroHandler firePyroHandler(pyroManager.getPyroChannels());
-GetPyroContinuityHandler getPyroContinuityHandler(pyroManager.getPyroChannels());
-GetPyroSoftwareArmedHandler getPyroSoftwareArmedHandler(pyroManager);
-SetPyroSoftwareArmedHandler setPyroSoftwareArmedHandler(pyroManager);
-GetPyroHardwareArmedHandler getPyroHardwareArmedHandler(pyroManager);
+FirePyroHandler firePyroHandler(pyroChannels);
+GetPyroContinuityHandler getPyroContinuityHandler(pyroChannels);
+GetPyroSoftwareArmedHandler getPyroSoftwareArmedHandler(pyroArmManager);
+SetPyroSoftwareArmedHandler setPyroSoftwareArmedHandler(pyroArmManager);
+GetPyroHardwareArmedHandler getPyroHardwareArmedHandler(pyroArmManager);
 AbortFlightHandler abortFlightHandler(flightStateManager);
 EndFlightHandler endFlightHandler(flightStateManager);
 GetBaroHeightHandler baroHeightHandler(barometricHeightCalculator);
@@ -150,7 +150,7 @@ CalibrateBaroHeightHandler calibrateBaroHeightHandler(barometricHeightCalculator
 GetFlightLocationHandler flightLocationHandler(verticalMovementTracker, horizontalMovementTracker);
 GetFlightStateHandler flightStateHandler(flightStateManager);
 GetCountdownTimeHandler countdownTimeHandler(flightStateManager);
-StartCountdownHandler startCountdownHandler(flightStateManager);
+StartCountdownHandler startCountdownHandler(flightStateManager, pyroChannels);
 RetryDeployParachuteHandler retryDeployParachuteHandler(flightStateManager);
 SetPIDParametersHandler setPIDParametersHandler(controlPID);
 GetPIDParametersHandler getPIDParametersHandler(controlPID);
@@ -175,7 +175,7 @@ void setup() {
 
     radioHC12.begin();
 
-    pyroManager.begin();
+    pyroArmManager.begin();
     pyroChannel1.begin();
     pyroChannel2.begin();
     pyroChannel3.begin();

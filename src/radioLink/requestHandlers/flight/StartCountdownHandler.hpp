@@ -3,7 +3,7 @@
 #include <span>
 
 #include "../../MessageScheduler.hpp"
-#include "../../../stateManagement/FlightStateManager.hpp"
+#include "../../../flightStateManagement/FlightStateManager.hpp"
 #include "../LittleEndianCodec.hpp"
 #include "../FixedPointCodec.hpp"
 #include "../QuaternionCodec.hpp"

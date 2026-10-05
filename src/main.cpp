@@ -62,7 +62,7 @@
 #include "./ascentTracking/VerticalMovementTracker.hpp"
 #include "./ascentTracking/HorizontalMovementTracker.hpp"
 
-#include "./stateManagement/FlightStateManager.hpp"
+#include "./flightStateManagement/FlightStateManager.hpp"
 
 hardware::BlinkLed statusLed(PB14, 35, 50);
 hardware::Buzzer buzzer(PA8);

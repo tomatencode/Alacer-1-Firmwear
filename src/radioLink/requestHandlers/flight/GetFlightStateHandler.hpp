@@ -3,7 +3,7 @@
 #include <span>
 
 #include "../../MessageScheduler.hpp"
-#include "../../../stateManagement/FlightStateManager.hpp"
+#include "../../../flightStateManagement/FlightStateManager.hpp"
 
 // GET_FLIGHT_STATE request:
 //   empty payload.

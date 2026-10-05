@@ -49,7 +49,7 @@ bool FlightStateManager::abort() {
 }
 
 bool FlightStateManager::retryDeployParachute() {
-    if (_currentState != FlightState::ABORTED) {
+    if (_currentState != FlightState::ABORTED && _currentState != FlightState::DESCENDING && _currentState != FlightState::LANDED) {
         return false;
     }
     return _executor.deployParachute();

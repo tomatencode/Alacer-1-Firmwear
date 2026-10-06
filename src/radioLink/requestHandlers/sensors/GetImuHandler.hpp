@@ -4,7 +4,7 @@
 
 #include "../../MessageScheduler.hpp"
 #include "../../../hardwareIO/imu/IMU.hpp"
-#include "../FixedPointCodec.hpp"
+#include "../../../helpers/codec/FixedPointCodec.hpp"
 
 class GetImuHandler {
 public:

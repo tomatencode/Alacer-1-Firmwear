@@ -5,7 +5,7 @@
 #include "../../MessageScheduler.hpp"
 #include "../../../ascentTracking/VerticalMovementTracker.hpp"
 #include "../../../ascentTracking/HorizontalMovementTracker.hpp"
-#include "../FixedPointCodec.hpp"
+#include "../../../helpers/codec/FixedPointCodec.hpp"
 
 // Approximate flight location, taken from the ascent trackers.
 //

@@ -4,7 +4,7 @@
 
 #include "../../MessageScheduler.hpp"
 #include "../../../flightStateManagement/FlightStateManager.hpp"
-#include "../LittleEndianCodec.hpp"
+#include "../../../helpers/codec/LittleEndianCodec.hpp"
 
 // GET_COUNTDOWN_TIME request:
 //   empty payload.

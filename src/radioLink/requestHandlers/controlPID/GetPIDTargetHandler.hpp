@@ -4,7 +4,7 @@
 
 #include "../../MessageScheduler.hpp"
 #include "../../../controlPID/ControlPID.hpp"
-#include "../QuaternionCodec.hpp"
+#include "../../../helpers/codec/FixedPointCodec.hpp"
 
 // GET_PID_TARGET request:
 //   empty payload.

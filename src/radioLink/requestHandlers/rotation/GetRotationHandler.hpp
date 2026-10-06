@@ -4,7 +4,7 @@
 
 #include "../../MessageScheduler.hpp"
 #include "../../../rotationEstimation/RotationAccumulator.hpp"
-#include "../QuaternionCodec.hpp"
+#include "../../../helpers/codec/QuaternionCodec.hpp"
 
 // GET_ROTATION request:
 //   empty payload.

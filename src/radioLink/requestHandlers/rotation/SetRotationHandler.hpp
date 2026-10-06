@@ -4,7 +4,7 @@
 
 #include "../../MessageScheduler.hpp"
 #include "../../../rotationEstimation/RotationAccumulator.hpp"
-#include "../QuaternionCodec.hpp"
+#include "../../../helpers/codec/FixedPointCodec.hpp"
 
 // SET_ROTATION request:
 //   payload (16 bytes): orientation quaternion (x, y, z, w), each an int32

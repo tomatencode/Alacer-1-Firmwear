@@ -4,7 +4,7 @@
 
 #include "../../MessageScheduler.hpp"
 #include "../../../hardwareIO/led/BlinkLed.hpp"
-#include "../LittleEndianCodec.hpp"
+#include "../../../helpers/codec/LittleEndianCodec.hpp"
 
 // FLASH_LED request:
 //   empty payload = flash with the LED's default duration.

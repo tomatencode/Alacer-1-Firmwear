@@ -2,7 +2,7 @@
 
 #include "../../MessageScheduler.hpp"
 #include "../../../hardwareIO/battery/Battery.hpp"
-#include "../FixedPointCodec.hpp"
+#include "../../../helpers/codec/FixedPointCodec.hpp"
 
 class GetBatteryVoltageHandler {
 public:

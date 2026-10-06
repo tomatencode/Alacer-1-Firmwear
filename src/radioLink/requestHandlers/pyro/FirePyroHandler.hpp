@@ -4,7 +4,7 @@
 
 #include "../../MessageScheduler.hpp"
 #include "../../../hardwareIO/pyro/PyroChannel.hpp"
-#include "../LittleEndianCodec.hpp"
+#include "../../../helpers/codec/LittleEndianCodec.hpp"
 
 // FIRE_PYRO request:
 //   payload[0] = channel index (0-based into the channels array given at construction)

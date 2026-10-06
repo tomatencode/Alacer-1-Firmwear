@@ -4,7 +4,7 @@
 
 #include "../../MessageScheduler.hpp"
 #include "../../../controlPID/ControlPID.hpp"
-#include "../FixedPointCodec.hpp"
+#include "../../../helpers/codec/FixedPointCodec.hpp"
 
 // SET_PID_PARAMETERS request:
 //   payload (12 bytes): kp, ki, kd, each an int32 fixed-point value scaled by

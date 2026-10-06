@@ -4,9 +4,9 @@
 
 #include "../../MessageScheduler.hpp"
 #include "../../../flightStateManagement/FlightStateManager.hpp"
-#include "../LittleEndianCodec.hpp"
-#include "../FixedPointCodec.hpp"
-#include "../QuaternionCodec.hpp"
+#include "../../../helpers/codec/LittleEndianCodec.hpp"
+#include "../../../helpers/codec/FixedPointCodec.hpp"
+#include "../../../helpers/codec/FixedPointCodec.hpp"
 
 // START_COUNTDOWN request:
 //   payload (58 bytes):

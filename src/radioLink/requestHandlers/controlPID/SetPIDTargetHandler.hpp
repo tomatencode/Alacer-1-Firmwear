@@ -4,7 +4,7 @@
 
 #include "../../MessageScheduler.hpp"
 #include "../../../controlPID/ControlPID.hpp"
-#include "../QuaternionCodec.hpp"
+#include "../../../helpers/codec/FixedPointCodec.hpp"
 
 // SET_PID_TARGET request:
 //   payload (16 bytes): target attitude quaternion (x, y, z, w), each an int32

@@ -4,7 +4,7 @@
 
 #include "../../MessageScheduler.hpp"
 #include "../../../barometricHeightCalculation/BarometricHeightCalculator.hpp"
-#include "../FixedPointCodec.hpp"
+#include "../../../helpers/codec/FixedPointCodec.hpp"
 
 // GET_BARO_HEIGHT request:
 //   empty payload.

@@ -4,7 +4,7 @@
 
 #include "../../MessageScheduler.hpp"
 #include "../../../barometricHeightCalculation/BarometricHeightCalculator.hpp"
-#include "../FixedPointCodec.hpp"
+#include "../../../helpers/codec/FixedPointCodec.hpp"
 
 // CALIBRATE_BARO_HEIGHT request:
 //   payload[0..3] = fixed-point int32 scaled by 100: the height the current

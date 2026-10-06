@@ -82,6 +82,28 @@ bool isErased(const uint8_t *p, size_t len) {
     return true;
 }
 
+uint16_t crc16Update(uint16_t crc, const uint8_t *data, size_t len) {
+    for (size_t i = 0; i < len; ++i) {
+        crc ^= static_cast<uint16_t>(data[i]) << 8;
+        for (int b = 0; b < 8; ++b) {
+            crc = (crc & 0x8000) ? static_cast<uint16_t>((crc << 1) ^ 0x1021)
+                                 : static_cast<uint16_t>(crc << 1);
+        }
+    }
+    return crc;
+}
+
+uint16_t crc16(const uint8_t *data, size_t len) {
+    return crc16Update(0xFFFF, data, len);
+}
+
+uint16_t frameCrcRam(const uint8_t fhZeroed[8], const uint8_t *payload,
+                     size_t payLen) {
+    // fhZeroed must have crc bytes (6,7) already zeroed.
+    uint16_t crc = crc16(fhZeroed, 8);
+    return crc16Update(crc, payload, payLen);
+}
+
 uint8_t entryCrcOpen(const uint8_t name[kNameSize], uint32_t start) {
     uint8_t b[kNameSize + 5];
     memcpy(b, name, kNameSize);
@@ -103,10 +125,14 @@ uint8_t entryCrcClose(const uint8_t name[kNameSize], uint8_t flags,
 
 void nameToBytes(const char *name, size_t len, uint8_t out[kNameSize]) {
     memset(out, 0xFF, kNameSize);
-    if (len > kNameSize) {
-        len = kNameSize;
+    if (len >= kNameSize) {
+        // No room for NUL: store all 32 bytes, parseEntry() treats a full
+        // 32-byte field without NUL as a 32-char name.
+        memcpy(out, name, kNameSize);
+        return;
     }
     memcpy(out, name, len);
+    out[len] = 0x00; // NUL-terminate so parseEntry() finds the length
 }
 
 void buildEntryImage(uint8_t img[64], const uint8_t name[kNameSize],
@@ -323,69 +349,77 @@ uint32_t StorageManager::recoverLength(uint32_t start) {
     uint32_t len = 0;
     uint16_t expectSeq = 0;
     uint8_t fh[8];
-    std::array<uint8_t, 256> page{};
     while (start + len + kFrameHdrSize <= _capacity) {
-        if (!_flashChip.read(start + len, std::span(fh, kFrameHdrSize))) {
-            break;
-        }
-        if (isErased(fh, kFrameHdrSize)) {
-            break;
-        }
-        if (getU16(fh) != kFrameMagic) {
+        if (!readVerifiedFrameHeader(start + len, _capacity, expectSeq, fh)) {
             break;
         }
         const uint16_t payLen = getU16(fh + 2);
-        const uint16_t seq = getU16(fh + 4);
-        if (payLen == 0 || payLen > BUFFER_SIZE || seq != expectSeq) {
-            break;
+        if (!verifyFramePayload(start + len, fh)) {
+            break; // torn payload
         }
-        const uint32_t frameEnd = start + len + kFrameHdrSize + payLen;
-        if (frameEnd > _capacity) {
-            break;
-        }
-        uint16_t crc = 0xFFFF;
-        uint8_t hdrZero[8];
-        memcpy(hdrZero, fh, 8);
-        hdrZero[6] = 0;
-        hdrZero[7] = 0;
-        for (size_t i = 0; i < 8; ++i) {
-            crc ^= static_cast<uint16_t>(hdrZero[i]) << 8;
-            for (int b = 0; b < 8; ++b) {
-                crc = (crc & 0x8000) ? static_cast<uint16_t>((crc << 1) ^ 0x1021)
-                                     : static_cast<uint16_t>(crc << 1);
-            }
-        }
-        uint32_t off = start + len + static_cast<uint32_t>(kFrameHdrSize);
-        uint32_t left = payLen;
-        bool ok = true;
-        while (left > 0) {
-            const size_t chunk = left > page.size() ? page.size() : left;
-            if (!_flashChip.read(off, std::span(page.data(), chunk))) {
-                ok = false;
-                break;
-            }
-            for (size_t i = 0; i < chunk; ++i) {
-                crc ^= static_cast<uint16_t>(page[i]) << 8;
-                for (int b = 0; b < 8; ++b) {
-                    crc = (crc & 0x8000) ? static_cast<uint16_t>((crc << 1) ^ 0x1021)
-                                         : static_cast<uint16_t>(crc << 1);
-                }
-            }
-            off += static_cast<uint32_t>(chunk);
-            left -= static_cast<uint32_t>(chunk);
-        }
-        if (!ok) {
-            break;
-        }
-        if (crc != (static_cast<uint16_t>(fh[6]) | (static_cast<uint16_t>(fh[7]) << 8))) {
-            break; // torn frame
-        }
-        len = frameEnd - start;
+        len += static_cast<uint32_t>(kFrameHdrSize) + payLen;
         ++expectSeq;
     }
     return len;
 }
 // === PART3 END ===
+// Shared frame accept rule: header must be intact (magic/len/seq) and the
+// frame must fit inside capacityEnd. Payload CRC is checked separately by
+// verifyFramePayload().
+bool StorageManager::readVerifiedFrameHeader(uint32_t frameAddr,
+                                             uint32_t capacityEnd,
+                                             uint16_t expectSeq,
+                                             uint8_t fhOut[8]) {
+    if (frameAddr + kFrameHdrSize > capacityEnd) {
+        return false;
+    }
+    if (!_flashChip.read(frameAddr, std::span(fhOut, kFrameHdrSize))) {
+        return false;
+    }
+    if (isErased(fhOut, kFrameHdrSize)) {
+        return false;
+    }
+    if (getU16(fhOut) != kFrameMagic) {
+        return false;
+    }
+    const uint16_t payLen = getU16(fhOut + 2);
+    const uint16_t seq = getU16(fhOut + 4);
+    if (payLen == 0 || payLen > BUFFER_SIZE || seq != expectSeq) {
+        return false;
+    }
+    if (frameAddr + kFrameHdrSize + payLen > capacityEnd) {
+        return false;
+    }
+    return true;
+}
+
+bool StorageManager::verifyFramePayload(uint32_t frameAddr,
+                                        const uint8_t fh[8]) {
+    const uint16_t payLen = getU16(fh + 2);
+    if (payLen == 0 || payLen > BUFFER_SIZE) {
+        return false;
+    }
+    uint8_t hdrZero[8];
+    memcpy(hdrZero, fh, 8);
+    hdrZero[6] = 0;
+    hdrZero[7] = 0;
+    uint16_t crc = crc16(hdrZero, 8);
+    std::array<uint8_t, 256> page{};
+    uint32_t off = frameAddr + static_cast<uint32_t>(kFrameHdrSize);
+    uint32_t left = payLen;
+    while (left > 0) {
+        const size_t chunk = left > page.size() ? page.size() : left;
+        if (!_flashChip.read(off, std::span(page.data(), chunk))) {
+            return false;
+        }
+        crc = crc16Update(crc, page.data(), chunk);
+        off += static_cast<uint32_t>(chunk);
+        left -= static_cast<uint32_t>(chunk);
+    }
+    const uint16_t want =
+        static_cast<uint16_t>(fh[6]) | (static_cast<uint16_t>(fh[7]) << 8);
+    return crc == want;
+}
 // In-place close: program the tail (len + crcClose) and clear the state
 // bits OPEN->CLOSED. Erased bytes are FF so this only clears 1->0.
 // Returns false if the slot moved (compaction raced) - caller rescans.
@@ -417,14 +451,18 @@ bool StorageManager::closeEntry(const Filename &filename, uint32_t start,
             continue;
         }
         const uint8_t flags = recovered ? kFlagRecovered : kFlagNormal;
+        // Tail covers bytes 32..43: state/flags/start/len/crcOpen/crcClose.
+        // Bytes 42 (crcOpen) is already programmed and can only clear bits,
+        // so rewrite its current value to avoid corrupting it, then set 43.
         uint8_t tail[12];
         memset(tail, 0xFF, sizeof(tail));
         tail[0] = kStateClosed; // clears OPEN bits only
         tail[1] = flags;        // FF->FE or stays FF
         putU32(tail + 2, start); // same value, clears nothing new
         putU32(tail + 6, len);
-        tail[10] = entryCrcClose(want, flags, start, len);
-        if (!_flashChip.write(addr + 32, std::span<const uint8_t>(tail, 10))) {
+        tail[10] = img[42]; // preserve programmed crcOpen (1->0 only)
+        tail[11] = entryCrcClose(want, flags, start, len);
+        if (!_flashChip.write(addr + 32, std::span<const uint8_t>(tail, sizeof(tail)))) {
             return false;
         }
         return true;
@@ -517,7 +555,8 @@ bool StorageManager::ensureErased(uint32_t addr, uint32_t len) {
 
 // Erase exactly one not-yet-erased sector ahead of the write frontier so
 // flushes rarely have to erase inline. Skipped during flight bursts by
-// simply not calling update().
+// simply not calling update(). Clamped to a small lookahead so ground idle
+// does not erase the whole chip (wear + boot-time stall).
 void StorageManager::preEraseIdle() {
     if (!_mounted || _hasOpen) {
         return; // data content (and thus _erasedUpTo) may change on close
@@ -529,7 +568,22 @@ void StorageManager::preEraseIdle() {
     if (s + _sectorSize > _capacity) {
         return; // flash full, nothing to pre-erase
     }
-    _flashChip.eraseSector(s);
+    // Keep at most kPreEraseAhead sectors erased ahead of the write
+    // frontier; _writePtr only moves on close, so this is stable while idle.
+    constexpr uint32_t kPreEraseAhead = 2;
+    const uint32_t frontier = alignUp(_writePtr, _sectorSize);
+    if (s >= frontier + kPreEraseAhead * _sectorSize) {
+        return;
+    }
+    if (s < frontier) {
+        s = frontier;
+        if (s + _sectorSize > _capacity) {
+            return;
+        }
+    }
+    if (!_flashChip.eraseSector(s)) {
+        return; // retry next update(); don't advance _erasedUpTo
+    }
     _erasedUpTo = s + _sectorSize;
 }
 // === PART4 END ===
@@ -551,22 +605,7 @@ bool StorageManager::flushFrame() {
     putU16(fh + 4, _frameSeq);
     fh[6] = 0;
     fh[7] = 0;
-    uint16_t crc = 0xFFFF;
-    for (size_t i = 0; i < 8; ++i) {
-        crc ^= static_cast<uint16_t>(fh[i]) << 8;
-        for (int b = 0; b < 8; ++b) {
-            crc = (crc & 0x8000) ? static_cast<uint16_t>((crc << 1) ^ 0x1021)
-                                 : static_cast<uint16_t>(crc << 1);
-        }
-    }
-    for (size_t i = 0; i < _bufUsed; ++i) {
-        crc ^= static_cast<uint16_t>(_byteBuffer[i]) << 8;
-        for (int b = 0; b < 8; ++b) {
-            crc = (crc & 0x8000) ? static_cast<uint16_t>((crc << 1) ^ 0x1021)
-                                 : static_cast<uint16_t>(crc << 1);
-        }
-    }
-    putU16(fh + 6, crc);
+    putU16(fh + 6, frameCrcRam(fh, _byteBuffer.data(), _bufUsed));
     if (!_flashChip.write(_writePtr, std::span<const uint8_t>(fh, 8))) {
         return false;
     }
@@ -581,12 +620,18 @@ bool StorageManager::flushFrame() {
     return true;
 }
 
-void StorageManager::begin() {
+bool StorageManager::begin() {
     _sectorSize = _flashChip.getSectorSize();
     if (_sectorSize < kHdrSize + kEntrySize || _sectorSize == 0) {
-        _sectorSize = 4096;
+        return false;
     }
     _capacity = _flashChip.getCapacity();
+    if (_capacity < 2 * _sectorSize + _sectorSize || _capacity <= _sectorSize) {
+        return false;
+    }
+    if (!_flashChip.isConnected()) {
+        return false;
+    }
     _dataStart = 2 * _sectorSize;
     _mounted = true;
     _bufUsed = 0;
@@ -599,13 +644,16 @@ void StorageManager::begin() {
     const bool va = readHeader(0, ha);
     const bool vb = readHeader(_sectorSize, hb);
     if (!va && !vb) {
-        formatDir(0, nullptr, 0, 0);
+        if (!formatDir(0, nullptr, 0, 0)) {
+            _mounted = false;
+            return false;
+        }
         _activeDir = 0;
         _activeSeq = 0;
         scanDir(0, 0);
         _writePtr = _dataStart;
         _erasedUpTo = _dataStart;
-        return;
+        return true;
     }
     const uint16_t sa = va ? getU16(ha + 6) : 0;
     const uint16_t sb = vb ? getU16(hb + 6) : 0;
@@ -622,6 +670,7 @@ void StorageManager::begin() {
         scanDir(_sectorSize, sb);
     }
     recoverOpenFiles();
+    return true;
 }
 // === PART5 END ===
 bool StorageManager::startFile(Filename filename) {
@@ -670,7 +719,7 @@ bool StorageManager::finishFile() {
     }
     while (_hasOpen && _bufUsed > 0) {
         if (!flushFrame()) {
-            return false;
+            return false; // flash full/error; file stays open, retry later
         }
     }
     const Filename name = _openFile.name;
@@ -700,6 +749,72 @@ bool StorageManager::isFileOpen() const {
     return _hasOpen;
 }
 
+uint32_t StorageManager::fileSizeFramed(const Filename &file) const {
+    const int i = findFile(file);
+    if (i < 0) {
+        return 0;
+    }
+    return _files[static_cast<size_t>(i)].len;
+}
+
+uint32_t StorageManager::fileSizePayload(const Filename &file) {
+    const int i = findFile(file);
+    if (i < 0) {
+        return 0;
+    }
+    const FileInfo &f = _files[static_cast<size_t>(i)];
+    uint32_t payload = 0;
+    uint32_t addr = f.start;
+    const uint32_t end = f.start + f.len;
+    uint16_t expectSeq = 0;
+    uint8_t fh[8];
+    // Read-only walk, but the Arduino SPI flash driver mutates bus state, so
+    // _flashChip is non-const and this stays a non-const method.
+    while (addr + kFrameHdrSize <= end) {
+        if (!readVerifiedFrameHeader(addr, end, expectSeq, fh)) {
+            break;
+        }
+        const uint16_t payLen = getU16(fh + 2);
+        if (!verifyFramePayload(addr, fh)) {
+            break;
+        }
+        payload += payLen;
+        addr += static_cast<uint32_t>(kFrameHdrSize) + payLen;
+        ++expectSeq;
+    }
+    return payload;
+}
+
+uint32_t StorageManager::freeSpace() const {
+    if (!_mounted || _writePtr >= _capacity) {
+        return 0;
+    }
+    return _capacity - _writePtr;
+}
+
+uint32_t StorageManager::usedSpace() const {
+    if (!_mounted || _writePtr < _dataStart) {
+        return 0;
+    }
+    return _writePtr - _dataStart;
+}
+
+bool StorageManager::flush() {
+    if (!_mounted || !_hasOpen) {
+        return false;
+    }
+    while (_bufUsed > 0) {
+        if (!flushFrame()) {
+            return false; // buffer retained for retry
+        }
+    }
+    return true;
+}
+
+void StorageManager::discardBuffered() {
+    _bufUsed = 0;
+}
+
 const etl::ivector<StorageManager::Filename> &StorageManager::listFiles() const {
     return _ids;
 }
@@ -708,11 +823,27 @@ bool StorageManager::deleteFile(Filename file) {
     if (!_mounted) {
         return false;
     }
-    // Close the open file first if it is the one being deleted.
-    if (_hasOpen && _openFile.name == file) {
+    // Deleting the open file aborts the log: discard the uncommitted RAM
+    // tail (LogManager re-reports it as dropped on the next log) and
+    // tombstone the committed prefix. Deleting any other file only
+    // tombstones: arena space is append-only and reclaimed by
+    // deleteAllFiles() on the ground.
+    const bool deletingOpen = _hasOpen && _openFile.name == file;
+    uint32_t openStart = 0;
+    if (deletingOpen) {
+        openStart = _openFile.start;
         _hasOpen = false;
         _openFile = FileInfo{};
         _bufUsed = 0;
+        // The open file always occupies the arena tail ([openStart,
+        // _writePtr)), since no other file can be created while one is open.
+        // Rewind so the next log reuses the space immediately instead of
+        // waiting for deleteAllFiles(). Older files are NOT rewound: their
+        // arena bytes stay allocated (append-only design).
+        _writePtr = openStart;
+        if (_erasedUpTo > _writePtr) {
+            _erasedUpTo = _writePtr;
+        }
     }
     const uint32_t slots =
         (_sectorSize - static_cast<uint32_t>(kHdrSize)) / static_cast<uint32_t>(kEntrySize);
@@ -754,8 +885,7 @@ bool StorageManager::deleteFile(Filename file) {
         }
         const int i = findFile(file);
         if (i >= 0) {
-            const size_t idx = static_cast<size_t>(i);
-            _files.erase(_files.begin() + static_cast<ptrdiff_t>(idx));
+            _files.erase(_files.begin() + static_cast<ptrdiff_t>(i));
             rebuildIdList();
         }
         return true;
@@ -794,20 +924,18 @@ size_t StorageManager::readFile(Filename file, std::uint32_t offset,
     uint32_t addr = f.start;
     const uint32_t end = f.start + f.len;
     uint32_t skip = offset; // payload bytes to skip (de-framed space)
+    uint16_t expectSeq = 0;
     uint8_t fh[8];
     std::array<uint8_t, 256> tmp{};
     while (addr + kFrameHdrSize <= end && copied < output.size()) {
-        if (!_flashChip.read(addr, std::span(fh, kFrameHdrSize))) {
-            break;
-        }
-        if (getU16(fh) != kFrameMagic) {
-            break;
+        if (!readVerifiedFrameHeader(addr, end, expectSeq, fh)) {
+            break; // corrupt/torn tail: same rule as recoverLength()
         }
         const uint16_t payLen = getU16(fh + 2);
-        if (payLen == 0 || addr + kFrameHdrSize + payLen > end) {
-            break;
-        }
         const uint32_t payAddr = addr + static_cast<uint32_t>(kFrameHdrSize);
+        if (!verifyFramePayload(addr, fh)) {
+            break; // bit-flip or torn payload: stop, don't return bad data
+        }
         if (skip >= payLen) {
             skip -= payLen;
         } else {
@@ -833,6 +961,7 @@ size_t StorageManager::readFile(Filename file, std::uint32_t offset,
                 break;
             }
         }
+        ++expectSeq;
         addr = payAddr + payLen;
     }
     return copied;
@@ -858,7 +987,8 @@ StorageManager::WriteResult StorageManager::write(std::span<const uint8_t> data)
         const size_t room = BUFFER_SIZE - _bufUsed;
         if (room == 0) {
             if (!flushFrame()) {
-                _bufUsed = 0; // drop torn tail; mount re-derives length
+                // Keep staged bytes for retry after freeing space; mount
+                // still re-derives length from committed frames only.
                 return WriteResult::WriteError;
             }
             continue;
@@ -869,7 +999,6 @@ StorageManager::WriteResult StorageManager::write(std::span<const uint8_t> data)
         off += n;
         if (_bufUsed == BUFFER_SIZE) {
             if (!flushFrame()) {
-                _bufUsed = 0;
                 return WriteResult::WriteError;
             }
         }

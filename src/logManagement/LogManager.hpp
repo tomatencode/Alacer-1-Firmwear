@@ -9,49 +9,49 @@
 #include "etl/vector.h"
 
 #include "StorageManager.hpp"
+#include "LogProtocol.hpp"
 
-struct LogMetadata {
-    uint32_t timestamp_unix;
-    std::string log_name;
-
-    Eigen::Quaternionf initialRotation;
-    Eigen::Quaternionf targetAngle;
-
-    float pidKp;
-    float pidKi;
-    float pidKd;
-
-    float initialHeight_m;
-};
-
-enum class EventType : uint8_t {
-    IMU_DATA,
-    GYRO_DATA
-};
-
-struct LogEvent {
-    EventType type;
-    std::span<const uint8_t> data;
-};
 
 class LogManager {
 public:
     LogManager(StorageManager &storageManager);
 
-    bool startLog(const LogMetadata &metadata);
-    std::optional<uint16_t> finishLog(); // returns the ID of the finished log's file if successful, std::nullopt otherwise
+    bool startLog(const LogProtocol::LogMetadata &metadata, StorageManager::Filename filename);
+    bool finishLog();
 
-    void appendEvent(LogEvent event);
+    template<typename T>
+    void appendEvent(const T& event) {
+        if (!_storageManager.isFileOpen())
+            return;
 
-    void update();
+        appendDroppedEventsIfNeeded();
+        addTimesyncIfNeeded();
+
+        uint16_t dt = getCurrentTimestampDelta_us();
+
+        static std::array<uint8_t, LogProtocol::maxEventSize> buffer;
+
+        size_t encodedSize = LogProtocol::encodeEvent(event, dt, buffer);
+
+        auto res = _storageManager.write(
+            std::span<const uint8_t>(buffer.data(), encodedSize));
+        if (res != StorageManager::WriteResult::Ok)
+            _droppedEvents++;
+    }
+
 private:
 
-    static constexpr size_t EVENT_BUFFER_SIZE = 1024;
-    static constexpr size_t ENCODED_EVENT_MAX_SIZE = 1024;
+    static constexpr uint32_t TIME_SYNC_INTERVAL_MS = 50; // before 16 bit us delta timestamp overflows
 
-    etl::vector<uint8_t, ENCODED_EVENT_MAX_SIZE> encodeEvent(LogEvent event);
+    uint32_t _droppedEvents = 0;
 
-    etl::vector<LogEvent, EVENT_BUFFER_SIZE> _eventBuffer;
+    uint16_t _lastTimestamp_us = 0;
+    uint32_t _lastTimeSync_ms = 0;
+    uint32_t _startTime_ms = 0;
+
+    void appendDroppedEventsIfNeeded();
+    void addTimesyncIfNeeded();
+    uint16_t getCurrentTimestampDelta_us();
 
     StorageManager &_storageManager;
 };

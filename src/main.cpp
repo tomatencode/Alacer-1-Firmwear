@@ -16,6 +16,7 @@
 #include "./hardwareIO/servo/Servo.hpp"
 #include "./hardwareIO/pyro/PyroArmManager.hpp"
 #include "./hardwareIO/pyro/PyroChannel.hpp"
+#include "./hardwareIO/flash/W25Q32JV.hpp"
 
 #include "./hardwareComponents/gimbal/Gimbal.hpp"
 #include "./hardwareComponents/motor/MotorIgniter.hpp"
@@ -54,6 +55,9 @@
 #include "./radioLink/requestHandlers/led/FlashLedHandler.hpp"
 #include "./radioLink/requestHandlers/battery/GetBatteryVoltageHandler.hpp"
 
+#include "./logManagement/StorageManager.hpp"
+#include "./logManagement/LogManager.hpp"
+
 #include "./rotationEstimation/IMURocketCoordinateConverter.hpp"
 #include "./rotationEstimation/RotationAccumulator.hpp"
 
@@ -86,11 +90,13 @@ std::array<PyroChannel*, 3> pyroChannels = {
 
 hardware::HC12 radioHC12(PB15, PA9, PA10);
 
-SPIClass sensorSPI(PA7, PA6, PA5);
+SPIClass spiBus(PA7, PA6, PA5);
 
-hardware::ICM45686 imu(PB10, sensorSPI);
+hardware::ICM45686 imu(PB10, spiBus);
 
-hardware::MS5611 barometer(PB3, sensorSPI);
+hardware::MS5611 barometer(PB3, spiBus);
+
+hardware::W25Q32JV flashMemory(PB12, spiBus);
 
 MotorIgniter motorIgniter;
 Parachute parachute;
@@ -103,6 +109,9 @@ hardware::Gimbal gimbal(
     GIMBAL_PITCH_GEAR_RATIO, GIMBAL_YAW_GEAR_RATIO,
     GIMBAL_PITCH_SERVO_OFFSET_deg, GIMBAL_YAW_SERVO_OFFSET_deg
 );
+
+StorageManager storageManager(flashMemory);
+LogManager logManager(storageManager);
 
 const Eigen::Matrix3f imuToRocketRotationMatrix = (Eigen::Matrix3f() <<
     IMU_TO_ROCKET_ROTATION_MATRIX[0][0], IMU_TO_ROCKET_ROTATION_MATRIX[0][1], IMU_TO_ROCKET_ROTATION_MATRIX[0][2],
@@ -182,10 +191,13 @@ void setup() {
 
     imu.begin();
     barometer.begin();
+    flashMemory.begin();
 
     pitchServo.begin();
     yawServo.begin();
     gimbal.begin();
+
+    storageManager.begin();
 
     controlPID.setPIDParameters(1.0f, 0.0f, 0.0f); // Example PID parameters
     controlPID.setTarget(Eigen::Quaternionf::Identity()); // Example target angle
@@ -242,6 +254,8 @@ void loop() {
     pyroChannel1.update();
     pyroChannel2.update();
     pyroChannel3.update();
+
+    storageManager.update();
 
     rotationAccumulator.update();
     verticalMovementTracker.update();

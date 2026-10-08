@@ -58,7 +58,7 @@
 #include "./logManagement/StorageManager.hpp"
 #include "./logManagement/LogManager.hpp"
 
-#include "./rotationEstimation/IMURocketCoordinateConverter.hpp"
+#include "./helpers/coordinates/IMURocketCoordinateConverter.hpp"
 #include "./rotationEstimation/RotationAccumulator.hpp"
 
 #include "./controlPID/ControlPID.hpp"

@@ -2,7 +2,7 @@
 
 #include <ArduinoEigen.h>
 
-#include "IMURocketCoordinateConverter.hpp"
+#include "../helpers/coordinates/IMURocketCoordinateConverter.hpp"
 
 #include "../hardwareIO/imu/IMU.hpp"
 

@@ -56,8 +56,8 @@ private:
 
     uint32_t _droppedMessages;
 
-    etl::map<Protocol::MessageType, RequestHandler, 32> _handlers;
-    etl::map<Protocol::MessageType, bool, 32> _groundOnlyHandlers;
+    etl::map<Protocol::MessageType, RequestHandler, 40> _handlers;
+    etl::map<Protocol::MessageType, bool, 40> _groundOnlyHandlers;
     etl::delegate<bool()> _isMidFlightCb;
     etl::vector<Protocol::Message, 32> _scheduledMessages;
 };

@@ -44,6 +44,10 @@ enum class MessageType : uint8_t {
     GET_PID_TARGET = 0x1D,
     GET_BATTERY_VOLTAGE = 0x1E,
     SET_ACCUMULATING_ROTATION = 0x1F,
+    START_LOG = 0x20,
+    FINISH_LOG = 0x21,
+    IS_LOGGING = 0x22,
+    LIST_LOGS = 0x23,
 };
 
 enum class RequestStatus : uint8_t {

@@ -54,6 +54,10 @@
 #include "./radioLink/requestHandlers/controlPID/GetPIDTargetHandler.hpp"
 #include "./radioLink/requestHandlers/led/FlashLedHandler.hpp"
 #include "./radioLink/requestHandlers/battery/GetBatteryVoltageHandler.hpp"
+#include "./radioLink/requestHandlers/logs/StartLogHandler.hpp"
+#include "./radioLink/requestHandlers/logs/FinishLogHandler.hpp"
+#include "./radioLink/requestHandlers/logs/IsLoggingHandler.hpp"
+#include "./radioLink/requestHandlers/logs/ListLogsHandler.hpp"
 
 #include "./logManagement/StorageManager.hpp"
 #include "./logManagement/LogManager.hpp"
@@ -169,6 +173,10 @@ SetPIDTargetHandler setPIDTargetHandler(controlPID);
 GetPIDTargetHandler getPIDTargetHandler(controlPID);
 FlashLedHandler flashLedHandler(statusLed);
 GetBatteryVoltageHandler getBatteryVoltageHandler(battery);
+StartLogHandler startLogHandler(logManager);
+FinishLogHandler finishLogHandler(logManager);
+IsLoggingHandler isLoggingHandler(logManager);
+ListLogsHandler listLogsHandler(storageManager);
 
 const hardware::Buzzer::Melody startupMelody = {
     {262, 200},
@@ -240,6 +248,10 @@ void setup() {
     messageScheduler.registerRequestHandler(Protocol::MessageType::SET_PID_TARGET, setPIDTargetHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PID_TARGET, getPIDTargetHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::FLASH_LED, flashLedHandler.callback(), {.groundOnly = false});
+    messageScheduler.registerRequestHandler(Protocol::MessageType::START_LOG, startLogHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::FINISH_LOG, finishLogHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::IS_LOGGING, isLoggingHandler.callback(), {.groundOnly = false});
+    messageScheduler.registerRequestHandler(Protocol::MessageType::LIST_LOGS, listLogsHandler.callback(), {.groundOnly = false});
 
     buzzer.playMelody(startupMelody);
 }

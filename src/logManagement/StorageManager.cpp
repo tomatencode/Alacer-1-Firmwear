@@ -785,6 +785,33 @@ uint32_t StorageManager::fileSizePayload(const Filename &file) {
     return payload;
 }
 
+std::optional<uint32_t> StorageManager::fileSizePayloadChecked(const Filename &file) {
+    if (!_mounted || (_hasOpen && _openFile.name == file)) {
+        return std::nullopt;
+    }
+    const int i = findFile(file);
+    if (i < 0) {
+        return std::nullopt;
+    }
+    const FileInfo &f = _files[static_cast<size_t>(i)];
+    uint32_t payload = 0;
+    uint32_t addr = f.start;
+    const uint32_t end = f.start + f.len;
+    uint16_t expectSeq = 0;
+    uint8_t fh[8];
+    while (addr < end) {
+        if (!readVerifiedFrameHeader(addr, end, expectSeq, fh) ||
+            !verifyFramePayload(addr, fh)) {
+            return std::nullopt;
+        }
+        const uint16_t payLen = getU16(fh + 2);
+        payload += payLen;
+        addr += static_cast<uint32_t>(kFrameHdrSize) + payLen;
+        ++expectSeq;
+    }
+    return payload;
+}
+
 uint32_t StorageManager::freeSpace() const {
     if (!_mounted || _writePtr >= _capacity) {
         return 0;

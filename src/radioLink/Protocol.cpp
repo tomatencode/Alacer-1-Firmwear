@@ -187,7 +187,7 @@ std::optional<size_t> Protocol::encode(const Frame& frame, std::span<uint8_t> ou
     for (size_t i = 0; i < frame.numMessages; i++) {
         const auto& message = frame.messages[i];
         
-        // 3 bytes for message header (type, seqId, status, messageLen) + payload
+        // 4 bytes for message header (type, seqId, status, messageLen) + payload
         size_t requiredMsgLen = 4 + message.messageLen;
         if (OVERHEAD + messagesIndex + requiredMsgLen > outBuffer.size() || 
             message.payload.size() < message.messageLen) {
@@ -209,7 +209,7 @@ std::optional<size_t> Protocol::encode(const Frame& frame, std::span<uint8_t> ou
     outBuffer[2] = static_cast<uint8_t>((messagesIndex >> 8) & 0xFF);
 
     uint16_t crc = Protocol::CRC16_INITIAL;
-    for (size_t i = 1; i < messagesStart + messagesIndex; i++) {
+    for (size_t i = 1; i < static_cast<size_t>(messagesStart) + messagesIndex; i++) {
         crc = Protocol::updateCrc16(crc, outBuffer[i]);
     }
     outBuffer[messagesStart + messagesIndex] = static_cast<uint8_t>(crc & 0xFF);

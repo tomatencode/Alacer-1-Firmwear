@@ -12,5 +12,7 @@ g++ -std=c++20 -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-fram
     "$root/src/logManagement/StorageManager.cpp" \
     "$root/src/logManagement/LogManager.cpp" \
     "$root/src/logManagement/LogProtocol.cpp" \
+    "$root/src/radioLink/Protocol.cpp" \
+    "$root/src/radioLink/MessageScheduler.cpp" \
     -o "$build/log-handler-tests"
 "$build/log-handler-tests"

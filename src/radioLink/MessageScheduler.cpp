@@ -4,11 +4,12 @@
 #include <array>
 
 MessageScheduler::MessageScheduler(Protocol::Parser& parser, hardware::Radio& radio, etl::delegate<bool()> isMidFlightCb)
-    : _parser(parser), _radio(radio), _isMidFlightCb(isMidFlightCb),
-      _didRespond(false), _droppedMessages(0) {
+    : _parser(parser), _radio(radio), _didRespond(false),
+      _droppedMessages(0), _isMidFlightCb(isMidFlightCb) {
 }
 
 void MessageScheduler::update() {
+    _didRespond = false; // allow queued frames to drain even without new requests
     while (_radio.available()) {
         auto byte = _radio.read();
         if (!byte.has_value())
@@ -37,12 +38,14 @@ void MessageScheduler::update() {
     if (hasScheduledMessages && !_didRespond) {
         Protocol::Frame frame;
 
-        const auto scheduledMessageCount = std::min(
-            _scheduledMessages.size(),
-            static_cast<size_t>(Protocol::MAX_MESSAGES_PER_FRAME));
-
+        size_t frameSize = 6; // start, length, message count, CRC
         uint8_t msgIndex = 0;
         while (msgIndex < _scheduledMessages.size() && msgIndex < Protocol::MAX_MESSAGES_PER_FRAME) {
+            const size_t messageSize = 4 + _scheduledMessages[msgIndex].messageLen;
+            if (frameSize + messageSize > Protocol::MAX_FRAME_SIZE) {
+                break;
+            }
+            frameSize += messageSize;
             frame.messages.push_back(_scheduledMessages[msgIndex++]);
         }
 
@@ -58,7 +61,7 @@ void MessageScheduler::update() {
                 _didRespond = true;
                 _scheduledMessages.erase(
                     _scheduledMessages.begin(),
-                    _scheduledMessages.begin() + scheduledMessageCount);
+                    _scheduledMessages.begin() + msgIndex);
             }
         }
     }

@@ -34,6 +34,9 @@ public:
     // Returns 0 for unknown files and for the currently open file
     // (its length is still growing).
     uint32_t fileSizePayload(const Filename &file);
+    // Full verified payload size, or nullopt for unmounted/unknown/open files
+    // and read/CRC errors. Unlike fileSizePayload(), never returns a partial size.
+    std::optional<uint32_t> fileSizePayloadChecked(const Filename &file);
     // Framed (on-flash, incl. 8B frame headers) size. Same caveats.
     uint32_t fileSizeFramed(const Filename &file) const;
 

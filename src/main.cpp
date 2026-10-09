@@ -58,6 +58,8 @@
 #include "./radioLink/requestHandlers/logs/FinishLogHandler.hpp"
 #include "./radioLink/requestHandlers/logs/IsLoggingHandler.hpp"
 #include "./radioLink/requestHandlers/logs/ListLogsHandler.hpp"
+#include "./radioLink/requestHandlers/logs/GetLogInfoHandler.hpp"
+#include "./radioLink/requestHandlers/logs/GetLogBytesHandler.hpp"
 
 #include "./logManagement/StorageManager.hpp"
 #include "./logManagement/LogManager.hpp"
@@ -177,6 +179,8 @@ StartLogHandler startLogHandler(logManager);
 FinishLogHandler finishLogHandler(logManager);
 IsLoggingHandler isLoggingHandler(logManager);
 ListLogsHandler listLogsHandler(storageManager);
+GetLogInfoHandler getLogInfoHandler(storageManager);
+GetLogBytesHandler getLogBytesHandler(storageManager);
 
 const hardware::Buzzer::Melody startupMelody = {
     {262, 200},
@@ -252,6 +256,8 @@ void setup() {
     messageScheduler.registerRequestHandler(Protocol::MessageType::FINISH_LOG, finishLogHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::IS_LOGGING, isLoggingHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::LIST_LOGS, listLogsHandler.callback(), {.groundOnly = false});
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_LOG_INFO, getLogInfoHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_LOG_BYTES, getLogBytesHandler.callback());
 
     buzzer.playMelody(startupMelody);
 }

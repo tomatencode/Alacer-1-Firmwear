@@ -48,6 +48,8 @@ enum class MessageType : uint8_t {
     FINISH_LOG = 0x21,
     IS_LOGGING = 0x22,
     LIST_LOGS = 0x23,
+    GET_LOG_INFO = 0x24,
+    GET_LOG_BYTES = 0x25,
 };
 
 enum class RequestStatus : uint8_t {

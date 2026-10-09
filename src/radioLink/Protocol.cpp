@@ -187,8 +187,8 @@ std::optional<size_t> Protocol::encode(const Frame& frame, std::span<uint8_t> ou
     for (size_t i = 0; i < frame.numMessages; i++) {
         const auto& message = frame.messages[i];
         
-        // 3 bytes for message header (type, seqId, messageLen) + payload
-        size_t requiredMsgLen = 3 + message.messageLen;
+        // 3 bytes for message header (type, seqId, status, messageLen) + payload
+        size_t requiredMsgLen = 4 + message.messageLen;
         if (OVERHEAD + messagesIndex + requiredMsgLen > outBuffer.size() || 
             message.payload.size() < message.messageLen) {
             return std::nullopt;

@@ -8,15 +8,14 @@
 #include "../../../helpers/codec/LittleEndianCodec.hpp"
 
 // GET_LOG_INFO request: length-prefixed filename, no trailing bytes.
-// SUCCESS response: uint32 LE verified payload size, uint16 LE maximum chunk size.
+// SUCCESS response: uint32 LE verified payload size.
 // Only closed/recovered files are downloadable. Invalid requests/files or storage
 // read/CRC errors return FAILURE with an empty payload.
-class GetLogInfoHandler {
+class GetLogSizeHandler {
 public:
-    static constexpr uint16_t MAX_CHUNK_BYTES = 240;
-    static constexpr size_t RESPONSE_SIZE = 6;
+    static constexpr size_t RESPONSE_SIZE = 4;
 
-    explicit GetLogInfoHandler(StorageManager& storageManager) : _storageManager(storageManager) {}
+    explicit GetLogSizeHandler(StorageManager& storageManager) : _storageManager(storageManager) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t> response) {
         StorageManager::Filename filename;
@@ -29,12 +28,11 @@ public:
             return {MessageScheduler::HandlerResultStatus::FAILURE, 0};
         }
         littleEndian::encodeU32(*size, response, 0);
-        littleEndian::encodeU16(MAX_CHUNK_BYTES, response, 4);
         return {MessageScheduler::HandlerResultStatus::SUCCESS, RESPONSE_SIZE};
     }
 
     MessageScheduler::RequestHandler callback() {
-        return MessageScheduler::RequestHandler::create<GetLogInfoHandler, &GetLogInfoHandler::handle>(*this);
+        return MessageScheduler::RequestHandler::create<GetLogSizeHandler, &GetLogSizeHandler::handle>(*this);
     }
 
 private:

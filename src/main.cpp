@@ -58,10 +58,10 @@
 #include "./radioLink/requestHandlers/logs/FinishLogHandler.hpp"
 #include "./radioLink/requestHandlers/logs/IsLoggingHandler.hpp"
 #include "./radioLink/requestHandlers/logs/ListLogsHandler.hpp"
-#include "./radioLink/requestHandlers/logs/GetLogInfoHandler.hpp"
-#include "./radioLink/requestHandlers/logs/GetLogBytesHandler.hpp"
+#include "./radioLink/requestHandlers/logs/GetLogSizeHandler.hpp"
 #include "./radioLink/requestHandlers/logs/DeleteLogHandler.hpp"
 #include "./radioLink/requestHandlers/logs/DeleteAllLogsHandler.hpp"
+#include "./radioLink/requestHandlers/logs/DownloadManager.hpp"
 
 #include "./logManagement/StorageManager.hpp"
 #include "./logManagement/LogManager.hpp"
@@ -181,10 +181,10 @@ StartLogHandler startLogHandler(logManager);
 FinishLogHandler finishLogHandler(logManager);
 IsLoggingHandler isLoggingHandler(logManager);
 ListLogsHandler listLogsHandler(storageManager);
-GetLogInfoHandler getLogInfoHandler(storageManager);
-GetLogBytesHandler getLogBytesHandler(storageManager);
+GetLogSizeHandler getLogSizeHandler(storageManager);
 DeleteLogHandler deleteLogHandler(storageManager);
 DeleteAllLogsHandler deleteAllLogsHandler(storageManager);
+DownloadManager downloadManager(storageManager);
 
 const hardware::Buzzer::Melody startupMelody = {
     {262, 200},
@@ -260,15 +260,17 @@ void setup() {
     messageScheduler.registerRequestHandler(Protocol::MessageType::FINISH_LOG, finishLogHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::IS_LOGGING, isLoggingHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::LIST_LOGS, listLogsHandler.callback(), {.groundOnly = false});
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_LOG_INFO, getLogInfoHandler.callback());
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_LOG_BYTES, getLogBytesHandler.callback());
-    messageScheduler.registerRequestHandler(Protocol::MessageType::DELETE_LOG, deleteLogHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_LOG_SIZE, getLogSizeHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::DELETE_ALL_LOGS, deleteAllLogsHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::START_LOG_DOWNLOAD, downloadManager.startCallback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_LOG_CHUNK, downloadManager.chunkCallback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::STOP_LOG_DOWNLOAD, downloadManager.stopCallback());
 
     buzzer.playMelody(startupMelody);
 }
 
 void loop() {
+    downloadManager.update();
     statusLed.update();
     buzzer.update();
 

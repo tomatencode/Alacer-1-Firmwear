@@ -18,6 +18,45 @@ public:
     using Filename = etl::string<32>;
     static constexpr size_t MAX_FILES = 63;
 
+    // Non-owning storage handle: StorageManager must outlive the reader.
+    // Opening verifies the complete file once. Each subsequently loaded frame
+    // is CRC-checked in RAM and retained, rather than verified then reread.
+    // Deletion/reset/remount invalidates all readers, including cached bytes.
+    class SequentialFileReader {
+    public:
+        SequentialFileReader(const SequentialFileReader&) = delete;
+        SequentialFileReader& operator=(const SequentialFileReader&) = delete;
+        SequentialFileReader(SequentialFileReader&&) = default;
+        SequentialFileReader& operator=(SequentialFileReader&&) = default;
+
+        bool valid() const;
+        uint32_t size() const { return _size; }
+        uint32_t position() const { return _position; }
+        bool advanceTo(uint32_t offset);
+        size_t read(std::span<uint8_t> output);
+        bool copyCached(uint32_t offset, std::span<uint8_t> output) const;
+
+    private:
+        friend class StorageManager;
+        SequentialFileReader(StorageManager& storage, uint32_t start,
+                             uint32_t framedSize, uint32_t payloadSize);
+        bool loadFrame();
+
+        StorageManager* _storage;
+        uint32_t _generation;
+        uint32_t _end;
+        uint32_t _nextFrame;
+        uint32_t _size;
+        uint32_t _position = 0;
+        uint32_t _frameOffset = 0;
+        uint16_t _frameLength = 0;
+        uint16_t _sequence = 0;
+        bool _failed = false;
+        std::array<uint8_t, 1024> _frame{};
+    };
+
+    std::optional<SequentialFileReader> openSequentialReader(const Filename& file);
+
     // Mounts, recovers any torn-open file. Returns false when the flash
     // chip is not connected or geometry is unusable (not mounted).
     bool begin();
@@ -59,8 +98,8 @@ public:
 
     // Copies de-framed payload bytes starting at payload offset.
     // CRC/seq-verified: stops before the first corrupt frame.
-    // O(offset+copied): for sequential download call with increasing
-    // offsets; for large files prefer small sequential chunks.
+    // O(offset+copied), restarting at the beginning on every call.
+    // Prefer openSequentialReader() for sequential downloads.
     size_t readFile(Filename file, std::uint32_t offset, std::span<std::uint8_t> output);
 
     // Only Ok / NoOpenFile / WriteError are returned today. BufferFull is
@@ -117,6 +156,7 @@ private:
     hardware::FlashChip &_flashChip;
 
     bool _mounted = false;
+    uint32_t _readerGeneration = 0;
     uint32_t _sectorSize = 4096;
     uint32_t _capacity = 0;
     uint32_t _dataStart = 0;

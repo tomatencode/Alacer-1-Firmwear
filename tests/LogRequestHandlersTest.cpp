@@ -12,6 +12,7 @@
 #include "radioLink/requestHandlers/logs/GetLogBytesHandler.hpp"
 #include "radioLink/requestHandlers/logs/DeleteLogHandler.hpp"
 #include "radioLink/requestHandlers/logs/DeleteAllLogsHandler.hpp"
+#include "radioLink/requestHandlers/logs/DownloadManager.hpp"
 
 class MemoryFlash : public hardware::FlashChip {
 public:
@@ -20,6 +21,8 @@ public:
     bool failReads = false;
     bool failErases = false;
     int readsUntilFailure = -1;
+    size_t readBytes = 0;
+    size_t readCalls = 0;
 
     void begin() override {}
     bool isConnected() const override { return true; }
@@ -28,6 +31,8 @@ public:
     size_t getSectorSize() const override { return 4096; }
 
     bool read(uint32_t address, std::span<uint8_t> data) override {
+        ++readCalls;
+        readBytes += data.size();
         if (failReads || readsUntilFailure == 0) return false;
         if (readsUntilFailure > 0) --readsUntilFailure;
         if (address > bytes.size() || data.size() > bytes.size() - address) return false;
@@ -502,6 +507,263 @@ void testDeleteScheduling() {
     }
 }
 
+std::array<uint8_t, 8> makeChunkRequest(uint32_t session, uint32_t index) {
+    std::array<uint8_t, 8> request{};
+    littleEndian::encodeU32(session, request, 0);
+    littleEndian::encodeU32(index, request, 4);
+    return request;
+}
+
+std::vector<uint8_t> makeStartDownloadRequest(const StorageManager::Filename& filename, uint32_t token) {
+    auto request = makeInfoRequest(filename);
+    const size_t fields = request.size();
+    request.resize(fields + 4);
+    littleEndian::encodeU32(token, request, fields);
+    return request;
+}
+
+void testSequentialReader() {
+    MemoryFlash flash;
+    StorageManager storage(flash);
+    const StorageManager::Filename filename("reader.bin");
+    assert(!storage.openSequentialReader(filename));
+    assert(storage.begin() && storage.startFile(filename));
+    assert(!storage.openSequentialReader(filename));
+    std::vector<uint8_t> data(2500);
+    for (size_t i = 0; i < data.size(); ++i) data[i] = static_cast<uint8_t>(i * 13);
+    assert(storage.write(data) == StorageManager::WriteResult::Ok && storage.finishFile());
+    auto reader = storage.openSequentialReader(filename);
+    assert(reader && reader->valid() && reader->size() == data.size() && reader->position() == 0);
+    const size_t before = flash.readBytes;
+    std::vector<uint8_t> restored(data.size());
+    for (size_t offset = 0; offset < data.size(); offset += 137) {
+        const size_t length = std::min(size_t{137}, data.size() - offset);
+        assert(reader->read(std::span(restored).subspan(offset, length)) == length);
+    }
+    assert(restored == data && reader->position() == data.size());
+    assert(flash.readBytes - before == storage.fileSizeFramed(filename));
+    std::array<uint8_t, 100> scratch{};
+    assert(reader->read(scratch) == 0);
+    assert(!reader->advanceTo(0) && !reader->advanceTo(2501));
+    assert(reader->copyCached(2400, scratch));
+    assert(std::equal(scratch.begin(), scratch.end(), data.begin() + 2400));
+    assert(!reader->copyCached(0, scratch));
+    reader = storage.openSequentialReader(filename);
+    assert(reader && reader->advanceTo(1100) && reader->read(scratch) == scratch.size());
+    assert(std::equal(scratch.begin(), scratch.end(), data.begin() + 1100));
+    // Cached readers cannot survive deletion/remount or filename reuse.
+    assert(storage.deleteAllFiles() && !reader->valid());
+    assert(reader->read(scratch) == 0 && !reader->copyCached(1100, scratch));
+    assert(storage.startFile(filename));
+    assert(storage.write(data) == StorageManager::WriteResult::Ok && storage.finishFile());
+    reader = storage.openSequentialReader(filename);
+    assert(reader && storage.begin() && !reader->valid());
+    reader = storage.openSequentialReader(filename);
+    assert(reader);
+    // Corruption after preparation is caught when the frame is actually loaded.
+    flash.bytes[8192 + 8] ^= 1;
+    assert(reader->read(scratch) == 0 && !reader->valid());
+    assert(!storage.openSequentialReader(filename));
+    // Explicit flushes produce variable-length frames, not fixed 1024B blocks.
+    assert(storage.deleteAllFiles() && storage.startFile(filename));
+    const std::array<size_t, 5> lengths{17, 513, 1, 1024, 945};
+    size_t offset = 0;
+    for (size_t length : lengths) {
+        assert(storage.write(std::span(data).subspan(offset, length)) == StorageManager::WriteResult::Ok);
+        assert(storage.flush());
+        offset += length;
+    }
+    assert(offset == data.size() && storage.finishFile());
+    reader = storage.openSequentialReader(filename);
+    assert(reader && reader->read(restored) == restored.size() && restored == data);
+}
+
+void testDownloadManager() {
+    MemoryFlash flash;
+    StorageManager storage(flash);
+    DownloadManager download(storage);
+    const StorageManager::Filename filename("session.bin"), empty("empty.bin");
+    const auto start = makeStartDownloadRequest(filename, 123);
+    std::array<uint8_t, 256> response{};
+    assert(download.start(start, response).status == FAILURE);
+    assert(storage.begin() && storage.startFile(filename));
+    assert(download.start(start, response).status == FAILURE);
+    std::vector<uint8_t> data(5500);
+    for (size_t i = 0; i < data.size(); ++i) data[i] = static_cast<uint8_t>(i * 17 + i / 256);
+    assert(storage.write(data) == StorageManager::WriteResult::Ok && storage.finishFile());
+    for (size_t n = 0; n < start.size(); ++n)
+        assert(download.start(std::span(start).first(n), response).status == FAILURE);
+    auto malformed = start;
+    malformed.push_back(0);
+    assert(download.start(malformed, response).status == FAILURE);
+    assert(download.start(start, std::span(response).first(13)).status == FAILURE);
+    auto result = download.startCallback()(start, response);
+    assert(result.status == SUCCESS && result.responseLength == 14);
+    uint32_t session = littleEndian::decodeU32(response, 0);
+    assert(session != 0 && littleEndian::decodeU32(response, 4) == data.size());
+    assert(littleEndian::decodeU16(response, 8) == 240);
+    const uint32_t chunks = littleEndian::decodeU32(response, 10);
+    assert(chunks == 23);
+    size_t before = flash.readBytes;
+    assert(download.start(start, response).status == SUCCESS);
+    assert(littleEndian::decodeU32(response, 0) == session && flash.readBytes == before);
+    assert(download.start(makeStartDownloadRequest(filename, 124), response).status == FAILURE);
+    assert(download.getChunk(makeChunkRequest(session + 1, 0), response).status == FAILURE);
+    assert(download.getChunk(makeChunkRequest(session, chunks), response).status == FAILURE);
+    assert(download.getChunk(makeChunkRequest(session, 0), std::span(response).first(247)).status == FAILURE);
+    const auto first = makeChunkRequest(session, 0);
+    for (size_t n = 0; n < first.size(); ++n)
+        assert(download.getChunk(std::span(first).first(n), response).status == FAILURE);
+    auto check = [&](uint32_t index) {
+        const auto reply = download.chunkCallback()(makeChunkRequest(session, index), response);
+        const size_t offset = index * 240;
+        const size_t count = std::min(size_t{240}, data.size() - offset);
+        assert(reply.status == SUCCESS && reply.responseLength == count + 8);
+        assert(littleEndian::decodeU32(response, 0) == session);
+        assert(littleEndian::decodeU32(response, 4) == index);
+        assert(std::equal(response.begin() + 8, response.begin() + reply.responseLength,
+                          data.begin() + offset));
+    };
+    before = flash.readBytes;
+    for (uint32_t i = 0; i < chunks; ++i) {
+        check(i);
+        const size_t retryBefore = flash.readBytes;
+        check(i);
+        assert(flash.readBytes == retryBefore);
+    }
+    // One read of each frame, not a full-size scan per chunk.
+    assert(flash.readBytes - before == storage.fileSizeFramed(filename));
+    before = flash.readBytes;
+    check(22); // final chunk remains retryable
+    check(0); // old frame: inefficient readFile fallback
+    assert(flash.readBytes > before);
+    before = flash.readBytes;
+    check(0); // last-chunk cache
+    check(22); // current frame cache, despite the backward request
+    assert(flash.readBytes == before);
+    auto stop = makeChunkRequest(session, 0);
+    assert(download.stop(std::span(stop).first(3), {}).status == FAILURE);
+    assert(download.stop(makeChunkRequest(session + 1, 0), {}).status == FAILURE);
+    assert(download.stopCallback()(std::span(stop).first(4), {}).status == SUCCESS);
+    assert(download.stop(std::span(stop).first(4), {}).status == SUCCESS);
+    assert(download.getChunk(first, response).status == FAILURE);
+    assert(download.start(start, response).status == SUCCESS);
+    const uint32_t newerSession = littleEndian::decodeU32(response, 0);
+    assert(newerSession != session);
+    assert(download.stop(std::span(stop).first(4), {}).status == FAILURE);
+    session = newerSession;
+    check(10); // forward seek verifies skipped frames
+    check(0); // fallback must not rewind the sequential reader
+    before = flash.readBytes;
+    check(11);
+    assert(flash.readBytes == before); // same frame as chunk 10
+    hostArduino::nowMillis += DownloadManager::TIMEOUT_MS;
+    download.update();
+    assert(download.getChunk(makeChunkRequest(session, 11), response).status == FAILURE);
+    assert(download.start(start, response).status == SUCCESS);
+    session = littleEndian::decodeU32(response, 0);
+    check(0);
+    assert(storage.deleteFile(filename));
+    assert(download.getChunk(makeChunkRequest(session, 0), response).status == FAILURE);
+    assert(storage.startFile(empty) && storage.finishFile());
+    assert(download.start(makeStartDownloadRequest(empty, 200), response).status == SUCCESS);
+    session = littleEndian::decodeU32(response, 0);
+    assert(littleEndian::decodeU32(response, 4) == 0 && littleEndian::decodeU32(response, 10) == 0);
+    assert(download.getChunk(makeChunkRequest(session, 0), response).status == FAILURE);
+    assert(storage.deleteAllFiles());
+    assert(storage.startFile(filename));
+    assert(storage.write(data) == StorageManager::WriteResult::Ok && storage.finishFile());
+    assert(download.start(start, response).status == SUCCESS);
+    session = littleEndian::decodeU32(response, 0);
+    // Fail after loading the first frame, during a chunk spanning two frames.
+    check(3);
+    flash.failReads = true;
+    assert(download.getChunk(makeChunkRequest(session, 4), response).status == FAILURE);
+    flash.failReads = false;
+    assert(download.getChunk(makeChunkRequest(session, 4), response).status == FAILURE);
+    assert(download.start(start, response).status == SUCCESS);
+    session = littleEndian::decodeU32(response, 0);
+    check(10);
+    flash.failReads = true;
+    assert(download.getChunk(makeChunkRequest(session, 0), response).status == FAILURE);
+    flash.failReads = false;
+    assert(download.getChunk(makeChunkRequest(session, 10), response).status == FAILURE);
+    assert(download.start(start, response).status == SUCCESS);
+    session = littleEndian::decodeU32(response, 0);
+    flash.bytes[8192 + 1032 + 8] ^= 1; // second frame, after initial verification
+    assert(download.getChunk(makeChunkRequest(session, 4), response).status == FAILURE);
+    assert(download.start(start, response).status == FAILURE);
+}
+
+void testSessionDownloadScheduling() {
+    MemoryFlash flash;
+    StorageManager storage(flash);
+    assert(storage.begin());
+    const StorageManager::Filename filename("wire.bin");
+    assert(storage.startFile(filename));
+    std::array<uint8_t, 240> data{};
+    data.fill(73);
+    assert(storage.write(data) == StorageManager::WriteResult::Ok && storage.finishFile());
+    DownloadManager download(storage);
+    MemoryRadio radio;
+    Protocol::Parser parser;
+    struct FlightState {
+        bool midFlight = false;
+        bool isMidFlight() { return midFlight; }
+    } flight;
+    MessageScheduler scheduler(parser, radio,
+        etl::delegate<bool()>::create<FlightState, &FlightState::isMidFlight>(flight));
+    scheduler.registerRequestHandler(Protocol::MessageType::START_LOG_DOWNLOAD, download.startCallback());
+    scheduler.registerRequestHandler(Protocol::MessageType::GET_LOG_CHUNK, download.chunkCallback());
+    scheduler.registerRequestHandler(Protocol::MessageType::STOP_LOG_DOWNLOAD, download.stopCallback());
+    auto exchange = [&](Protocol::MessageType type, std::span<const uint8_t> payload) {
+        Protocol::Frame frame{};
+        Protocol::Message message{};
+        message.type = type;
+        message.seqId = 42;
+        message.messageLen = static_cast<uint8_t>(payload.size());
+        message.payload.assign(payload.begin(), payload.end());
+        frame.messages.push_back(message);
+        frame.numMessages = 1;
+        std::array<uint8_t, Protocol::MAX_FRAME_SIZE> encoded{};
+        const auto length = Protocol::encode(frame, encoded);
+        assert(length);
+        radio.incoming.assign(encoded.begin(), encoded.begin() + *length);
+        radio.position = 0;
+        scheduler.update();
+        Protocol::Parser client;
+        for (uint8_t byte : radio.sent.back()) client.feed(byte);
+        auto reply = client.takeFrame();
+        assert(reply && reply->numMessages == 1);
+        assert(reply->messages[0].seqId == 42 && reply->messages[0].type == type);
+        return reply->messages[0];
+    };
+    const auto start = makeStartDownloadRequest(filename, 1);
+    flight.midFlight = true;
+    auto reply = exchange(Protocol::MessageType::START_LOG_DOWNLOAD, start);
+    assert(reply.status == Protocol::RequestStatus::FAILURE && reply.messageLen == 0);
+    flight.midFlight = false;
+    reply = exchange(Protocol::MessageType::START_LOG_DOWNLOAD, start);
+    assert(reply.status == Protocol::RequestStatus::SUCCESS && reply.messageLen == 14);
+    const uint32_t session = littleEndian::decodeU32(
+        std::span<const uint8_t>(reply.payload.data(), reply.payload.size()), 0);
+    const auto chunk = makeChunkRequest(session, 0);
+    reply = exchange(Protocol::MessageType::GET_LOG_CHUNK, chunk);
+    assert(reply.status == Protocol::RequestStatus::SUCCESS && reply.messageLen == 248);
+    assert(std::equal(reply.payload.begin() + 8, reply.payload.end(), data.begin()));
+    flight.midFlight = true;
+    for (auto type : {Protocol::MessageType::GET_LOG_CHUNK, Protocol::MessageType::STOP_LOG_DOWNLOAD}) {
+        reply = exchange(type, type == Protocol::MessageType::GET_LOG_CHUNK
+            ? std::span(chunk) : std::span(chunk).first(4));
+        assert(reply.status == Protocol::RequestStatus::FAILURE && reply.messageLen == 0);
+    }
+    flight.midFlight = false;
+    reply = exchange(Protocol::MessageType::STOP_LOG_DOWNLOAD, std::span(chunk).first(4));
+    assert(reply.status == Protocol::RequestStatus::SUCCESS && reply.messageLen == 0);
+    reply = exchange(Protocol::MessageType::GET_LOG_CHUNK, chunk);
+    assert(reply.status == Protocol::RequestStatus::FAILURE && reply.messageLen == 0);
+}
+
 int main() {
     testStringCodec();
     testHandlers();
@@ -509,5 +771,8 @@ int main() {
     testDownloadScheduling();
     testDeletes();
     testDeleteScheduling();
+    testSequentialReader();
+    testDownloadManager();
+    testSessionDownloadScheduling();
     std::cout << "Log request handler and string codec tests passed\n";
 }

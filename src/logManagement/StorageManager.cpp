@@ -621,6 +621,8 @@ bool StorageManager::flushFrame() {
 }
 
 bool StorageManager::begin() {
+    ++_readerGeneration;
+    _mounted = false;
     _sectorSize = _flashChip.getSectorSize();
     if (_sectorSize < kHdrSize + kEntrySize || _sectorSize == 0) {
         return false;
@@ -910,6 +912,7 @@ bool StorageManager::deleteFile(Filename file) {
         if (!_flashChip.write(addr + 32, std::span<const uint8_t>(&tomb, 1))) {
             return false;
         }
+        ++_readerGeneration;
         const int i = findFile(file);
         if (i >= 0) {
             _files.erase(_files.begin() + static_cast<ptrdiff_t>(i));
@@ -933,11 +936,103 @@ bool StorageManager::deleteAllFiles() {
     }
     _activeDir = (_activeDir == 0) ? 1 : 0;
     _activeSeq = seq;
+    ++_readerGeneration;
     _files.clear();
     _ids.clear();
     _writePtr = _dataStart;
     _erasedUpTo = _dataStart;
     return true;
+}
+
+StorageManager::SequentialFileReader::SequentialFileReader(
+        StorageManager& storage, uint32_t start, uint32_t framedSize, uint32_t payloadSize)
+    : _storage(&storage), _generation(storage._readerGeneration),
+      _end(start + framedSize), _nextFrame(start), _size(payloadSize) {}
+
+bool StorageManager::SequentialFileReader::valid() const {
+    return !_failed && _storage->_mounted &&
+           _generation == _storage->_readerGeneration;
+}
+
+bool StorageManager::SequentialFileReader::loadFrame() {
+    if (!valid()) {
+        return false;
+    }
+    uint8_t header[8];
+    if (!_storage->readVerifiedFrameHeader(_nextFrame, _end, _sequence, header)) {
+        _failed = true;
+        return false;
+    }
+    const uint16_t length = getU16(header + 2);
+    const uint16_t expectedCrc = getU16(header + 6);
+    if (!_storage->_flashChip.read(_nextFrame + kFrameHdrSize,
+                                  std::span(_frame).first(length))) {
+        _failed = true;
+        return false;
+    }
+    header[6] = 0;
+    header[7] = 0;
+    if (frameCrcRam(header, _frame.data(), length) != expectedCrc) {
+        _failed = true;
+        return false;
+    }
+    _frameOffset += _frameLength;
+    _frameLength = length;
+    _nextFrame += static_cast<uint32_t>(kFrameHdrSize) + length;
+    ++_sequence;
+    return true;
+}
+
+bool StorageManager::SequentialFileReader::advanceTo(uint32_t offset) {
+    if (!valid() || offset < _position || offset > _size) {
+        return false;
+    }
+    while (_position < offset) {
+        if (_position == _frameOffset + _frameLength && !loadFrame()) {
+            return false;
+        }
+        _position += std::min(offset - _position,
+                              _frameOffset + _frameLength - _position);
+    }
+    return true;
+}
+
+size_t StorageManager::SequentialFileReader::read(std::span<uint8_t> output) {
+    if (!valid()) {
+        return 0;
+    }
+    size_t copied = 0;
+    while (copied < output.size() && _position < _size) {
+        if (_position == _frameOffset + _frameLength && !loadFrame()) {
+            break;
+        }
+        const size_t count = std::min(output.size() - copied,
+            static_cast<size_t>(_frameOffset + _frameLength - _position));
+        memcpy(output.data() + copied, _frame.data() + _position - _frameOffset, count);
+        copied += count;
+        _position += static_cast<uint32_t>(count);
+    }
+    return copied;
+}
+
+bool StorageManager::SequentialFileReader::copyCached(
+        uint32_t offset, std::span<uint8_t> output) const {
+    if (!valid() || offset < _frameOffset || offset - _frameOffset > _frameLength ||
+        output.size() > _frameLength - (offset - _frameOffset)) {
+        return false;
+    }
+    memcpy(output.data(), _frame.data() + offset - _frameOffset, output.size());
+    return true;
+}
+
+std::optional<StorageManager::SequentialFileReader>
+StorageManager::openSequentialReader(const Filename& file) {
+    const auto size = fileSizePayloadChecked(file);
+    if (!size) {
+        return std::nullopt;
+    }
+    const FileInfo& info = _files[static_cast<size_t>(findFile(file))];
+    return SequentialFileReader(*this, info.start, info.len, *size);
 }
 
 size_t StorageManager::readFile(Filename file, std::uint32_t offset,

@@ -261,6 +261,7 @@ void setup() {
     messageScheduler.registerRequestHandler(Protocol::MessageType::IS_LOGGING, isLoggingHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::LIST_LOGS, listLogsHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_LOG_SIZE, getLogSizeHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::DELETE_LOG, deleteLogHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::DELETE_ALL_LOGS, deleteAllLogsHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::START_LOG_DOWNLOAD, downloadManager.startCallback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_LOG_CHUNK, downloadManager.chunkCallback());

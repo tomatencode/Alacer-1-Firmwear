@@ -920,21 +920,24 @@ bool StorageManager::deleteFile(Filename file) {
     return false;
 }
 
-void StorageManager::deleteAllFiles() {
-    if (!_mounted) {
-        return;
+bool StorageManager::deleteAllFiles() {
+    if (!_mounted || _hasOpen) {
+        return false;
     }
-    _hasOpen = false;
-    _openFile = FileInfo{};
-    _bufUsed = 0;
-    formatDir(0, nullptr, 0, static_cast<uint16_t>(_activeSeq + 1));
-    _flashChip.eraseSector(_sectorSize);
-    _activeDir = 0;
-    ++_activeSeq;
+    // Commit an empty directory in the inactive copy before changing RAM.
+    // Keep the old copy as a fallback if formatting fails; after success its
+    // older sequence is ignored on mount and it can be erased on the next swap.
+    const uint16_t seq = static_cast<uint16_t>(_activeSeq + 1);
+    if (!formatDir(inactiveDirAddr(), nullptr, 0, seq)) {
+        return false;
+    }
+    _activeDir = (_activeDir == 0) ? 1 : 0;
+    _activeSeq = seq;
     _files.clear();
     _ids.clear();
     _writePtr = _dataStart;
     _erasedUpTo = _dataStart;
+    return true;
 }
 
 size_t StorageManager::readFile(Filename file, std::uint32_t offset,

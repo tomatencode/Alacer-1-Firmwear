@@ -10,12 +10,15 @@
 #include "radioLink/requestHandlers/logs/ListLogsHandler.hpp"
 #include "radioLink/requestHandlers/logs/GetLogInfoHandler.hpp"
 #include "radioLink/requestHandlers/logs/GetLogBytesHandler.hpp"
+#include "radioLink/requestHandlers/logs/DeleteLogHandler.hpp"
+#include "radioLink/requestHandlers/logs/DeleteAllLogsHandler.hpp"
 
 class MemoryFlash : public hardware::FlashChip {
 public:
     std::vector<uint8_t> bytes = std::vector<uint8_t>(1024 * 1024, 0xFF);
     bool failWrites = false;
     bool failReads = false;
+    bool failErases = false;
     int readsUntilFailure = -1;
 
     void begin() override {}
@@ -39,6 +42,7 @@ public:
     }
 
     bool eraseSector(uint32_t address) override {
+        if (failErases) return false;
         if (address % 4096 != 0 || address > bytes.size() - 4096) return false;
         std::fill_n(bytes.begin() + address, 4096, 0xFF);
         return true;
@@ -366,10 +370,144 @@ void testDownloadScheduling() {
         assert(message.status == Protocol::RequestStatus::FAILURE && message.messageLen == 0);
 }
 
+void testDeletes() {
+    MemoryFlash flash;
+    StorageManager storage(flash);
+    DeleteLogHandler single(storage);
+    DeleteAllLogsHandler all(storage);
+    const StorageManager::Filename first("first.bin"), second("second.bin"), active("active.bin");
+    const auto request = makeInfoRequest(first);
+    assert(single.handle(request, {}).status == FAILURE);
+    assert(all.handle({}, {}).status == FAILURE);
+    assert(storage.begin());
+    const std::array<uint8_t, 3> data{10, 20, 30};
+    assert(storage.startFile(first));
+    assert(storage.write(data) == StorageManager::WriteResult::Ok && storage.finishFile());
+    assert(storage.startFile(second));
+    assert(storage.write(data) == StorageManager::WriteResult::Ok && storage.finishFile());
+    const auto used = storage.usedSpace();
+    for (size_t n = 0; n < request.size(); ++n)
+        assert(single.handle(std::span(request).first(n), {}).status == FAILURE);
+    auto malformed = request;
+    malformed.push_back(0);
+    assert(single.handle(malformed, {}).status == FAILURE);
+    malformed = request;
+    malformed[1] = 0;
+    assert(single.handle(malformed, {}).status == FAILURE);
+    malformed.assign(34, 'x');
+    malformed[0] = 33;
+    assert(single.handle(malformed, {}).status == FAILURE);
+    const std::array<uint8_t, 1> emptyName{0}, extra{1};
+    assert(single.handle(emptyName, {}).status == FAILURE);
+    assert(single.handle(makeInfoRequest(StorageManager::Filename("missing.bin")), {}).status == FAILURE);
+    assert(all.handle(extra, {}).status == FAILURE);
+    assert(storage.listFiles().size() == 2 && storage.usedSpace() == used);
+
+    flash.failReads = true;
+    assert(single.handle(request, {}).status == FAILURE);
+    flash.failReads = false;
+    flash.failWrites = true;
+    assert(single.handle(request, {}).status == FAILURE);
+    assert(all.handle({}, {}).status == FAILURE);
+    flash.failWrites = false;
+    flash.failErases = true;
+    assert(all.handle({}, {}).status == FAILURE);
+    flash.failErases = false;
+    assert(storage.listFiles().size() == 2 && storage.usedSpace() == used);
+    // Failed formatting must leave the previous directory valid after remount.
+    StorageManager afterFailure(flash);
+    assert(afterFailure.begin() && afterFailure.listFiles().size() == 2);
+
+    assert(storage.startFile(active));
+    assert(storage.write(data) == StorageManager::WriteResult::Ok);
+    assert(single.handle(makeInfoRequest(active), {}).status == FAILURE);
+    assert(all.handle({}, {}).status == FAILURE);
+    assert(storage.isFileOpen() && storage.bufferedBytes() == data.size());
+    auto result = single.callback()(request, {}); // closed file may be deleted while logging
+    assert(result.status == SUCCESS && result.responseLength == 0);
+    assert(storage.isFileOpen() && storage.listFiles().size() == 1);
+    assert(single.handle(request, {}).status == FAILURE); // already deleted
+    assert(!storage.fileSizePayloadChecked(first));
+    assert(storage.usedSpace() == used); // single deletion doesn't reclaim arena space
+    assert(storage.finishFile());
+    StorageManager afterSingle(flash);
+    assert(afterSingle.begin() && afterSingle.listFiles().size() == 2);
+    assert(!afterSingle.fileSizePayloadChecked(first));
+    result = all.callback()({}, {});
+    assert(result.status == SUCCESS && result.responseLength == 0);
+    assert(storage.listFiles().empty() && !storage.isFileOpen());
+    assert(storage.usedSpace() == 0 && storage.freeSpace() == storage.capacity() - 8192);
+    assert(!storage.fileSizePayloadChecked(second));
+    StorageManager afterAll(flash);
+    assert(afterAll.begin() && afterAll.listFiles().empty() && afterAll.usedSpace() == 0);
+    assert(all.handle({}, {}).status == SUCCESS); // repeated delete-all on empty directory
+    StorageManager afterRepeat(flash);
+    assert(afterRepeat.begin() && afterRepeat.listFiles().empty());
+    assert(afterRepeat.startFile(first));
+    assert(afterRepeat.write(data) == StorageManager::WriteResult::Ok && afterRepeat.finishFile());
+    std::array<uint8_t, 3> restored{};
+    assert(afterRepeat.readFile(first, 0, restored) == data.size() && restored == data);
+}
+
+void testDeleteScheduling() {
+    MemoryFlash flash;
+    StorageManager storage(flash);
+    assert(storage.begin());
+    const StorageManager::Filename filename("protected.bin");
+    assert(storage.startFile(filename) && storage.finishFile());
+    DeleteLogHandler single(storage);
+    DeleteAllLogsHandler all(storage);
+    Protocol::Parser parser;
+    MemoryRadio radio;
+    struct FlightState {
+        bool midFlight = true;
+        bool isMidFlight() { return midFlight; }
+    } flight;
+    MessageScheduler scheduler(parser, radio,
+        etl::delegate<bool()>::create<FlightState, &FlightState::isMidFlight>(flight));
+    scheduler.registerRequestHandler(Protocol::MessageType::DELETE_LOG, single.callback());
+    scheduler.registerRequestHandler(Protocol::MessageType::DELETE_ALL_LOGS, all.callback());
+    Protocol::Frame requests{};
+    Protocol::Message message{};
+    const auto payload = makeInfoRequest(filename);
+    message.type = Protocol::MessageType::DELETE_LOG;
+    message.seqId = 10;
+    message.messageLen = payload.size();
+    message.payload.assign(payload.begin(), payload.end());
+    requests.messages.push_back(message);
+    message.type = Protocol::MessageType::DELETE_ALL_LOGS;
+    message.seqId = 11;
+    message.messageLen = 0;
+    message.payload.clear();
+    requests.messages.push_back(message);
+    requests.numMessages = 2;
+    std::array<uint8_t, Protocol::MAX_FRAME_SIZE> encoded{};
+    const auto size = Protocol::encode(requests, encoded);
+    assert(size);
+    for (bool midFlight : {true, false}) {
+        flight.midFlight = midFlight;
+        radio.incoming.assign(encoded.begin(), encoded.begin() + *size);
+        radio.position = 0;
+        scheduler.update();
+        Protocol::Parser client;
+        for (uint8_t byte : radio.sent.back()) client.feed(byte);
+        const auto response = client.takeFrame();
+        assert(response && response->numMessages == 2);
+        for (size_t i = 0; i < 2; ++i) {
+            const auto& reply = response->messages[i];
+            assert(reply.seqId == 10 + i && reply.messageLen == 0);
+            assert(reply.status == (midFlight ? Protocol::RequestStatus::FAILURE : Protocol::RequestStatus::SUCCESS));
+        }
+        assert(storage.listFiles().size() == (midFlight ? 1 : 0));
+    }
+}
+
 int main() {
     testStringCodec();
     testHandlers();
     testDownloads();
     testDownloadScheduling();
+    testDeletes();
+    testDeleteScheduling();
     std::cout << "Log request handler and string codec tests passed\n";
 }

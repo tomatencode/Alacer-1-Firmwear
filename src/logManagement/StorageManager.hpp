@@ -53,7 +53,9 @@ public:
     void discardBuffered();
 
     bool deleteFile(Filename file);
-    void deleteAllFiles();
+    // Ground-only directory reset; fails while a file is open. Reclaims arena
+    // space (data sectors are erased lazily), not a secure wipe of flash bytes.
+    bool deleteAllFiles();
 
     // Copies de-framed payload bytes starting at payload offset.
     // CRC/seq-verified: stops before the first corrupt frame.

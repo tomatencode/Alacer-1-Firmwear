@@ -60,6 +60,8 @@
 #include "./radioLink/requestHandlers/logs/ListLogsHandler.hpp"
 #include "./radioLink/requestHandlers/logs/GetLogInfoHandler.hpp"
 #include "./radioLink/requestHandlers/logs/GetLogBytesHandler.hpp"
+#include "./radioLink/requestHandlers/logs/DeleteLogHandler.hpp"
+#include "./radioLink/requestHandlers/logs/DeleteAllLogsHandler.hpp"
 
 #include "./logManagement/StorageManager.hpp"
 #include "./logManagement/LogManager.hpp"
@@ -181,6 +183,8 @@ IsLoggingHandler isLoggingHandler(logManager);
 ListLogsHandler listLogsHandler(storageManager);
 GetLogInfoHandler getLogInfoHandler(storageManager);
 GetLogBytesHandler getLogBytesHandler(storageManager);
+DeleteLogHandler deleteLogHandler(storageManager);
+DeleteAllLogsHandler deleteAllLogsHandler(storageManager);
 
 const hardware::Buzzer::Melody startupMelody = {
     {262, 200},
@@ -258,6 +262,8 @@ void setup() {
     messageScheduler.registerRequestHandler(Protocol::MessageType::LIST_LOGS, listLogsHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_LOG_INFO, getLogInfoHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_LOG_BYTES, getLogBytesHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::DELETE_LOG, deleteLogHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::DELETE_ALL_LOGS, deleteAllLogsHandler.callback());
 
     buzzer.playMelody(startupMelody);
 }

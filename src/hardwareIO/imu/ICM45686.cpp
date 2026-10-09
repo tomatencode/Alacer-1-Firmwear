@@ -7,8 +7,8 @@ namespace {
 
 namespace hardware {
 
-ICM45686::ICM45686(int csPin, SPIClass &spi)
-    : _csPin(csPin), _spi(spi) {
+ICM45686::ICM45686(int csPin, SPIClass &spi, LogManager &logManager)
+    : _csPin(csPin), _spi(spi), _logManager(logManager) {
 }
 
 void ICM45686::begin() {
@@ -46,6 +46,15 @@ void ICM45686::update() {
     _gyro.x_rad_s = toInt16(buffer[6], buffer[7]) / GYRO_LSB_PER_RAD_S;
     _gyro.y_rad_s = toInt16(buffer[8], buffer[9]) / GYRO_LSB_PER_RAD_S;
     _gyro.z_rad_s = toInt16(buffer[10], buffer[11]) / GYRO_LSB_PER_RAD_S;
+
+    _logManager.appendEvent(LogProtocol::IMUEvent{
+        .accel_x_m_s2 = _accel.x_m_s2,
+        .accel_y_m_s2 = _accel.y_m_s2,
+        .accel_z_m_s2 = _accel.z_m_s2,
+        .gyro_x_rad_s = _gyro.x_rad_s,
+        .gyro_y_rad_s = _gyro.y_rad_s,
+        .gyro_z_rad_s = _gyro.z_rad_s
+    });
 }
 
 IMU::Accel ICM45686::getAccel() const {

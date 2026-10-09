@@ -60,12 +60,12 @@ size_t LogProtocol::encodeEvent(const IMUEvent& event, uint16_t timestamp_d_us,
 								std::span<uint8_t> buffer) {
 	requireBufferSize(buffer, kImuEventSize);
 	encodeEventPrefix(EventType::IMU, timestamp_d_us, buffer);
-	fixedPoint::encode32(event.x_m_s2, buffer, 3);
-	fixedPoint::encode32(event.y_m_s2, buffer, 7);
-	fixedPoint::encode32(event.z_m_s2, buffer, 11);
-	fixedPoint::encode32(event.roll_rad, buffer, 15);
-	fixedPoint::encode32(event.pitch_rad, buffer, 19);
-	fixedPoint::encode32(event.yaw_rad, buffer, 23);
+	fixedPoint::encode32(event.accel_x_m_s2, buffer, 3);
+	fixedPoint::encode32(event.accel_y_m_s2, buffer, 7);
+	fixedPoint::encode32(event.accel_z_m_s2, buffer, 11);
+	fixedPoint::encode32(event.gyro_x_rad_s, buffer, 15);
+	fixedPoint::encode32(event.gyro_y_rad_s, buffer, 19);
+	fixedPoint::encode32(event.gyro_z_rad_s, buffer, 23);
 	return kImuEventSize;
 }
 
@@ -73,8 +73,8 @@ size_t LogProtocol::encodeEvent(const BarometerEvent& event, uint16_t timestamp_
 								std::span<uint8_t> buffer) {
 	requireBufferSize(buffer, kBarometerEventSize);
 	encodeEventPrefix(EventType::Barometer, timestamp_d_us, buffer);
-	fixedPoint::encode32(event.pressure, buffer, 3);
-	fixedPoint::encode32(event.temperature, buffer, 7);
+	fixedPoint::encode32(event.pressure_Pa, buffer, 3);
+	fixedPoint::encode32(event.temperature_C, buffer, 7);
 	return kBarometerEventSize;
 }
 

@@ -51,18 +51,18 @@ struct DroppedEvents {
 };
 
 struct IMUEvent {
-    float x_m_s2;
-    float y_m_s2;
-    float z_m_s2;
+    float accel_x_m_s2;
+    float accel_y_m_s2;
+    float accel_z_m_s2;
 
-    float roll_rad;
-    float pitch_rad;
-    float yaw_rad;
+    float gyro_x_rad_s;
+    float gyro_y_rad_s;
+    float gyro_z_rad_s;
 };
 
 struct BarometerEvent {
-    float pressure;
-    float temperature;
+    float pressure_Pa;
+    float temperature_C;
 };
 
 size_t encodeHeader(const LogMetadata& metadata, std::span<uint8_t> buffer);

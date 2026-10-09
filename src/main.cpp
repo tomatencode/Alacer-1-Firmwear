@@ -68,6 +68,19 @@
 
 #include "./flightStateManagement/FlightStateManager.hpp"
 
+SPIClass spiBus(PA7, PA6, PA5);
+
+hardware::W25Q32JV flashMemory(PB12, spiBus);
+
+StorageManager storageManager(flashMemory);
+LogManager logManager(storageManager);
+
+hardware::HC12 radioHC12(PB15, PA9, PA10);
+
+hardware::ICM45686 imu(PB10, spiBus, logManager);
+
+hardware::MS5611 barometer(PB3, spiBus, logManager);
+
 hardware::BlinkLed statusLed(PB14, 35, 50);
 hardware::Buzzer buzzer(PA8);
 
@@ -88,16 +101,6 @@ std::array<PyroChannel*, 3> pyroChannels = {
     &pyroChannel3
 };
 
-hardware::HC12 radioHC12(PB15, PA9, PA10);
-
-SPIClass spiBus(PA7, PA6, PA5);
-
-hardware::ICM45686 imu(PB10, spiBus);
-
-hardware::MS5611 barometer(PB3, spiBus);
-
-hardware::W25Q32JV flashMemory(PB12, spiBus);
-
 MotorIgniter motorIgniter;
 Parachute parachute;
 
@@ -109,9 +112,6 @@ hardware::Gimbal gimbal(
     GIMBAL_PITCH_GEAR_RATIO, GIMBAL_YAW_GEAR_RATIO,
     GIMBAL_PITCH_SERVO_OFFSET_deg, GIMBAL_YAW_SERVO_OFFSET_deg
 );
-
-StorageManager storageManager(flashMemory);
-LogManager logManager(storageManager);
 
 const Eigen::Matrix3f imuToRocketRotationMatrix = (Eigen::Matrix3f() <<
     IMU_TO_ROCKET_ROTATION_MATRIX[0][0], IMU_TO_ROCKET_ROTATION_MATRIX[0][1], IMU_TO_ROCKET_ROTATION_MATRIX[0][2],

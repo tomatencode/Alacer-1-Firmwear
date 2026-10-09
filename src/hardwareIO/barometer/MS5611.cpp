@@ -2,8 +2,8 @@
 
 namespace hardware {
 
-MS5611::MS5611(int csPin, SPIClass &spi)
-    : _sensor(csPin, &spi),  _pressure_Pa(0), _temperature_C(0) {}
+MS5611::MS5611(int csPin, SPIClass &spi, LogManager &logManager)
+    : _sensor(csPin, &spi), _logManager(logManager), _pressure_Pa(0), _temperature_C(0) {}
 
 void MS5611::begin() {
     _sensor.begin();
@@ -24,6 +24,11 @@ void MS5611::update() {
 
     _pressure_Pa = _sensor.getPressurePascal();
     _temperature_C = _sensor.getTemperature();
+
+    _logManager.appendEvent(LogProtocol::BarometerEvent{
+        .pressure_Pa = _pressure_Pa,
+        .temperature_C = _temperature_C
+    });
 }
 
 } // namespace hardware

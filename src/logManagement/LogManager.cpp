@@ -5,8 +5,7 @@ LogManager::LogManager(StorageManager &storageManager)
     : _storageManager(storageManager) {
 }
 
-bool LogManager::startLog(const LogProtocol::LogMetadata &metadata, const LogProtocol::FlightConfigurationEvent &configuration,
-                          StorageManager::Filename filename) {
+bool LogManager::startLog(const LogProtocol::LogMetadata &metadata, StorageManager::Filename filename) {
     if (_storageManager.isFileOpen()) {
         return false; // finish the previous log first; don't orphan it
     }
@@ -25,19 +24,11 @@ bool LogManager::startLog(const LogProtocol::LogMetadata &metadata, const LogPro
     }
 
     _droppedEvents = 0;
-    // First appendEvent() anchors both clocks with dt=0, so the idle gap
-    // between startLog() and the first sample cannot wrap the 16-bit delta.
     _hasTimestamp = false;
     _lastTimestampUs = 0;
     _startTime_ms = millis();
     _lastTimeSync_ms = _startTime_ms;
     _lastEventsTracker.clearLasts();
-
-    if (!appendEvent(configuration)) {
-        _storageManager.finishFile();
-        _storageManager.deleteFile(filename);
-        return false;
-    }
 
     return true;
 }

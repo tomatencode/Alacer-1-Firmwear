@@ -34,15 +34,7 @@ public:
         metadata.timestamp_unix = littleEndian::decodeU32(payload, 0);
         metadata.logName = filename;
 
-        LogProtocol::FlightConfigurationEvent configuration;
-        configuration.initialRotation = quaternionCodec::decode(payload, 4);
-        configuration.targetAngle = quaternionCodec::decode(payload, 20);
-        configuration.pidKp = fixedPoint::decode32(payload, 36);
-        configuration.pidKi = fixedPoint::decode32(payload, 40);
-        configuration.pidKd = fixedPoint::decode32(payload, 44);
-        configuration.initialHeight_m = fixedPoint::decode32(payload, 48);
-
-        const bool started = _logManager.startLog(metadata, configuration, filename);
+        const bool started = _logManager.startLog(metadata, filename);
         return {started ? MessageScheduler::HandlerResultStatus::SUCCESS
                         : MessageScheduler::HandlerResultStatus::FAILURE, 0};
     }

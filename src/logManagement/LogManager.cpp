@@ -30,6 +30,7 @@ bool LogManager::startLog(const LogProtocol::LogMetadata &metadata, StorageManag
     _lastTimestampUs = 0;
     _startTime_ms = millis();
     _lastTimeSync_ms = _startTime_ms;
+    _lastEventsTracker.clearLasts();
 
 
     return true;

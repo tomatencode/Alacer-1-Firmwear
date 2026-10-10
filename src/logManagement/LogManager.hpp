@@ -8,6 +8,7 @@
 
 #include "StorageManager.hpp"
 #include "LogProtocol.hpp"
+#include "LastEventsTracker.hpp"
 
 
 class LogManager {
@@ -23,6 +24,8 @@ public:
     bool appendEvent(const T& event) {
         if (!_storageManager.isFileOpen())
             return false;
+
+        if (_lastEventsTracker.checkSameAsLast(event)) return true;
 
         const uint32_t nowUs = micros();
         const uint32_t nowMs = millis();
@@ -55,6 +58,8 @@ public:
             ++_droppedEvents; // single count: only the main event counts
             return false;
         }
+
+        _lastEventsTracker.updateLast(event);
         return true;
     }
 
@@ -75,6 +80,8 @@ private:
     void appendDroppedEventsIfNeeded(uint32_t nowMs);
     void addTimesyncIfNeeded(uint32_t nowMs, bool force);
     bool writeTimeSync(uint32_t nowMs);
+
+    LastEventsTracker _lastEventsTracker;
 
     StorageManager &_storageManager;
 };

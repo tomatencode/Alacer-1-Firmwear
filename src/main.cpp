@@ -143,7 +143,20 @@ HorizontalMovementTracker horizontalMovementTracker(verticalMovementTracker, rot
 
 ControlPID controlPID(rotationAccumulator, gimbal);
 
-FlightStateManager flightStateManager(controlPID, rotationAccumulator, barometricHeightCalculator, verticalMovementTracker, horizontalMovementTracker, motorIgniter, parachute);
+FlightStateManager flightStateManager(
+    etl::delegate<void(FlightState)>{
+        [](FlightState newState) {
+            logManager.appendEvent(LogProtocol::FlightStateChangedEvent{newState});
+        }
+    }, // onChangeState
+    controlPID,
+    rotationAccumulator,
+    barometricHeightCalculator,
+    verticalMovementTracker,
+    horizontalMovementTracker,
+    motorIgniter,
+    parachute
+);
 
 Protocol::Parser radioLinkParser;
 MessageScheduler messageScheduler(radioLinkParser, radioHC12);

@@ -18,7 +18,15 @@
 // through the manager's guards (option C: composition, no friend needed).
 class FlightSequenceExecutor {
 public:
-    FlightSequenceExecutor(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, BarometricHeightCalculator& barometricHeightCalculator, VerticalMovementTracker& verticalMovementTracker, HorizontalMovementTracker& horizontalMovementTracker, MotorIgniter& motorIgniter, Parachute& parachute);
+    FlightSequenceExecutor(
+        ControlPID& controlPID,
+        RotationAccumulator& rotationAccumulator,
+        BarometricHeightCalculator& barometricHeightCalculator,
+        VerticalMovementTracker& verticalMovementTracker,
+        HorizontalMovementTracker& horizontalMovementTracker,
+        MotorIgniter& motorIgniter,
+        Parachute& parachute
+    );
 
     // Dumb hardware sequences. All return false on failure, never change FlightState.
     bool configureForFlight(const FlightProfile& profile);

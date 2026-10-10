@@ -1,7 +1,23 @@
 #include "FlightStateManager.hpp"
 
-FlightStateManager::FlightStateManager(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, BarometricHeightCalculator& barometricHeightCalculator, VerticalMovementTracker& verticalMovementTracker, HorizontalMovementTracker& horizontalMovementTracker, MotorIgniter& motorIgniter, Parachute& parachute)
-    : _executor(controlPID, rotationAccumulator, barometricHeightCalculator, verticalMovementTracker, horizontalMovementTracker, motorIgniter, parachute) {}
+FlightStateManager::FlightStateManager(
+    etl::delegate<void(FlightState)> onChangeState,
+    ControlPID& controlPID,
+    RotationAccumulator& rotationAccumulator,
+    BarometricHeightCalculator& barometricHeightCalculator,
+    VerticalMovementTracker& verticalMovementTracker,
+    HorizontalMovementTracker& horizontalMovementTracker,
+    MotorIgniter& motorIgniter,
+    Parachute& parachute)
+    : _onChangeState(onChangeState),
+      _executor(controlPID,
+        rotationAccumulator,
+        barometricHeightCalculator,
+        verticalMovementTracker,
+        horizontalMovementTracker,
+        motorIgniter,
+        parachute)
+{}
 
 FlightState FlightStateManager::getCurrentState() const {
     return _currentState;
@@ -13,7 +29,7 @@ bool FlightStateManager::trySetIdle() {
     }
 
     if (_currentState == FlightState::COUNTDOWN || _currentState == FlightState::ABORTED || _currentState == FlightState::LANDED) {
-        _currentState = FlightState::IDLE;
+        changeState(FlightState::IDLE);
         return true;
     }
     return false; // Deny setting to IDLE if not allowed
@@ -24,14 +40,14 @@ bool FlightStateManager::abort() {
     {
     case FlightState::COUNTDOWN:
         _countdownStartTime = 0;
-        _currentState = FlightState::ABORTED;
+        changeState(FlightState::ABORTED);
         return true;
     case FlightState::BURNING: {
         _executor.abortThrust();
         // Always enter ABORTED (no half-abort): even if the chute fails,
         // thrust is already cut, so staying in BURNING would drift from hardware.
         const bool chuteOk = _executor.deployParachute();
-        _currentState = FlightState::ABORTED;
+        changeState(FlightState::ABORTED);
         return chuteOk;
     }
     case FlightState::COASTING:
@@ -39,7 +55,7 @@ bool FlightStateManager::abort() {
     case FlightState::LANDED: // parachute deployment might have failed and falsely enterd landed state
     {
         const bool chuteOk = _executor.deployParachute();
-        _currentState = FlightState::ABORTED;
+        changeState(FlightState::ABORTED);
         return chuteOk;
     }
     
@@ -68,7 +84,7 @@ bool FlightStateManager::startCountdown(FlightProfile flightProfile) {
 
     if (configSuccess && checksSuccess) {
         _countdownStartTime = millis();
-        _currentState = FlightState::COUNTDOWN;
+        changeState(FlightState::COUNTDOWN);
         return true; // Countdown successfully started
     }
 
@@ -98,29 +114,29 @@ void FlightStateManager::update() {
         if (millis() - _countdownStartTime >= _flightProfile.countdownDuration_ms) {
             if (_executor.launch()) {
                 _motorStartBurnTime = millis();
-                _currentState = FlightState::BURNING;
+                changeState(FlightState::BURNING);
             } else {
                 // Ignition failed: do not enter BURNING, fail safe to ABORTED.
-                _currentState = FlightState::ABORTED;
+                changeState(FlightState::ABORTED);
             }
         }
         break;
     case FlightState::BURNING:
         if (millis() - _motorStartBurnTime >= _flightProfile.motorBurnDuration_ms) {
             _executor.finishBurn();
-            _currentState = FlightState::COASTING;
+            changeState(FlightState::COASTING);
         }
         break;
     case FlightState::COASTING:
         if (_executor.hasReachedApogee()) {
             _executor.deployForDescent();
-            _currentState = FlightState::DESCENDING;
+            changeState(FlightState::DESCENDING);
         }
         break;
     case FlightState::DESCENDING:
         if (_executor.hasTouchedDown(_flightProfile.initialHeight_m)) {
             _executor.finishLanding();
-            _currentState = FlightState::LANDED;
+            changeState(FlightState::LANDED);
         }
         break;
     case FlightState::LANDED:

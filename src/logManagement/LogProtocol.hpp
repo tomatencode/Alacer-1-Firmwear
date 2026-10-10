@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <span>
 #include "etl/string.h"
-#include "../flightStateManagement/FlightStateManager.hpp"
+#include "../flightStateManagement/FlightTypes.hpp"
 
 #include <ArduinoEigen.h>
 

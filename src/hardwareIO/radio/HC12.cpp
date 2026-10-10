@@ -8,7 +8,7 @@ HC12::HC12(int setPin, int rxPin, int txPin)
 }
 
 void HC12::begin() {
-    _serial.begin(9600);
+    _serial.begin(38400); // HC-12 must be put in the correct baud rate mode via AT+B38400
 
     pinMode(_setPin, OUTPUT);
     digitalWrite(_setPin, HIGH);

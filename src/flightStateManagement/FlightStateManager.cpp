@@ -1,7 +1,7 @@
 #include "FlightStateManager.hpp"
 
 FlightStateManager::FlightStateManager(
-    etl::delegate<void(FlightState)> onChangeState,
+    LogManager& logManager,
     ControlPID& controlPID,
     RotationAccumulator& rotationAccumulator,
     BarometricHeightCalculator& barometricHeightCalculator,
@@ -9,8 +9,9 @@ FlightStateManager::FlightStateManager(
     HorizontalMovementTracker& horizontalMovementTracker,
     MotorIgniter& motorIgniter,
     Parachute& parachute)
-    : _onChangeState(onChangeState),
-      _executor(controlPID,
+    : _logManager(logManager),
+      _executor(logManager,
+        controlPID,
         rotationAccumulator,
         barometricHeightCalculator,
         verticalMovementTracker,

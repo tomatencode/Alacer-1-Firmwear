@@ -1,7 +1,23 @@
 #include "FlightSequenceExecutor.hpp"
 
-FlightSequenceExecutor::FlightSequenceExecutor(ControlPID& controlPID, RotationAccumulator& rotationAccumulator, BarometricHeightCalculator& barometricHeightCalculator, VerticalMovementTracker& verticalMovementTracker, HorizontalMovementTracker& horizontalMovementTracker, MotorIgniter& motorIgniter, Parachute& parachute)
-    : _controlPID(controlPID), _rotationAccumulator(rotationAccumulator), _barometricHeightCalculator(barometricHeightCalculator), _verticalMovementTracker(verticalMovementTracker), _horizontalMovementTracker(horizontalMovementTracker), _motorIgniter(motorIgniter), _parachute(parachute) {}
+FlightSequenceExecutor::FlightSequenceExecutor(
+    LogManager& logManager,
+    ControlPID& controlPID,
+    RotationAccumulator& rotationAccumulator,
+    BarometricHeightCalculator& barometricHeightCalculator,
+    VerticalMovementTracker& verticalMovementTracker,
+    HorizontalMovementTracker& horizontalMovementTracker,
+    MotorIgniter& motorIgniter,
+    Parachute& parachute)
+    : _logManager(logManager),
+      _controlPID(controlPID),
+      _rotationAccumulator(rotationAccumulator),
+      _barometricHeightCalculator(barometricHeightCalculator),
+      _verticalMovementTracker(verticalMovementTracker),
+      _horizontalMovementTracker(horizontalMovementTracker),
+      _motorIgniter(motorIgniter),
+      _parachute(parachute)
+{}
 
 bool FlightSequenceExecutor::configureForFlight(const FlightProfile& profile) {
     if (profile.parachutePyroChannel == nullptr || profile.motorIgniterChannel == nullptr) {
@@ -22,6 +38,15 @@ bool FlightSequenceExecutor::configureForFlight(const FlightProfile& profile) {
     _verticalMovementTracker.reset();
     _horizontalMovementTracker.reset();
 
+    _logManager.appendEvent(LogProtocol::FlightConfigurationEvent{
+        .initialRotation = profile.initialRotation,
+        .targetAngle = profile.targetAngle,
+        .pidKp = profile.pidKp,
+        .pidKi = profile.pidKi,
+        .pidKd = profile.pidKd,
+        .initialHeight_m = profile.initialHeight_m,
+    });
+
     return true;
 }
 
@@ -29,6 +54,7 @@ bool FlightSequenceExecutor::preflightChecks() const {
     if (!_motorIgniter.canIgnite()) return false;
     if (!_parachute.canDeploy()) return false;
     if (!_controlPID.canStartControlling()) return false;
+    if (_logManager.isLogging()) return false;
 
     return true;
 }

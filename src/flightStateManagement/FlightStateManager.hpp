@@ -17,11 +17,13 @@
 #include "../ascentTracking/VerticalMovementTracker.hpp"
 #include "../ascentTracking/HorizontalMovementTracker.hpp"
 #include "../controlPID/ControlPID.hpp"
+#include "../logManagement/LogManager.hpp"
+
 
 class FlightStateManager {
 public:
     FlightStateManager(
-        etl::delegate<void(FlightState)> onChangeState,
+        LogManager& logManager,
         ControlPID& controlPID,
         RotationAccumulator& rotationAccumulator,
         BarometricHeightCalculator& barometricHeightCalculator,
@@ -54,9 +56,7 @@ private:
 
     void changeState(FlightState newState) {
         _currentState = newState;
-        if (_onChangeState) {
-            _onChangeState(_currentState);
-        }
+        _logManager.appendEvent(LogProtocol::FlightStateChangedEvent{.newState = newState});
     }
 
     FlightState _currentState = FlightState::IDLE;
@@ -64,7 +64,6 @@ private:
     uint32_t _countdownStartTime = 0;
     uint32_t _motorStartBurnTime = 0;
 
-    etl::delegate<void(FlightState)> _onChangeState;
-
+    LogManager& _logManager;
     FlightSequenceExecutor _executor;
 };

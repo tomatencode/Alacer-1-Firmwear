@@ -10,6 +10,7 @@
 #include "../ascentTracking/VerticalMovementTracker.hpp"
 #include "../ascentTracking/HorizontalMovementTracker.hpp"
 #include "../controlPID/ControlPID.hpp"
+#include "../logManagement/LogManager.hpp"
 
 // FlightSequenceExecutor owns NO state machine state.
 // It only touches hardware / estimators. It never decides WHEN to act.
@@ -19,6 +20,7 @@
 class FlightSequenceExecutor {
 public:
     FlightSequenceExecutor(
+        LogManager& logManager,
         ControlPID& controlPID,
         RotationAccumulator& rotationAccumulator,
         BarometricHeightCalculator& barometricHeightCalculator,
@@ -45,6 +47,7 @@ public:
     bool hasTouchedDown(float initialHeight_m) const;
 
 private:
+    LogManager& _logManager;
     ControlPID& _controlPID;
     RotationAccumulator& _rotationAccumulator;
     BarometricHeightCalculator& _barometricHeightCalculator;

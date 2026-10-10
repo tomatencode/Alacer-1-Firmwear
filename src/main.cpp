@@ -144,11 +144,7 @@ HorizontalMovementTracker horizontalMovementTracker(verticalMovementTracker, rot
 ControlPID controlPID(rotationAccumulator, gimbal);
 
 FlightStateManager flightStateManager(
-    etl::delegate<void(FlightState)>{
-        [](FlightState newState) {
-            logManager.appendEvent(LogProtocol::FlightStateChangedEvent{newState});
-        }
-    }, // onChangeState
+    logManager,
     controlPID,
     rotationAccumulator,
     barometricHeightCalculator,

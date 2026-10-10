@@ -5,14 +5,12 @@
 #include <cstddef>
 
 #include "./IMU.hpp"
-#include "../../logManagement/LogManager.hpp"
-#include "../../logManagement/LogProtocol.hpp"
 
 namespace hardware {
 
 class ICM45686 : public IMU {
 public:
-    explicit ICM45686(int csPin, SPIClass &spi, LogManager &logManager);
+    explicit ICM45686(int csPin, SPIClass &spi);
 
     void begin() override;
     void update() override;
@@ -40,7 +38,6 @@ private:
 
     int _csPin;
     SPIClass &_spi;
-    LogManager &_logManager;
 
     bool _connected = false;
 

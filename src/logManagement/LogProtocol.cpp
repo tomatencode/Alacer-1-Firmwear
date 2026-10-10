@@ -14,6 +14,11 @@ constexpr size_t kDroppedEventsSize = 9;
 constexpr size_t kUpdateCycleDoneEventSize = 3;
 constexpr size_t kImuEventSize = 27;
 constexpr size_t kBarometerEventSize = 11;
+constexpr size_t kBatteryEventSize = 7;
+constexpr size_t kGimbalEventSize = 11;
+constexpr size_t kRotationEventSize = 19;
+constexpr size_t kHorizontalMovementEventSize = 20;
+constexpr size_t kVerticalMovementEventSize = 11;
 
 void requireBufferSize(std::span<uint8_t> buffer, size_t requiredSize) {
 	assert(buffer.size() >= requiredSize);
@@ -85,3 +90,48 @@ size_t LogProtocol::encodeEvent(const BarometerEvent& event, uint16_t timestamp_
 	return kBarometerEventSize;
 }
 
+size_t LogProtocol::encodeEvent(const BatteryEvent& event, uint16_t timestamp_d_us,
+								std::span<uint8_t> buffer) {
+	requireBufferSize(buffer, kBatteryEventSize);
+	encodeEventPrefix(EventType::Battery, timestamp_d_us, buffer);
+	fixedPoint::encode32(event.voltage_v, buffer, 3);
+	return kBatteryEventSize;
+}
+
+size_t LogProtocol::encodeEvent(const GimbalEvent& event, uint16_t timestamp_d_us,
+								std::span<uint8_t> buffer) {
+	requireBufferSize(buffer, kGimbalEventSize);
+	encodeEventPrefix(EventType::Gimbal, timestamp_d_us, buffer);
+	fixedPoint::encode32(event.pitch_deg, buffer, 3);
+	fixedPoint::encode32(event.yaw_deg, buffer, 7);
+	return kGimbalEventSize;
+}
+
+size_t LogProtocol::encodeEvent(const RotationEvent& event, uint16_t timestamp_d_us,
+								std::span<uint8_t> buffer) {
+	requireBufferSize(buffer, kRotationEventSize);
+	encodeEventPrefix(EventType::Rotation, timestamp_d_us, buffer);
+	quaternionCodec::encode(event.rotation, buffer, 3);
+	return kRotationEventSize;
+}
+
+size_t LogProtocol::encodeEvent(const HorizontalMovementEvent& event, uint16_t timestamp_d_us,
+								std::span<uint8_t> buffer) {
+	requireBufferSize(buffer, kHorizontalMovementEventSize);
+	encodeEventPrefix(EventType::HorizontalMovement, timestamp_d_us, buffer);
+	fixedPoint::encode32(event.x_m, buffer, 3);
+	fixedPoint::encode32(event.y_m, buffer, 7);
+	fixedPoint::encode32(event.velocity_x_m_s, buffer, 11);
+	fixedPoint::encode32(event.velocity_y_m_s, buffer, 15);
+	buffer[19] = event.ascentStage;
+	return kHorizontalMovementEventSize;
+}
+
+size_t LogProtocol::encodeEvent(const VerticalMovementEvent& event, uint16_t timestamp_d_us,
+								std::span<uint8_t> buffer) {
+	requireBufferSize(buffer, kVerticalMovementEventSize);
+	encodeEventPrefix(EventType::VerticalMovement, timestamp_d_us, buffer);
+	fixedPoint::encode32(event.height_m, buffer, 3);
+	fixedPoint::encode32(event.velocity_m_s, buffer, 7);
+	return kVerticalMovementEventSize;
+}

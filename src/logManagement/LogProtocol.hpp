@@ -28,6 +28,11 @@ enum class EventType : uint8_t {
     UpdateCycleDone = 0x03,
     IMU = 0x04,
     Barometer = 0x05,
+    Battery = 0x06,
+    Gimbal = 0x07,
+    Rotation = 0x08,
+    HorizontalMovement = 0x09,
+    VerticalMovement = 0x0A,
 };
 
 struct LogMetadata {
@@ -66,6 +71,32 @@ struct BarometerEvent {
     float temperature_C;
 };
 
+struct BatteryEvent {
+    float voltage_v;
+};
+
+struct GimbalEvent {
+    float pitch_deg;
+    float yaw_deg;
+};
+
+struct RotationEvent {
+    Eigen::Quaternionf rotation;
+};
+
+struct HorizontalMovementEvent {
+    float x_m;
+    float y_m;
+    float velocity_x_m_s;
+    float velocity_y_m_s;
+    uint8_t ascentStage;
+};
+
+struct VerticalMovementEvent {
+    float height_m;
+    float velocity_m_s;
+};
+
 struct UpdateCycleDoneEvent {
 };
 
@@ -83,6 +114,16 @@ size_t encodeEvent(const UpdateCycleDoneEvent& event, uint16_t timestamp_d_us, s
 size_t encodeEvent(const IMUEvent& event, uint16_t timestamp_d_us, std::span<uint8_t> buffer);
 // Barometer: event type, uint16 delta microseconds, then two int32 fixed-point values.
 size_t encodeEvent(const BarometerEvent& event, uint16_t timestamp_d_us, std::span<uint8_t> buffer);
-
+// Battery: event type, uint16 delta microseconds, then one int32 fixed-point voltage.
+size_t encodeEvent(const BatteryEvent& event, uint16_t timestamp_d_us, std::span<uint8_t> buffer);
+// Gimbal: event type, uint16 delta microseconds, then pitch and yaw as int32 fixed-point values.
+size_t encodeEvent(const GimbalEvent& event, uint16_t timestamp_d_us, std::span<uint8_t> buffer);
+// Rotation: event type, uint16 delta microseconds, then quaternion (x, y, z, w) as four int32 fixed-point values.
+size_t encodeEvent(const RotationEvent& event, uint16_t timestamp_d_us, std::span<uint8_t> buffer);
+// HorizontalMovement: event type, uint16 delta microseconds, four int32 fixed-point values
+// (x, y, velocity x, velocity y), then a uint8 ascent stage.
+size_t encodeEvent(const HorizontalMovementEvent& event, uint16_t timestamp_d_us, std::span<uint8_t> buffer);
+// VerticalMovement: event type, uint16 delta microseconds, then height and velocity as int32 fixed-point values.
+size_t encodeEvent(const VerticalMovementEvent& event, uint16_t timestamp_d_us, std::span<uint8_t> buffer);
 
 } // namespace LogProtocol

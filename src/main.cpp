@@ -65,6 +65,7 @@
 
 #include "./logManagement/StorageManager.hpp"
 #include "./logManagement/LogManager.hpp"
+#include "./logManagement/TelemetryRecorder.hpp"
 
 #include "./helpers/coordinates/IMURocketCoordinateConverter.hpp"
 #include "./rotationEstimation/RotationAccumulator.hpp"
@@ -76,23 +77,21 @@
 
 #include "./flightStateManagement/FlightStateManager.hpp"
 
+hardware::BlinkLed statusLed(PB14, 35, 50);
+
+hardware::Buzzer buzzer(PA8);
+
+hardware::Battery battery(PB1);
+
+hardware::HC12 radioHC12(PB15, PA9, PA10);
+
 SPIClass spiBus(PA7, PA6, PA5);
 
 hardware::W25Q32JV flashMemory(PB12, spiBus);
 
-StorageManager storageManager(flashMemory);
-LogManager logManager(storageManager);
+hardware::ICM45686 imu(PB10, spiBus);
 
-hardware::HC12 radioHC12(PB15, PA9, PA10);
-
-hardware::ICM45686 imu(PB10, spiBus, logManager);
-
-hardware::MS5611 barometer(PB3, spiBus, logManager);
-
-hardware::BlinkLed statusLed(PB14, 35, 50);
-hardware::Buzzer buzzer(PA8);
-
-hardware::Battery battery(PB1);
+hardware::MS5611 barometer(PB3, spiBus);
 
 hardware::Servo pitchServo(PA1, 2, 0.0f, 180.0f, 90.0f, 544, 2400, 180.0);
 hardware::Servo yawServo(PA2, 3, 0.0f, 180.0f, 90.0f, 544, 2400, 180.0);
@@ -120,6 +119,9 @@ hardware::Gimbal gimbal(
     GIMBAL_PITCH_GEAR_RATIO, GIMBAL_YAW_GEAR_RATIO,
     GIMBAL_PITCH_SERVO_OFFSET_deg, GIMBAL_YAW_SERVO_OFFSET_deg
 );
+
+StorageManager storageManager(flashMemory);
+LogManager logManager(storageManager);
 
 const Eigen::Matrix3f imuToRocketRotationMatrix = (Eigen::Matrix3f() <<
     IMU_TO_ROCKET_ROTATION_MATRIX[0][0], IMU_TO_ROCKET_ROTATION_MATRIX[0][1], IMU_TO_ROCKET_ROTATION_MATRIX[0][2],
@@ -185,6 +187,15 @@ GetLogSizeHandler getLogSizeHandler(storageManager);
 DeleteLogHandler deleteLogHandler(storageManager);
 DeleteAllLogsHandler deleteAllLogsHandler(storageManager);
 DownloadManager downloadManager(storageManager);
+
+TelemetryRecorder telemetryRecorder(
+    logManager, battery,
+    imu, barometer,
+    barometricHeightCalculator,
+    verticalMovementTracker,
+    horizontalMovementTracker,
+    gimbal, rotationAccumulator
+);
 
 const hardware::Buzzer::Melody startupMelody = {
     {262, 200},

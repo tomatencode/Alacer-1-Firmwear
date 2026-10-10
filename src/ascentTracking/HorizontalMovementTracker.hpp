@@ -33,6 +33,7 @@ public:
     bool hasVelocityEstimate() const { return _hasVelocityEstimate; }
 
     void setAscentStage(AscentStage stage);
+    AscentStage getAscendStage() const { return _currentAscentStage; }
 
     void update();
 private:

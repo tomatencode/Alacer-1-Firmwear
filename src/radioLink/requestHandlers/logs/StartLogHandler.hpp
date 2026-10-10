@@ -11,15 +11,12 @@
 
 // START_LOG payload:
 //   [0..3] UNIX timestamp, little-endian uint32
-//   [4..19] initial rotation, [20..35] target angle (x,y,z,w)
-//   [36..47] PID kp, ki, kd; [48..51] initial height in metres
-//   Quaternion/float fields use int32 fixed-point scaled by 100.
-//   [52..] length-prefixed filename (1..32 bytes), no trailing bytes.
+//   [4..] length-prefixed filename (1..32 bytes), no trailing bytes.
 // The filename is also the log name; the configuration is logged as a FlightConfigurationEvent.
 // Response: SUCCESS/FAILURE with an empty payload.
 class StartLogHandler {
 public:
-    static constexpr size_t METADATA_SIZE = 52;
+    static constexpr size_t METADATA_SIZE = 4;
 
     explicit StartLogHandler(LogManager& logManager) : _logManager(logManager) {}
 

@@ -11,6 +11,7 @@ namespace {
 
 constexpr size_t kTimeSyncSize = 5;
 constexpr size_t kDroppedEventsSize = 9;
+constexpr size_t kUpdateCycleDoneEventSize = 3;
 constexpr size_t kImuEventSize = 27;
 constexpr size_t kBarometerEventSize = 11;
 
@@ -54,6 +55,12 @@ size_t LogProtocol::encodeDroppedEvents(uint32_t count, uint32_t time_since_star
 	littleEndian::encodeU32(time_since_start_ms, buffer, 1);
 	littleEndian::encodeU32(count, buffer, 5);
 	return kDroppedEventsSize;
+}
+
+size_t LogProtocol::encodeEvent(const UpdateCycleDoneEvent& event, uint16_t timestamp_d_us, std::span<uint8_t> buffer) {
+	requireBufferSize(buffer, kUpdateCycleDoneEventSize);
+	encodeEventPrefix(EventType::UpdateCycleDone, timestamp_d_us, buffer);
+	return kUpdateCycleDoneEventSize;
 }
 
 size_t LogProtocol::encodeEvent(const IMUEvent& event, uint16_t timestamp_d_us,

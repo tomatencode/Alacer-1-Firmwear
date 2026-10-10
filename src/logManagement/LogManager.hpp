@@ -25,7 +25,9 @@ public:
         if (!_storageManager.isFileOpen())
             return false;
 
-        if (_lastEventsTracker.checkSameAsLast(event)) return true;
+        if constexpr (requires { _lastEventsTracker.checkSameAsLast(event); }) {
+            if (_lastEventsTracker.checkSameAsLast(event)) return true;
+        }
 
         const uint32_t nowUs = micros();
         const uint32_t nowMs = millis();
@@ -59,7 +61,9 @@ public:
             return false;
         }
 
-        _lastEventsTracker.updateLast(event);
+        if constexpr (requires { _lastEventsTracker.updateLast(event); }) {
+            _lastEventsTracker.updateLast(event);
+        }
         return true;
     }
 

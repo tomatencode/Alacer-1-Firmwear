@@ -19,6 +19,7 @@ public:
                lastBarometerEvent->pressure_Pa == event.pressure_Pa && lastBarometerEvent->temperature_C == event.temperature_C;
     }
 
+
     void updateLast(const LogProtocol::IMUEvent& event) {
         lastIMUEvent = event;
     }

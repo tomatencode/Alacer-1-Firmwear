@@ -25,8 +25,9 @@ constexpr uint16_t maxEventSize = 128;
 enum class EventType : uint8_t {
     TimeSync = 0x01,
     DroppedEvents = 0x02,
-    IMU = 0x03,
-    Barometer = 0x04,
+    UpdateCycleDone = 0x03,
+    IMU = 0x04,
+    Barometer = 0x05,
 };
 
 struct LogMetadata {
@@ -65,6 +66,9 @@ struct BarometerEvent {
     float temperature_C;
 };
 
+struct UpdateCycleDoneEvent {
+};
+
 size_t encodeHeader(const LogMetadata& metadata, std::span<uint8_t> buffer);
 
 // TimeSync: event type followed by uint32 milliseconds since log start.
@@ -72,6 +76,9 @@ size_t encodeTimeSync(uint32_t time_since_start_ms, std::span<uint8_t> buffer);
 // DroppedEvents: event type, uint32 milliseconds since log start, uint32 count.
 size_t encodeDroppedEvents(uint32_t count, uint32_t time_since_start_ms, std::span<uint8_t> buffer);
 
+
+// UpdateCycleDone: event type only. to track main loop frequency.
+size_t encodeEvent(const UpdateCycleDoneEvent& event, uint16_t timestamp_d_us, std::span<uint8_t> buffer);
 // IMU: event type, uint16 delta microseconds, then six int32 fixed-point values.
 size_t encodeEvent(const IMUEvent& event, uint16_t timestamp_d_us, std::span<uint8_t> buffer);
 // Barometer: event type, uint16 delta microseconds, then two int32 fixed-point values.

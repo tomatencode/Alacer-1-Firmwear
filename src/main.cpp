@@ -293,4 +293,6 @@ void loop() {
     radioHC12.update();
     messageScheduler.update();
     controlPID.update();
+
+    logManager.appendEvent(LogProtocol::UpdateCycleDoneEvent{});
 }

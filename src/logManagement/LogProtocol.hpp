@@ -2,6 +2,8 @@
 
 #include <cstdint>
 #include <span>
+#include "etl/string.h"
+#include "../flightStateManagement/FlightStateManager.hpp"
 
 #include <ArduinoEigen.h>
 
@@ -12,11 +14,8 @@ constexpr uint16_t maxEventSize = 128;
 
 // Header layout (256 bytes, zero-padded):
 //   0..3   UNIX timestamp (uint32)
-//   4..19  initial rotation quaternion (x, y, z, w)
-//   20..35 target angle quaternion (x, y, z, w)
-//   36..47 PID kp, ki, kd
-//   48..51 initial height in metres
-// Quaternion and float fields are int32 fixed-point values scaled by 100.
+//   4..    log name (uint8 length followed by the bytes, no NUL)
+// Quaternion and float fields in events are int32 fixed-point values scaled by 100.
 //
 // Record layout:
 //   byte 0    event type
@@ -25,19 +24,32 @@ constexpr uint16_t maxEventSize = 128;
 enum class EventType : uint8_t {
     TimeSync = 0x01,
     DroppedEvents = 0x02,
-    UpdateCycleDone = 0x03,
-    IMU = 0x04,
-    Barometer = 0x05,
-    Battery = 0x06,
-    Gimbal = 0x07,
-    Rotation = 0x08,
-    HorizontalMovement = 0x09,
-    VerticalMovement = 0x0A,
+    FlightStateChanged = 0x03,
+    UpdateCycleDone = 0x04,
+    IMU = 0x05,
+    Barometer = 0x06,
+    Battery = 0x07,
+    Gimbal = 0x08,
+    Rotation = 0x09,
+    HorizontalMovement = 0x0A,
+    VerticalMovement = 0x0B,
+    FlightConfiguration = 0x0C,
 };
 
 struct LogMetadata {
     uint32_t timestamp_unix;
+    etl::string<32> logName;
+};
 
+struct TimeSyncEvent {
+    uint32_t absolute_timestamp_ms;
+};
+
+struct DroppedEvents {
+    uint32_t count;
+};
+
+struct FlightConfigurationEvent {
     Eigen::Quaternionf initialRotation;
     Eigen::Quaternionf targetAngle;
 
@@ -48,12 +60,8 @@ struct LogMetadata {
     float initialHeight_m;
 };
 
-struct TimeSyncEvent {
-    uint32_t absolute_timestamp_ms;
-};
-
-struct DroppedEvents {
-    uint32_t count;
+struct FlightStateChangedEvent {
+    FlightState newState;
 };
 
 struct IMUEvent {
@@ -108,6 +116,11 @@ size_t encodeTimeSync(uint32_t time_since_start_ms, std::span<uint8_t> buffer);
 size_t encodeDroppedEvents(uint32_t count, uint32_t time_since_start_ms, std::span<uint8_t> buffer);
 
 
+// FlightConfiguration: event type, uint16 delta microseconds, initial rotation and target angle
+// quaternions (x, y, z, w), then PID kp, ki, kd and initial height as int32 fixed-point values.
+size_t encodeEvent(const FlightConfigurationEvent& event, uint16_t timestamp_d_us, std::span<uint8_t> buffer);
+// FlightStateChanged: event type, uint16 delta microseconds, then the new flight state.
+size_t encodeEvent(const FlightStateChangedEvent& event, uint16_t timestamp_d_us, std::span<uint8_t> buffer);
 // UpdateCycleDone: event type only. to track main loop frequency.
 size_t encodeEvent(const UpdateCycleDoneEvent& event, uint16_t timestamp_d_us, std::span<uint8_t> buffer);
 // IMU: event type, uint16 delta microseconds, then six int32 fixed-point values.

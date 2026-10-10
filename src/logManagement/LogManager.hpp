@@ -15,7 +15,8 @@ class LogManager {
 public:
     LogManager(StorageManager &storageManager);
 
-    bool startLog(const LogProtocol::LogMetadata &metadata, StorageManager::Filename filename);
+    bool startLog(const LogProtocol::LogMetadata &metadata, const LogProtocol::FlightConfigurationEvent &configuration,
+                  StorageManager::Filename filename);
     bool finishLog();
 
     bool isLogging() const { return _storageManager.isFileOpen(); }

@@ -5,7 +5,8 @@ LogManager::LogManager(StorageManager &storageManager)
     : _storageManager(storageManager) {
 }
 
-bool LogManager::startLog(const LogProtocol::LogMetadata &metadata, StorageManager::Filename filename) {
+bool LogManager::startLog(const LogProtocol::LogMetadata &metadata, const LogProtocol::FlightConfigurationEvent &configuration,
+                          StorageManager::Filename filename) {
     if (_storageManager.isFileOpen()) {
         return false; // finish the previous log first; don't orphan it
     }
@@ -32,6 +33,11 @@ bool LogManager::startLog(const LogProtocol::LogMetadata &metadata, StorageManag
     _lastTimeSync_ms = _startTime_ms;
     _lastEventsTracker.clearLasts();
 
+    if (!appendEvent(configuration)) {
+        _storageManager.finishFile();
+        _storageManager.deleteFile(filename);
+        return false;
+    }
 
     return true;
 }

@@ -1,53 +1,51 @@
-#include "ControlPID.hpp"
+#include "ControlPD.hpp"
 
 #include <Arduino.h>
 #include <cmath>
 
 
-ControlPID::ControlPID(RotationAccumulator& rotationAccumulator, hardware::Gimbal& gimbal)
+ControlPD::ControlPD(RotationAccumulator& rotationAccumulator, hardware::Gimbal& gimbal)
     : _rotationAccumulator(rotationAccumulator),
       _gimbal(gimbal),
       _targetAngle(std::nullopt),
       _isControlling(false),
       _kp(std::nullopt),
-      _ki(std::nullopt),
       _kd(std::nullopt) {
 }
 
-bool ControlPID::canStartControlling() const {
-    return _kp.has_value() && _ki.has_value() && _kd.has_value() && _targetAngle.has_value();
+bool ControlPD::canStartControlling() const {
+    return _kp.has_value() && _kd.has_value() && _targetAngle.has_value();
 }
 
-void ControlPID::setPIDParameters(float kp, float ki, float kd) {
+void ControlPD::setPDParameters(float kp, float kd) {
     _kp = kp;
-    _ki = ki;
     _kd = kd;
 }
 
-std::optional<ControlPID::PIDParameters> ControlPID::getPIDParameters() const {
-    if (!_kp.has_value() || !_ki.has_value() || !_kd.has_value()) {
+std::optional<ControlPD::PDParameters> ControlPD::getPDParameters() const {
+    if (!_kp.has_value() || !_kd.has_value()) {
         return std::nullopt;
     }
-    return PIDParameters{_kp.value(), _ki.value(), _kd.value()};
+    return PDParameters{_kp.value(), _kd.value()};
 }
 
-void ControlPID::setTarget(const Eigen::Quaternionf& targetAngle) {
+void ControlPD::setTarget(const Eigen::Quaternionf& targetAngle) {
     _targetAngle = targetAngle;
 }
 
-std::optional<Eigen::Quaternionf> ControlPID::getTarget() const {
+std::optional<Eigen::Quaternionf> ControlPD::getTarget() const {
     return _targetAngle;
 }
 
-void ControlPID::startControlling() {
+void ControlPD::startControlling() {
   if (!canStartControlling()) return;
   _isControlling = true;
 }
-void ControlPID::stopControlling() {
+void ControlPD::stopControlling() {
   _isControlling = false;
 }
 
-bool ControlPID::setControlling(bool controlling) {
+bool ControlPD::setControlling(bool controlling) {
   if (controlling) {
     startControlling();
   } else {
@@ -56,17 +54,14 @@ bool ControlPID::setControlling(bool controlling) {
   return _isControlling == controlling;
 }
 
-void ControlPID::clearConfig() {
+void ControlPD::clearConfig() {
     _targetAngle = std::nullopt;
     _isControlling = false;
     _kp = std::nullopt;
-    _ki = std::nullopt;
     _kd = std::nullopt;
-    _integralYaw_rad = 0.0f;
-    _integralPitch_rad = 0.0f;
 }
 
-void ControlPID::update() {
+void ControlPD::update() {
     if (!_isControlling || !canStartControlling()) {
         return;
     }
@@ -115,19 +110,14 @@ void ControlPID::update() {
         // else: angle ~0 or ~2pi, error stays zero.
     }
 
-    _integralYaw_rad += yawError_rad * deltaTime_s;
-    _integralPitch_rad += pitchError_rad * deltaTime_s;
-
     Eigen::Vector3f angularVelocity_rad_s = _rotationAccumulator.getAngularVelocity_rad_s();
     float yawRate_rad_s = angularVelocity_rad_s[0];
     float pitchRate_rad_s = angularVelocity_rad_s[1];
 
     float yawOutput_rad = _kp.value() * yawError_rad
-                        + _ki.value() * _integralYaw_rad
                         - _kd.value() * yawRate_rad_s;
 
     float pitchOutput_rad = _kp.value() * pitchError_rad
-                          + _ki.value() * _integralPitch_rad
                           - _kd.value() * pitchRate_rad_s;
 
     hardware::Gimbal::GimbalPos targetPos{

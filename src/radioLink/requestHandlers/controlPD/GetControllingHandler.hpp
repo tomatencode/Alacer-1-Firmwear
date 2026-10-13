@@ -3,7 +3,7 @@
 #include <span>
 
 #include "../../MessageScheduler.hpp"
-#include "../../../controlPID/ControlPID.hpp"
+#include "../../../controlPD/ControlPD.hpp"
 
 // GET_CONTROLLING request (is controlling):
 //   empty payload.
@@ -12,7 +12,7 @@
 //   0 otherwise.
 class GetControllingHandler {
 public:
-    explicit GetControllingHandler(ControlPID& controlPID) : _controlPID(controlPID) {}
+    explicit GetControllingHandler(ControlPD& controlPID) : _controlPID(controlPID) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t>, std::span<uint8_t> response) {
         response[0] = _controlPID.isControlling() ? 1 : 0;
@@ -24,5 +24,5 @@ public:
     }
 
 private:
-    ControlPID& _controlPID;
+    ControlPD& _controlPID;
 };

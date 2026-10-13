@@ -3,7 +3,7 @@
 #include <span>
 
 #include "../../MessageScheduler.hpp"
-#include "../../../controlPID/ControlPID.hpp"
+#include "../../../controlPD/ControlPD.hpp"
 
 // SET_CONTROLLING request:
 //   payload[0] = 1 to start controlling, 0 to stop controlling.
@@ -13,7 +13,7 @@
 //   0/1, or starting was refused (PID parameters or target not configured).
 class SetControllingHandler {
 public:
-    explicit SetControllingHandler(ControlPID& controlPID) : _controlPID(controlPID) {}
+    explicit SetControllingHandler(ControlPD& controlPID) : _controlPID(controlPID) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t>) {
         if (payload.size() < 1) {
@@ -39,5 +39,5 @@ public:
     }
 
 private:
-    ControlPID& _controlPID;
+    ControlPD& _controlPID;
 };

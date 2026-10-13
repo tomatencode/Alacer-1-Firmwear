@@ -9,7 +9,7 @@
 #include "../barometricHeightCalculation/BarometricHeightCalculator.hpp"
 #include "../ascentTracking/VerticalMovementTracker.hpp"
 #include "../ascentTracking/HorizontalMovementTracker.hpp"
-#include "../controlPID/ControlPID.hpp"
+#include "../controlPD/ControlPD.hpp"
 #include "../logManagement/LogManager.hpp"
 
 // FlightSequenceExecutor owns NO state machine state.
@@ -21,7 +21,7 @@ class FlightSequenceExecutor {
 public:
     FlightSequenceExecutor(
         LogManager& logManager,
-        ControlPID& controlPID,
+        ControlPD& controlPID,
         RotationAccumulator& rotationAccumulator,
         BarometricHeightCalculator& barometricHeightCalculator,
         VerticalMovementTracker& verticalMovementTracker,
@@ -48,7 +48,7 @@ public:
 
 private:
     LogManager& _logManager;
-    ControlPID& _controlPID;
+    ControlPD& _controlPID;
     RotationAccumulator& _rotationAccumulator;
     BarometricHeightCalculator& _barometricHeightCalculator;
     VerticalMovementTracker& _verticalMovementTracker;

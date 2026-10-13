@@ -3,7 +3,7 @@
 #include <span>
 
 #include "../../MessageScheduler.hpp"
-#include "../../../controlPID/ControlPID.hpp"
+#include "../../../controlPD/ControlPD.hpp"
 #include "../../../helpers/codec/FixedPointCodec.hpp"
 
 // GET_PID_TARGET request:
@@ -12,9 +12,9 @@
 //   16 bytes: target attitude quaternion (x, y, z, w), each an int32 fixed-point
 //   value scaled by 100.
 //   FAILURE with empty payload if no target is configured yet.
-class GetPIDTargetHandler {
+class GetPDTargetHandler {
 public:
-    explicit GetPIDTargetHandler(ControlPID& controlPID) : _controlPID(controlPID) {}
+    explicit GetPDTargetHandler(ControlPD& controlPID) : _controlPID(controlPID) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t>, std::span<uint8_t> response) {
         const std::optional<Eigen::Quaternionf> target = _controlPID.getTarget();
@@ -27,9 +27,9 @@ public:
     }
 
     MessageScheduler::RequestHandler callback() {
-        return MessageScheduler::RequestHandler::create<GetPIDTargetHandler, &GetPIDTargetHandler::handle>(*this);
+        return MessageScheduler::RequestHandler::create<GetPDTargetHandler, &GetPDTargetHandler::handle>(*this);
     }
 
 private:
-    ControlPID& _controlPID;
+    ControlPD& _controlPID;
 };

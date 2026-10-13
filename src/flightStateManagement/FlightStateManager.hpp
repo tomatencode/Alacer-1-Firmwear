@@ -16,7 +16,7 @@
 #include "../barometricHeightCalculation/BarometricHeightCalculator.hpp"
 #include "../ascentTracking/VerticalMovementTracker.hpp"
 #include "../ascentTracking/HorizontalMovementTracker.hpp"
-#include "../controlPID/ControlPID.hpp"
+#include "../controlPD/ControlPD.hpp"
 #include "../logManagement/LogManager.hpp"
 
 
@@ -24,7 +24,7 @@ class FlightStateManager {
 public:
     FlightStateManager(
         LogManager& logManager,
-        ControlPID& controlPID,
+        ControlPD& controlPID,
         RotationAccumulator& rotationAccumulator,
         BarometricHeightCalculator& barometricHeightCalculator,
         VerticalMovementTracker& verticalMovementTracker,

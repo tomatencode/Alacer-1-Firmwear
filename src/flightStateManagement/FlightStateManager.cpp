@@ -2,7 +2,7 @@
 
 FlightStateManager::FlightStateManager(
     LogManager& logManager,
-    ControlPID& controlPID,
+    ControlPD& controlPID,
     RotationAccumulator& rotationAccumulator,
     BarometricHeightCalculator& barometricHeightCalculator,
     VerticalMovementTracker& verticalMovementTracker,

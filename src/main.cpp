@@ -46,12 +46,12 @@
 #include "./radioLink/requestHandlers/flight/GetFlightLocationHandler.hpp"
 #include "./radioLink/requestHandlers/flight/StartCountdownHandler.hpp"
 #include "./radioLink/requestHandlers/flight/RetryDeployParachuteHandler.hpp"
-#include "./radioLink/requestHandlers/controlPID/SetPIDParametersHandler.hpp"
-#include "./radioLink/requestHandlers/controlPID/GetPIDParametersHandler.hpp"
-#include "./radioLink/requestHandlers/controlPID/SetControllingHandler.hpp"
-#include "./radioLink/requestHandlers/controlPID/GetControllingHandler.hpp"
-#include "./radioLink/requestHandlers/controlPID/SetPIDTargetHandler.hpp"
-#include "./radioLink/requestHandlers/controlPID/GetPIDTargetHandler.hpp"
+#include "./radioLink/requestHandlers/controlPD/SetPDParametersHandler.hpp"
+#include "./radioLink/requestHandlers/controlPD/GetPDParametersHandler.hpp"
+#include "./radioLink/requestHandlers/controlPD/SetControllingHandler.hpp"
+#include "./radioLink/requestHandlers/controlPD/GetControllingHandler.hpp"
+#include "./radioLink/requestHandlers/controlPD/SetPDTargetHandler.hpp"
+#include "./radioLink/requestHandlers/controlPD/GetPDTargetHandler.hpp"
 #include "./radioLink/requestHandlers/led/FlashLedHandler.hpp"
 #include "./radioLink/requestHandlers/battery/GetBatteryVoltageHandler.hpp"
 #include "./radioLink/requestHandlers/logs/StartLogHandler.hpp"
@@ -70,7 +70,7 @@
 #include "./helpers/coordinates/IMURocketCoordinateConverter.hpp"
 #include "./rotationEstimation/RotationAccumulator.hpp"
 
-#include "./controlPID/ControlPID.hpp"
+#include "./controlPD/ControlPD.hpp"
 
 #include "./ascentTracking/VerticalMovementTracker.hpp"
 #include "./ascentTracking/HorizontalMovementTracker.hpp"
@@ -141,7 +141,7 @@ BarometricHeightCalculator barometricHeightCalculator(barometer);
 VerticalMovementTracker verticalMovementTracker(barometricHeightCalculator);
 HorizontalMovementTracker horizontalMovementTracker(verticalMovementTracker, rotationAccumulator);
 
-ControlPID controlPID(rotationAccumulator, gimbal);
+ControlPD controlPID(rotationAccumulator, gimbal);
 
 FlightStateManager flightStateManager(
     logManager,
@@ -180,12 +180,12 @@ GetFlightStateHandler flightStateHandler(flightStateManager);
 GetCountdownTimeHandler countdownTimeHandler(flightStateManager);
 StartCountdownHandler startCountdownHandler(flightStateManager, pyroChannels);
 RetryDeployParachuteHandler retryDeployParachuteHandler(flightStateManager);
-SetPIDParametersHandler setPIDParametersHandler(controlPID);
-GetPIDParametersHandler getPIDParametersHandler(controlPID);
+SetPDParametersHandler setPIDParametersHandler(controlPID);
+GetPDParametersHandler getPIDParametersHandler(controlPID);
 SetControllingHandler setControllingHandler(controlPID);
 GetControllingHandler getControllingHandler(controlPID);
-SetPIDTargetHandler setPIDTargetHandler(controlPID);
-GetPIDTargetHandler getPIDTargetHandler(controlPID);
+SetPDTargetHandler setPIDTargetHandler(controlPID);
+GetPDTargetHandler getPIDTargetHandler(controlPID);
 FlashLedHandler flashLedHandler(statusLed);
 GetBatteryVoltageHandler getBatteryVoltageHandler(battery);
 StartLogHandler startLogHandler(logManager);
@@ -235,7 +235,7 @@ void setup() {
 
     storageManager.begin();
 
-    controlPID.setPIDParameters(1.0f, 0.0f, 0.0f); // Example PID parameters
+    controlPID.setPDParameters(1.0f, 0.0f); // Example PID parameters
     controlPID.setTarget(Eigen::Quaternionf::Identity()); // Example target angle
 
     parachute.setPyroChannel(pyroChannel1);

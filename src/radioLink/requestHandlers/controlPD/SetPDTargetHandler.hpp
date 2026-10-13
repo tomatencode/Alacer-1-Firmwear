@@ -3,7 +3,7 @@
 #include <span>
 
 #include "../../MessageScheduler.hpp"
-#include "../../../controlPID/ControlPID.hpp"
+#include "../../../controlPD/ControlPD.hpp"
 #include "../../../helpers/codec/FixedPointCodec.hpp"
 
 // SET_PID_TARGET request:
@@ -12,9 +12,9 @@
 // Response:
 //   SUCCESS with empty payload if the target was stored.
 //   FAILURE with empty payload if the payload is shorter than 16 bytes.
-class SetPIDTargetHandler {
+class SetPDTargetHandler {
 public:
-    explicit SetPIDTargetHandler(ControlPID& controlPID) : _controlPID(controlPID) {}
+    explicit SetPDTargetHandler(ControlPD& controlPID) : _controlPID(controlPID) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t>) {
         if (payload.size() < quaternionCodec::ENCODED_SIZE) {
@@ -26,9 +26,9 @@ public:
     }
 
     MessageScheduler::RequestHandler callback() {
-        return MessageScheduler::RequestHandler::create<SetPIDTargetHandler, &SetPIDTargetHandler::handle>(*this);
+        return MessageScheduler::RequestHandler::create<SetPDTargetHandler, &SetPDTargetHandler::handle>(*this);
     }
 
 private:
-    ControlPID& _controlPID;
+    ControlPD& _controlPID;
 };

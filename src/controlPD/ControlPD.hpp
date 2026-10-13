@@ -8,18 +8,17 @@
 #include "../rotationEstimation/RotationAccumulator.hpp"
 #include "../hardwareComponents/gimbal/Gimbal.hpp"
 
-class ControlPID {
+class ControlPD {
 public:
-    struct PIDParameters {
+    struct PDParameters {
         float kp;
-        float ki;
         float kd;
     };
 
-    ControlPID(RotationAccumulator& rotationAccumulator, hardware::Gimbal& gimbal);
+    ControlPD(RotationAccumulator& rotationAccumulator, hardware::Gimbal& gimbal);
 
-    void setPIDParameters(float kp, float ki, float kd);
-    std::optional<PIDParameters> getPIDParameters() const; // std::nullopt until all three are set
+    void setPDParameters(float kp, float kd);
+    std::optional<PDParameters> getPDParameters() const; // std::nullopt until both are set
 
     void setTarget(const Eigen::Quaternionf& targetAngle);
     std::optional<Eigen::Quaternionf> getTarget() const; // std::nullopt until a target is set
@@ -48,9 +47,5 @@ private:
     bool _isControlling;
 
     std::optional<float> _kp;
-    std::optional<float> _ki;
     std::optional<float> _kd;
-
-    float _integralYaw_rad = 0.0f;
-    float _integralPitch_rad = 0.0f;
 };

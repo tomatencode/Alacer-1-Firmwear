@@ -25,7 +25,6 @@ struct FlightProfile {
     Eigen::Quaternionf targetAngle;
 
     float pidKp;
-    float pidKi;
     float pidKd;
 
     PyroChannel* motorIgniterChannel;

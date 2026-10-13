@@ -2,7 +2,7 @@
 
 #include "../../hardwareIO/servo/Servo.hpp"
 
-class ControlPID; // forward declaration
+class ControlPD; // forward declaration
 
 namespace hardware {
 

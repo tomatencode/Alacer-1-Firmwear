@@ -16,11 +16,10 @@
 //            value scaled by 100 (fixedPoint::kScale)
 //   [24..39] target attitude, quaternion (x, y, z, w), same encoding as above
 //   [40..43] PID kp, int32 fixed-point scaled by 100
-//   [44..47] PID ki, int32 fixed-point scaled by 100
-//   [48..51] PID kd, int32 fixed-point scaled by 100
-//   [52]     motor igniter pyro channel index (uint8)
-//   [53]     parachute pyro channel index (uint8)
-//   [54..57] initial height in metres, int32 fixed-point scaled by 100
+//   [44..47] PID kd, int32 fixed-point scaled by 100
+//   [48]     motor igniter pyro channel index (uint8)
+//   [49]     parachute pyro channel index (uint8)
+//   [50..53] initial height in metres, int32 fixed-point scaled by 100
 // Response:
 //   SUCCESS with empty payload if FlightStateManager::startCountdown() accepted
 //   the profile (state was IDLE and configuration/preflight checks passed).
@@ -44,11 +43,10 @@ public:
         flightProfile.initialRotation = quaternionCodec::decode(payload, 8);
         flightProfile.targetAngle = quaternionCodec::decode(payload, 24);
         flightProfile.pidKp = fixedPoint::decode32(payload, 40);
-        flightProfile.pidKi = fixedPoint::decode32(payload, 44);
-        flightProfile.pidKd = fixedPoint::decode32(payload, 48);
-        flightProfile.motorIgniterChannel = _pyroChannels[payload[52]];
-        flightProfile.parachutePyroChannel = _pyroChannels[payload[53]];
-        flightProfile.initialHeight_m = fixedPoint::decode32(payload, 54);
+        flightProfile.pidKd = fixedPoint::decode32(payload, 44);
+        flightProfile.motorIgniterChannel = _pyroChannels[payload[48]];
+        flightProfile.parachutePyroChannel = _pyroChannels[payload[49]];
+        flightProfile.initialHeight_m = fixedPoint::decode32(payload, 50);
 
         const bool started = _flightStateManager.startCountdown(flightProfile);
         return {started ? MessageScheduler::HandlerResultStatus::SUCCESS

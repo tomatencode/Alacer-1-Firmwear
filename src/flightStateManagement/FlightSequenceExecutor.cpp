@@ -2,7 +2,7 @@
 
 FlightSequenceExecutor::FlightSequenceExecutor(
     LogManager& logManager,
-    ControlPID& controlPID,
+    ControlPD& controlPID,
     RotationAccumulator& rotationAccumulator,
     BarometricHeightCalculator& barometricHeightCalculator,
     VerticalMovementTracker& verticalMovementTracker,
@@ -32,7 +32,7 @@ bool FlightSequenceExecutor::configureForFlight(const FlightProfile& profile) {
     _rotationAccumulator.stopAccumulation();
     _rotationAccumulator.setRotationQuaternion(profile.initialRotation);
 
-    _controlPID.setPIDParameters(profile.pidKp, profile.pidKi, profile.pidKd);
+    _controlPID.setPDParameters(profile.pidKp, profile.pidKd);
     _controlPID.setTarget(profile.targetAngle);
 
     _verticalMovementTracker.reset();
@@ -42,7 +42,6 @@ bool FlightSequenceExecutor::configureForFlight(const FlightProfile& profile) {
         .initialRotation = profile.initialRotation,
         .targetAngle = profile.targetAngle,
         .pidKp = profile.pidKp,
-        .pidKi = profile.pidKi,
         .pidKd = profile.pidKd,
         .initialHeight_m = profile.initialHeight_m,
     });

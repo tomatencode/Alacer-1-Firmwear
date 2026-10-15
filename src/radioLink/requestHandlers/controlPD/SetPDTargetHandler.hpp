@@ -6,6 +6,8 @@
 #include "../../../controlPD/ControlPD.hpp"
 #include "../../../helpers/codec/FixedPointCodec.hpp"
 
+namespace radioLink {
+
 // SET_PID_TARGET request:
 //   payload (16 bytes): target attitude quaternion (x, y, z, w), each an int32
 //   fixed-point value scaled by 100 (fixedPoint::kScale).
@@ -32,3 +34,5 @@ public:
 private:
     ControlPD& _controlPID;
 };
+
+} // namespace radioLink

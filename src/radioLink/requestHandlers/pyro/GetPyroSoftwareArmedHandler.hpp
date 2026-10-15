@@ -5,11 +5,13 @@
 #include "../../MessageScheduler.hpp"
 #include "../../../hardwareIO/pyro/PyroArmManager.hpp"
 
+namespace radioLink {
+
 // GET_PYRO_SOFTWARE_ARMED request: empty payload.
 // Response: SUCCESS with payload[0] = 1 if software-armed, 0 otherwise.
 class GetPyroSoftwareArmedHandler {
 public:
-    explicit GetPyroSoftwareArmedHandler(PyroArmManager& pyroArmManager) : _pyroArmManager(pyroArmManager) {}
+    explicit GetPyroSoftwareArmedHandler(hardware::PyroArmManager& pyroArmManager) : _pyroArmManager(pyroArmManager) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t>, std::span<uint8_t> response) {
         response[0] = _pyroArmManager.isSoftwareArmed() ? 1 : 0;
@@ -21,5 +23,7 @@ public:
     }
 
 private:
-    PyroArmManager& _pyroArmManager;
+    hardware::PyroArmManager& _pyroArmManager;
 };
+
+} // namespace radioLink

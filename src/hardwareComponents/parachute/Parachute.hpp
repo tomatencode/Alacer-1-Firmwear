@@ -2,6 +2,8 @@
 
 #include "../../hardwareIO/pyro/PyroChannel.hpp"
 
+namespace hardware {
+
 class Parachute {
 public:
     Parachute() = default;
@@ -27,3 +29,5 @@ private:
     PyroChannel* _pyroChannel = nullptr;
     bool _didDeploy = false;
 };
+
+} // namespace hardware

@@ -6,6 +6,8 @@
 #include "../../../controlPD/ControlPD.hpp"
 #include "../../../helpers/codec/FixedPointCodec.hpp"
 
+namespace radioLink {
+
 // GET_PID_PARAMETERS request:
 //   empty payload.
 // Response:
@@ -33,3 +35,5 @@ public:
 private:
     ControlPD& _controlPID;
 };
+
+} // namespace radioLink

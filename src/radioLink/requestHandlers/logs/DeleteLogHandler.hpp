@@ -6,15 +6,17 @@
 #include "../../../logManagement/StorageManager.hpp"
 #include "../../../helpers/codec/StringCodec.hpp"
 
+namespace radioLink {
+
 // DELETE_LOG request: length-prefixed filename, no trailing bytes.
 // Empty SUCCESS response on deletion; empty FAILURE for malformed requests,
 // unknown/open files, unmounted storage or flash errors. Does not reclaim space.
 class DeleteLogHandler {
 public:
-    explicit DeleteLogHandler(StorageManager& storageManager) : _storageManager(storageManager) {}
+    explicit DeleteLogHandler(logging::StorageManager& storageManager) : _storageManager(storageManager) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t>) {
-        StorageManager::Filename filename;
+        logging::StorageManager::Filename filename;
         const auto consumed = stringCodec::decode(payload, 0, filename);
         if (!consumed || filename.empty() || *consumed != payload.size() ||
             !_storageManager.isMounted()) {
@@ -34,5 +36,7 @@ public:
     }
 
 private:
-    StorageManager& _storageManager;
+    logging::StorageManager& _storageManager;
 };
+
+} // namespace radioLink

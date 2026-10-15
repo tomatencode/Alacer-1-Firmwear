@@ -23,14 +23,14 @@
 class FlightStateManager {
 public:
     FlightStateManager(
-        LogManager& logManager,
+        logging::LogManager& logManager,
         ControlPD& controlPID,
         RotationAccumulator& rotationAccumulator,
         BarometricHeightCalculator& barometricHeightCalculator,
         VerticalMovementTracker& verticalMovementTracker,
         HorizontalMovementTracker& horizontalMovementTracker,
-        MotorIgniter& motorIgniter,
-        Parachute& parachute
+        hardware::MotorIgniter& motorIgniter,
+        hardware::Parachute& parachute
     );
 
     FlightState getCurrentState() const; // should not be used in logic, only for debugging
@@ -64,6 +64,6 @@ private:
     uint32_t _countdownStartTime = 0;
     uint32_t _motorStartBurnTime = 0;
 
-    LogManager& _logManager;
+    logging::LogManager& _logManager;
     FlightSequenceExecutor _executor;
 };

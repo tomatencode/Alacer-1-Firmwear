@@ -2,6 +2,8 @@
 
 #include <Arduino.h>
 
+namespace hardware {
+
 PyroChannel::PyroChannel(int mosfetPin, int contPin, PyroArmManager& pyroArmManager)
     : _mosfetPin(mosfetPin), _contPin(contPin), _pyroArmManager(pyroArmManager)
 {}
@@ -39,3 +41,5 @@ void PyroChannel::update() {
         stopFiring();
     }
 }
+
+} // namespace hardware

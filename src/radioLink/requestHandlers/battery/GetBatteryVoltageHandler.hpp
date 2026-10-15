@@ -4,6 +4,8 @@
 #include "../../../hardwareIO/battery/Battery.hpp"
 #include "../../../helpers/codec/FixedPointCodec.hpp"
 
+namespace radioLink {
+
 class GetBatteryVoltageHandler {
 public:
     GetBatteryVoltageHandler(hardware::Battery& battery) : _battery(battery) {}
@@ -21,3 +23,5 @@ public:
 private:
     hardware::Battery& _battery;
 };
+
+} // namespace radioLink

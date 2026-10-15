@@ -11,6 +11,8 @@
 #include "LastEventsTracker.hpp"
 
 
+namespace logging {
+
 class LogManager {
 public:
     LogManager(StorageManager &storageManager);
@@ -89,3 +91,5 @@ private:
 
     StorageManager &_storageManager;
 };
+
+} // namespace logging

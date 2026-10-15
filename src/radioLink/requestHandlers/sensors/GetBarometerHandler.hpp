@@ -6,6 +6,8 @@
 #include "../../../hardwareIO/barometer/Barometer.hpp"
 #include "../../../helpers/codec/FixedPointCodec.hpp"
 
+namespace radioLink {
+
 class GetBarometerHandler {
 public:
     explicit GetBarometerHandler(hardware::Barometer& barometer) : _barometer(barometer) {}
@@ -24,3 +26,5 @@ public:
 private:
     hardware::Barometer& _barometer;
 };
+
+} // namespace radioLink

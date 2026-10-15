@@ -9,6 +9,8 @@
 #include "../../../helpers/codec/QuaternionCodec.hpp"
 #include "../../../helpers/codec/StringCodec.hpp"
 
+namespace radioLink {
+
 // START_LOG payload:
 //   [0..3] UNIX timestamp, little-endian uint32
 //   [4..] length-prefixed filename (1..32 bytes), no trailing bytes.
@@ -18,10 +20,10 @@ class StartLogHandler {
 public:
     static constexpr size_t METADATA_SIZE = 4;
 
-    explicit StartLogHandler(LogManager& logManager) : _logManager(logManager) {}
+    explicit StartLogHandler(logging::LogManager& logManager) : _logManager(logManager) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t>) {
-        StorageManager::Filename filename;
+        logging::StorageManager::Filename filename;
         const auto filenameSize = stringCodec::decode(payload, METADATA_SIZE, filename);
         if (!filenameSize || filename.empty() || payload.size() != METADATA_SIZE + *filenameSize) {
             return {MessageScheduler::HandlerResultStatus::FAILURE, 0};
@@ -41,5 +43,7 @@ public:
     }
 
 private:
-    LogManager& _logManager;
+    logging::LogManager& _logManager;
 };
+
+} // namespace radioLink

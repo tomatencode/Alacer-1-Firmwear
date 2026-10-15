@@ -3,6 +3,8 @@
 #include <optional>
 #include "LogProtocol.hpp"
 
+namespace logging {
+
 class LastEventsTracker {
 public:
 
@@ -94,3 +96,5 @@ private:
     std::optional<LogProtocol::VerticalMovementEvent> lastVerticalMovementEvent = std::nullopt;
 
 };
+
+} // namespace logging

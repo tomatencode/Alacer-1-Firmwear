@@ -5,6 +5,8 @@
 #include "../../MessageScheduler.hpp"
 #include "../../../hardwareIO/buzzer/Buzzer.hpp"
 
+namespace radioLink {
+
 class DoBeepHandler {
 public:
     DoBeepHandler(hardware::Buzzer& buzzer) : _buzzer(buzzer) {}
@@ -21,3 +23,5 @@ public:
 private:
     hardware::Buzzer& _buzzer;
 };
+
+} // namespace radioLink

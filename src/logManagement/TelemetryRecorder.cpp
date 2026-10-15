@@ -12,6 +12,8 @@
 #include "../ascentTracking/VerticalMovementTracker.hpp"
 #include "../ascentTracking/HorizontalMovementTracker.hpp"
 
+namespace logging {
+
 TelemetryRecorder::TelemetryRecorder(LogManager& logManager, hardware::Battery& battery,
                                      hardware::IMU& imu, hardware::Barometer& barometer,
                                      BarometricHeightCalculator& heightCalculator,
@@ -91,3 +93,5 @@ void TelemetryRecorder::appendVerticalMovementEvent() {
     _logManager.appendEvent(LogProtocol::VerticalMovementEvent{
         height, verticalVelocity});
 }
+
+} // namespace logging

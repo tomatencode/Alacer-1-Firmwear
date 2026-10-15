@@ -4,6 +4,8 @@
 #include <optional>
 
 
+namespace hardware {
+
 class PyroArmManager {
 public:
     PyroArmManager(int hardwareArmPin);
@@ -22,3 +24,5 @@ private:
     int _hardwareArmPin;
     bool _softwareArm = false;
 };
+
+} // namespace hardware

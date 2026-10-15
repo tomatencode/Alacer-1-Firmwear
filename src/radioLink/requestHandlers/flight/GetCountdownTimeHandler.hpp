@@ -6,6 +6,8 @@
 #include "../../../flightStateManagement/FlightStateManager.hpp"
 #include "../../../helpers/codec/LittleEndianCodec.hpp"
 
+namespace radioLink {
+
 // GET_COUNTDOWN_TIME request:
 //   empty payload.
 // Response:
@@ -32,3 +34,5 @@ public:
 private:
     FlightStateManager& _flightStateManager;
 };
+
+} // namespace radioLink

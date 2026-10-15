@@ -6,6 +6,8 @@
 #include "../../../barometricHeightCalculation/BarometricHeightCalculator.hpp"
 #include "../../../helpers/codec/FixedPointCodec.hpp"
 
+namespace radioLink {
+
 // CALIBRATE_BARO_HEIGHT request:
 //   payload[0..3] = fixed-point int32 scaled by 100: the height the current
 //   measurement should represent, in metres (e.g. 0 on the launch pad).
@@ -37,3 +39,5 @@ public:
 private:
     BarometricHeightCalculator& _heightCalculator;
 };
+
+} // namespace radioLink

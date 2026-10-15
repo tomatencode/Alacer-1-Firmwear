@@ -7,6 +7,8 @@
 #include "../../../ascentTracking/HorizontalMovementTracker.hpp"
 #include "../../../helpers/codec/FixedPointCodec.hpp"
 
+namespace radioLink {
+
 // Approximate flight location, taken from the ascent trackers.
 //
 // GET_FLIGHT_LOCATION request:
@@ -48,3 +50,5 @@ private:
     VerticalMovementTracker& _verticalMovementTracker;
     HorizontalMovementTracker& _horizontalMovementTracker;
 };
+
+} // namespace radioLink

@@ -5,10 +5,12 @@
 #include "../../MessageScheduler.hpp"
 #include "../../../logManagement/LogManager.hpp"
 
+namespace radioLink {
+
 // FINISH_LOG: empty request; SUCCESS/FAILURE with an empty response.
 class FinishLogHandler {
 public:
-    explicit FinishLogHandler(LogManager& logManager) : _logManager(logManager) {}
+    explicit FinishLogHandler(logging::LogManager& logManager) : _logManager(logManager) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t>) {
         if (!payload.empty()) {
@@ -24,5 +26,7 @@ public:
     }
 
 private:
-    LogManager& _logManager;
+    logging::LogManager& _logManager;
 };
+
+} // namespace radioLink

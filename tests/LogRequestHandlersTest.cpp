@@ -59,12 +59,12 @@ public:
     }
 };
 
-constexpr auto SUCCESS = MessageScheduler::HandlerResultStatus::SUCCESS;
-constexpr auto FAILURE = MessageScheduler::HandlerResultStatus::FAILURE;
+constexpr auto SUCCESS = radioLink::MessageScheduler::HandlerResultStatus::SUCCESS;
+constexpr auto FAILURE = radioLink::MessageScheduler::HandlerResultStatus::FAILURE;
 
 void testStringCodec() {
     std::array<uint8_t, 34> buffer{};
-    StorageManager::Filename value("flight.bin"), decoded("unchanged");
+    logging::StorageManager::Filename value("flight.bin"), decoded("unchanged");
     const auto size = stringCodec::encode(value, buffer, 1);
     assert(size && *size == 11);
     assert(stringCodec::decode(buffer, 1, decoded) == size && decoded == value);
@@ -88,12 +88,12 @@ void testStringCodec() {
 
 void testHandlers() {
     MemoryFlash flash;
-    StorageManager storage(flash);
-    LogManager manager(storage);
-    StartLogHandler start(manager);
-    FinishLogHandler finish(manager);
-    IsLoggingHandler status(manager);
-    ListLogsHandler list(storage);
+    logging::StorageManager storage(flash);
+    logging::LogManager manager(storage);
+    radioLink::StartLogHandler start(manager);
+    radioLink::FinishLogHandler finish(manager);
+    radioLink::IsLoggingHandler status(manager);
+    radioLink::ListLogsHandler list(storage);
     std::array<uint8_t, 256> response{};
     const std::array<uint8_t, 1> extra{1};
     assert(list.handle({}, response).status == FAILURE);
@@ -111,8 +111,8 @@ void testHandlers() {
         1.25f, -2.5f, 3.75f, 100.5f};
     std::array<uint8_t, LogProtocol::headerSize> header{};
     LogProtocol::encodeHeader(metadata, header);
-    std::vector<uint8_t> request(header.begin(), header.begin() + StartLogHandler::METADATA_SIZE);
-    StorageManager::Filename filename("flight.bin");
+    std::vector<uint8_t> request(header.begin(), header.begin() + radioLink::StartLogHandler::METADATA_SIZE);
+    logging::StorageManager::Filename filename("flight.bin");
     request.resize(52 + 1 + filename.size());
     assert(stringCodec::encode(filename, request, 52));
 
@@ -153,8 +153,8 @@ void testHandlers() {
     assert(storedHeader == header); // every metadata field decoded correctly
 
     // Fill the directory with maximum-length names to exercise pagination.
-    for (size_t i = 1; i < StorageManager::MAX_FILES; ++i) {
-        StorageManager::Filename name;
+    for (size_t i = 1; i < logging::StorageManager::MAX_FILES; ++i) {
+        logging::StorageManager::Filename name;
         name.assign(32, 'x');
         name[0] = static_cast<char>('A' + i / 26);
         name[1] = static_cast<char>('A' + i % 26);
@@ -167,10 +167,10 @@ void testHandlers() {
         const std::array<uint8_t, 1> page{static_cast<uint8_t>(next)};
         result = list.handle(page, response);
         assert(result.status == SUCCESS && result.responseLength <= 255);
-        assert(response[0] == StorageManager::MAX_FILES && response[2] > 0);
+        assert(response[0] == logging::StorageManager::MAX_FILES && response[2] > 0);
         size_t offset = 3;
         for (size_t i = 0; i < response[2]; ++i) {
-            StorageManager::Filename decoded;
+            logging::StorageManager::Filename decoded;
             const auto consumed = stringCodec::decode(std::span(response).first(result.responseLength), offset, decoded);
             assert(consumed && decoded == storage.listFiles()[next + i]);
             offset += *consumed;
@@ -190,13 +190,13 @@ void testHandlers() {
     assert(list.handle(invalidPayload, response).status == FAILURE);
 }
 
-std::vector<uint8_t> makeInfoRequest(const StorageManager::Filename& filename) {
+std::vector<uint8_t> makeInfoRequest(const logging::StorageManager::Filename& filename) {
     std::vector<uint8_t> request(filename.size() + 1);
     assert(stringCodec::encode(filename, request, 0));
     return request;
 }
 
-std::vector<uint8_t> makeBytesRequest(const StorageManager::Filename& filename, uint32_t offset, uint16_t length) {
+std::vector<uint8_t> makeBytesRequest(const logging::StorageManager::Filename& filename, uint32_t offset, uint16_t length) {
     auto request = makeInfoRequest(filename);
     const size_t fields = request.size();
     request.resize(fields + 6);
@@ -207,10 +207,10 @@ std::vector<uint8_t> makeBytesRequest(const StorageManager::Filename& filename, 
 
 void testDownloads() {
     MemoryFlash flash;
-    StorageManager storage(flash);
+    logging::StorageManager storage(flash);
     GetLogInfoHandler info(storage);
     GetLogBytesHandler bytes(storage);
-    const StorageManager::Filename filename("download.bin"), unknown("missing.bin"), empty("empty.bin");
+    const logging::StorageManager::Filename filename("download.bin"), unknown("missing.bin"), empty("empty.bin");
     const auto infoRequest = makeInfoRequest(filename);
     auto request = makeBytesRequest(filename, 0, 240);
     std::array<uint8_t, 256> response{};
@@ -224,7 +224,7 @@ void testDownloads() {
     assert(bytes.handle(request, response).status == FAILURE);
     std::vector<uint8_t> data(2500);
     for (size_t i = 0; i < data.size(); ++i) data[i] = static_cast<uint8_t>(i * 17);
-    assert(storage.write(data) == StorageManager::WriteResult::Ok);
+    assert(storage.write(data) == logging::StorageManager::WriteResult::Ok);
     assert(storage.finishFile());
     auto result = info.callback()(infoRequest, response);
     assert(result.status == SUCCESS && result.responseLength == 6);
@@ -248,7 +248,7 @@ void testDownloads() {
     malformed = request;
     malformed[1] = 0;
     assert(bytes.handle(malformed, response).status == FAILURE);
-    assert(bytes.handle(makeBytesRequest(StorageManager::Filename(), 0, 1), response).status == FAILURE);
+    assert(bytes.handle(makeBytesRequest(logging::StorageManager::Filename(), 0, 1), response).status == FAILURE);
     assert(bytes.handle(makeBytesRequest(filename, 0, 0), response).status == FAILURE);
     assert(bytes.handle(makeBytesRequest(filename, 0, 241), response).status == FAILURE);
     assert(bytes.handle(makeBytesRequest(filename, 2501, 1), response).status == FAILURE);
@@ -313,16 +313,16 @@ public:
 
 void testDownloadScheduling() {
     MemoryFlash flash;
-    StorageManager storage(flash);
+    logging::StorageManager storage(flash);
     assert(storage.begin());
-    const StorageManager::Filename filename("queued.bin");
+    const logging::StorageManager::Filename filename("queued.bin");
     assert(storage.startFile(filename));
     std::array<uint8_t, 240> data{};
-    assert(storage.write(data) == StorageManager::WriteResult::Ok && storage.finishFile());
+    assert(storage.write(data) == logging::StorageManager::WriteResult::Ok && storage.finishFile());
     GetLogBytesHandler bytes(storage);
     Protocol::Parser parser;
     MemoryRadio radio;
-    MessageScheduler scheduler(parser, radio);
+    radioLink::MessageScheduler scheduler(parser, radio);
     scheduler.registerRequestHandler(Protocol::MessageType::GET_LOG_BYTES, bytes.callback());
     Protocol::Frame requests{};
     const auto payload = makeBytesRequest(filename, 0, 240);
@@ -377,19 +377,19 @@ void testDownloadScheduling() {
 
 void testDeletes() {
     MemoryFlash flash;
-    StorageManager storage(flash);
-    DeleteLogHandler single(storage);
-    DeleteAllLogsHandler all(storage);
-    const StorageManager::Filename first("first.bin"), second("second.bin"), active("active.bin");
+    logging::StorageManager storage(flash);
+    radioLink::DeleteLogHandler single(storage);
+    radioLink::DeleteAllLogsHandler all(storage);
+    const logging::StorageManager::Filename first("first.bin"), second("second.bin"), active("active.bin");
     const auto request = makeInfoRequest(first);
     assert(single.handle(request, {}).status == FAILURE);
     assert(all.handle({}, {}).status == FAILURE);
     assert(storage.begin());
     const std::array<uint8_t, 3> data{10, 20, 30};
     assert(storage.startFile(first));
-    assert(storage.write(data) == StorageManager::WriteResult::Ok && storage.finishFile());
+    assert(storage.write(data) == logging::StorageManager::WriteResult::Ok && storage.finishFile());
     assert(storage.startFile(second));
-    assert(storage.write(data) == StorageManager::WriteResult::Ok && storage.finishFile());
+    assert(storage.write(data) == logging::StorageManager::WriteResult::Ok && storage.finishFile());
     const auto used = storage.usedSpace();
     for (size_t n = 0; n < request.size(); ++n)
         assert(single.handle(std::span(request).first(n), {}).status == FAILURE);
@@ -404,7 +404,7 @@ void testDeletes() {
     assert(single.handle(malformed, {}).status == FAILURE);
     const std::array<uint8_t, 1> emptyName{0}, extra{1};
     assert(single.handle(emptyName, {}).status == FAILURE);
-    assert(single.handle(makeInfoRequest(StorageManager::Filename("missing.bin")), {}).status == FAILURE);
+    assert(single.handle(makeInfoRequest(logging::StorageManager::Filename("missing.bin")), {}).status == FAILURE);
     assert(all.handle(extra, {}).status == FAILURE);
     assert(storage.listFiles().size() == 2 && storage.usedSpace() == used);
 
@@ -420,11 +420,11 @@ void testDeletes() {
     flash.failErases = false;
     assert(storage.listFiles().size() == 2 && storage.usedSpace() == used);
     // Failed formatting must leave the previous directory valid after remount.
-    StorageManager afterFailure(flash);
+    logging::StorageManager afterFailure(flash);
     assert(afterFailure.begin() && afterFailure.listFiles().size() == 2);
 
     assert(storage.startFile(active));
-    assert(storage.write(data) == StorageManager::WriteResult::Ok);
+    assert(storage.write(data) == logging::StorageManager::WriteResult::Ok);
     assert(single.handle(makeInfoRequest(active), {}).status == FAILURE);
     assert(all.handle({}, {}).status == FAILURE);
     assert(storage.isFileOpen() && storage.bufferedBytes() == data.size());
@@ -435,7 +435,7 @@ void testDeletes() {
     assert(!storage.fileSizePayloadChecked(first));
     assert(storage.usedSpace() == used); // single deletion doesn't reclaim arena space
     assert(storage.finishFile());
-    StorageManager afterSingle(flash);
+    logging::StorageManager afterSingle(flash);
     assert(afterSingle.begin() && afterSingle.listFiles().size() == 2);
     assert(!afterSingle.fileSizePayloadChecked(first));
     result = all.callback()({}, {});
@@ -443,32 +443,32 @@ void testDeletes() {
     assert(storage.listFiles().empty() && !storage.isFileOpen());
     assert(storage.usedSpace() == 0 && storage.freeSpace() == storage.capacity() - 8192);
     assert(!storage.fileSizePayloadChecked(second));
-    StorageManager afterAll(flash);
+    logging::StorageManager afterAll(flash);
     assert(afterAll.begin() && afterAll.listFiles().empty() && afterAll.usedSpace() == 0);
     assert(all.handle({}, {}).status == SUCCESS); // repeated delete-all on empty directory
-    StorageManager afterRepeat(flash);
+    logging::StorageManager afterRepeat(flash);
     assert(afterRepeat.begin() && afterRepeat.listFiles().empty());
     assert(afterRepeat.startFile(first));
-    assert(afterRepeat.write(data) == StorageManager::WriteResult::Ok && afterRepeat.finishFile());
+    assert(afterRepeat.write(data) == logging::StorageManager::WriteResult::Ok && afterRepeat.finishFile());
     std::array<uint8_t, 3> restored{};
     assert(afterRepeat.readFile(first, 0, restored) == data.size() && restored == data);
 }
 
 void testDeleteScheduling() {
     MemoryFlash flash;
-    StorageManager storage(flash);
+    logging::StorageManager storage(flash);
     assert(storage.begin());
-    const StorageManager::Filename filename("protected.bin");
+    const logging::StorageManager::Filename filename("protected.bin");
     assert(storage.startFile(filename) && storage.finishFile());
-    DeleteLogHandler single(storage);
-    DeleteAllLogsHandler all(storage);
+    radioLink::DeleteLogHandler single(storage);
+    radioLink::DeleteAllLogsHandler all(storage);
     Protocol::Parser parser;
     MemoryRadio radio;
     struct FlightState {
         bool midFlight = true;
         bool isMidFlight() { return midFlight; }
     } flight;
-    MessageScheduler scheduler(parser, radio,
+    radioLink::MessageScheduler scheduler(parser, radio,
         etl::delegate<bool()>::create<FlightState, &FlightState::isMidFlight>(flight));
     scheduler.registerRequestHandler(Protocol::MessageType::DELETE_LOG, single.callback());
     scheduler.registerRequestHandler(Protocol::MessageType::DELETE_ALL_LOGS, all.callback());
@@ -514,7 +514,7 @@ std::array<uint8_t, 8> makeChunkRequest(uint32_t session, uint32_t index) {
     return request;
 }
 
-std::vector<uint8_t> makeStartDownloadRequest(const StorageManager::Filename& filename, uint32_t token) {
+std::vector<uint8_t> makeStartDownloadRequest(const logging::StorageManager::Filename& filename, uint32_t token) {
     auto request = makeInfoRequest(filename);
     const size_t fields = request.size();
     request.resize(fields + 4);
@@ -524,14 +524,14 @@ std::vector<uint8_t> makeStartDownloadRequest(const StorageManager::Filename& fi
 
 void testSequentialReader() {
     MemoryFlash flash;
-    StorageManager storage(flash);
-    const StorageManager::Filename filename("reader.bin");
+    logging::StorageManager storage(flash);
+    const logging::StorageManager::Filename filename("reader.bin");
     assert(!storage.openSequentialReader(filename));
     assert(storage.begin() && storage.startFile(filename));
     assert(!storage.openSequentialReader(filename));
     std::vector<uint8_t> data(2500);
     for (size_t i = 0; i < data.size(); ++i) data[i] = static_cast<uint8_t>(i * 13);
-    assert(storage.write(data) == StorageManager::WriteResult::Ok && storage.finishFile());
+    assert(storage.write(data) == logging::StorageManager::WriteResult::Ok && storage.finishFile());
     auto reader = storage.openSequentialReader(filename);
     assert(reader && reader->valid() && reader->size() == data.size() && reader->position() == 0);
     const size_t before = flash.readBytes;
@@ -555,7 +555,7 @@ void testSequentialReader() {
     assert(storage.deleteAllFiles() && !reader->valid());
     assert(reader->read(scratch) == 0 && !reader->copyCached(1100, scratch));
     assert(storage.startFile(filename));
-    assert(storage.write(data) == StorageManager::WriteResult::Ok && storage.finishFile());
+    assert(storage.write(data) == logging::StorageManager::WriteResult::Ok && storage.finishFile());
     reader = storage.openSequentialReader(filename);
     assert(reader && storage.begin() && !reader->valid());
     reader = storage.openSequentialReader(filename);
@@ -569,7 +569,7 @@ void testSequentialReader() {
     const std::array<size_t, 5> lengths{17, 513, 1, 1024, 945};
     size_t offset = 0;
     for (size_t length : lengths) {
-        assert(storage.write(std::span(data).subspan(offset, length)) == StorageManager::WriteResult::Ok);
+        assert(storage.write(std::span(data).subspan(offset, length)) == logging::StorageManager::WriteResult::Ok);
         assert(storage.flush());
         offset += length;
     }
@@ -580,9 +580,9 @@ void testSequentialReader() {
 
 void testDownloadManager() {
     MemoryFlash flash;
-    StorageManager storage(flash);
-    DownloadManager download(storage);
-    const StorageManager::Filename filename("session.bin"), empty("empty.bin");
+    logging::StorageManager storage(flash);
+    radioLink::DownloadManager download(storage);
+    const logging::StorageManager::Filename filename("session.bin"), empty("empty.bin");
     const auto start = makeStartDownloadRequest(filename, 123);
     std::array<uint8_t, 256> response{};
     assert(download.start(start, response).status == FAILURE);
@@ -590,7 +590,7 @@ void testDownloadManager() {
     assert(download.start(start, response).status == FAILURE);
     std::vector<uint8_t> data(5500);
     for (size_t i = 0; i < data.size(); ++i) data[i] = static_cast<uint8_t>(i * 17 + i / 256);
-    assert(storage.write(data) == StorageManager::WriteResult::Ok && storage.finishFile());
+    assert(storage.write(data) == logging::StorageManager::WriteResult::Ok && storage.finishFile());
     for (size_t n = 0; n < start.size(); ++n)
         assert(download.start(std::span(start).first(n), response).status == FAILURE);
     auto malformed = start;
@@ -657,7 +657,7 @@ void testDownloadManager() {
     before = flash.readBytes;
     check(11);
     assert(flash.readBytes == before); // same frame as chunk 10
-    hostArduino::nowMillis += DownloadManager::TIMEOUT_MS;
+    hostArduino::nowMillis += radioLink::DownloadManager::TIMEOUT_MS;
     download.update();
     assert(download.getChunk(makeChunkRequest(session, 11), response).status == FAILURE);
     assert(download.start(start, response).status == SUCCESS);
@@ -672,7 +672,7 @@ void testDownloadManager() {
     assert(download.getChunk(makeChunkRequest(session, 0), response).status == FAILURE);
     assert(storage.deleteAllFiles());
     assert(storage.startFile(filename));
-    assert(storage.write(data) == StorageManager::WriteResult::Ok && storage.finishFile());
+    assert(storage.write(data) == logging::StorageManager::WriteResult::Ok && storage.finishFile());
     assert(download.start(start, response).status == SUCCESS);
     session = littleEndian::decodeU32(response, 0);
     // Fail after loading the first frame, during a chunk spanning two frames.
@@ -697,21 +697,21 @@ void testDownloadManager() {
 
 void testSessionDownloadScheduling() {
     MemoryFlash flash;
-    StorageManager storage(flash);
+    logging::StorageManager storage(flash);
     assert(storage.begin());
-    const StorageManager::Filename filename("wire.bin");
+    const logging::StorageManager::Filename filename("wire.bin");
     assert(storage.startFile(filename));
     std::array<uint8_t, 240> data{};
     data.fill(73);
-    assert(storage.write(data) == StorageManager::WriteResult::Ok && storage.finishFile());
-    DownloadManager download(storage);
+    assert(storage.write(data) == logging::StorageManager::WriteResult::Ok && storage.finishFile());
+    radioLink::DownloadManager download(storage);
     MemoryRadio radio;
     Protocol::Parser parser;
     struct FlightState {
         bool midFlight = false;
         bool isMidFlight() { return midFlight; }
     } flight;
-    MessageScheduler scheduler(parser, radio,
+    radioLink::MessageScheduler scheduler(parser, radio,
         etl::delegate<bool()>::create<FlightState, &FlightState::isMidFlight>(flight));
     scheduler.registerRequestHandler(Protocol::MessageType::START_LOG_DOWNLOAD, download.startCallback());
     scheduler.registerRequestHandler(Protocol::MessageType::GET_LOG_CHUNK, download.chunkCallback());

@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <array>
 
+namespace radioLink {
+
 MessageScheduler::MessageScheduler(Protocol::Parser& parser, hardware::Radio& radio, etl::delegate<bool()> isMidFlightCb)
     : _parser(parser), _radio(radio), _didRespond(false),
       _droppedMessages(0), _isMidFlightCb(isMidFlightCb) {
@@ -144,3 +146,5 @@ void MessageScheduler::registerRequestHandler(Protocol::MessageType requestType,
 void MessageScheduler::registerRequestHandler(Protocol::MessageType requestType, RequestHandler handler) {
     registerRequestHandler(requestType, handler, HandlerOptions{true});
 }
+
+} // namespace radioLink

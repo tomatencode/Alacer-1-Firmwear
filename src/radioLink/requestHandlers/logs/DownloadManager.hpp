@@ -7,6 +7,13 @@
 #include <span>
 #include <utility>
 
+#include "../../MessageScheduler.hpp"
+#include "../../../logManagement/StorageManager.hpp"
+#include "../../../helpers/codec/LittleEndianCodec.hpp"
+#include "../../../helpers/codec/StringCodec.hpp"
+
+namespace radioLink {
+
 // One ground-only download session; no allocation or speculative prefetch.
 // All integers are little-endian; malformed requests return empty FAILURE.
 // START_LOG_DOWNLOAD: filename (StringCodec), u32 client token.
@@ -26,7 +33,7 @@ public:
     static constexpr uint32_t TIMEOUT_MS = 60000;
     static_assert(CHUNK_HEADER_SIZE + CHUNK_BYTES <= 255);
 
-    explicit DownloadManager(StorageManager& storage) : _storage(storage) {}
+    explicit DownloadManager(logging::StorageManager& storage) : _storage(storage) {}
 
     void update() {
         const uint32_t now = millis();
@@ -38,7 +45,7 @@ public:
     MessageScheduler::HandlerResult start(std::span<const uint8_t> payload,
                                           std::span<uint8_t> response) {
         update();
-        StorageManager::Filename filename;
+        logging::StorageManager::Filename filename;
         const auto consumed = stringCodec::decode(payload, 0, filename);
         if (!consumed || filename.empty() || payload.size() != *consumed + 4 ||
             response.size() < START_RESPONSE_SIZE) {
@@ -152,9 +159,9 @@ private:
         _cachedIndex.reset();
     }
 
-    StorageManager& _storage;
-    std::optional<StorageManager::SequentialFileReader> _reader;
-    StorageManager::Filename _filename;
+    logging::StorageManager& _storage;
+    std::optional<logging::StorageManager::SequentialFileReader> _reader;
+    logging::StorageManager::Filename _filename;
     uint32_t _clientToken = 0;
     uint32_t _session = 0;
     uint32_t _nextSession = 1;
@@ -164,3 +171,5 @@ private:
     std::optional<uint32_t> _cachedIndex;
     std::array<uint8_t, CHUNK_BYTES> _chunk{};
 };
+
+} // namespace radioLink

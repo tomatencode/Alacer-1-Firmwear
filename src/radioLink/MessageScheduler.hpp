@@ -10,6 +10,8 @@
 #include "Protocol.hpp"
 #include "../hardwareIO/radio/Radio.hpp"
 
+namespace radioLink {
+
 class MessageScheduler {
 public:
     enum class HandlerResultStatus : uint8_t {
@@ -61,3 +63,5 @@ private:
     etl::delegate<bool()> _isMidFlightCb;
     etl::vector<Protocol::Message, 32> _scheduledMessages;
 };
+
+} // namespace radioLink

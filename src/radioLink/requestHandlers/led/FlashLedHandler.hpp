@@ -6,6 +6,8 @@
 #include "../../../hardwareIO/led/BlinkLed.hpp"
 #include "../../../helpers/codec/LittleEndianCodec.hpp"
 
+namespace radioLink {
+
 // FLASH_LED request:
 //   empty payload = flash with the LED's default duration.
 //   payload[0..1] = optional flash duration in ms, little-endian uint16.
@@ -36,3 +38,5 @@ public:
 private:
     hardware::BlinkLed& _led;
 };
+
+} // namespace radioLink

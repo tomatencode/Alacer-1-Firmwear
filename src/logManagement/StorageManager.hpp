@@ -11,6 +11,8 @@
 
 #include "hardwareIO/flash/FlashChip.hpp"
 
+namespace logging {
+
 class StorageManager {
 public:
     StorageManager(hardware::FlashChip &flashChip);
@@ -174,3 +176,5 @@ private:
     etl::vector<FileInfo, MAX_FILES> _files{};
     etl::vector<Filename, MAX_FILES> _ids{};
 };
+
+} // namespace logging

@@ -5,6 +5,8 @@
 #include "../../MessageScheduler.hpp"
 #include "../../../controlPD/ControlPD.hpp"
 
+namespace radioLink {
+
 // SET_CONTROLLING request:
 //   payload[0] = 1 to start controlling, 0 to stop controlling.
 // Response:
@@ -41,3 +43,5 @@ public:
 private:
     ControlPD& _controlPID;
 };
+
+} // namespace radioLink

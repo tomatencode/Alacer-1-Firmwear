@@ -5,12 +5,14 @@
 #include "../../MessageScheduler.hpp"
 #include "../../../logManagement/StorageManager.hpp"
 
+namespace radioLink {
+
 // DELETE_ALL_LOGS: empty request and response. SUCCESS also for an empty store.
 // FAILURE for nonempty payloads, unmounted storage, active logging or flash errors.
 // Logically removes all files and reclaims space; this is not a secure flash wipe.
 class DeleteAllLogsHandler {
 public:
-    explicit DeleteAllLogsHandler(StorageManager& storageManager) : _storageManager(storageManager) {}
+    explicit DeleteAllLogsHandler(logging::StorageManager& storageManager) : _storageManager(storageManager) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t>) {
         if (!payload.empty()) {
@@ -26,5 +28,7 @@ public:
     }
 
 private:
-    StorageManager& _storageManager;
+    logging::StorageManager& _storageManager;
 };
+
+} // namespace radioLink

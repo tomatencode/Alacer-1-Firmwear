@@ -6,6 +6,8 @@
 #include "../../../hardwareComponents/gimbal/Gimbal.hpp"
 #include "../../../helpers/codec/FixedPointCodec.hpp"
 
+namespace radioLink {
+
 class SetGimbalHandler {
 public:
     explicit SetGimbalHandler(hardware::Gimbal& gimbal) : _gimbal(gimbal) {}
@@ -28,3 +30,5 @@ public:
 private:
     hardware::Gimbal& _gimbal;
 };
+
+} // namespace radioLink

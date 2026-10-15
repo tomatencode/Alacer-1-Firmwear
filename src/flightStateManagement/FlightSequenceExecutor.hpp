@@ -20,14 +20,14 @@
 class FlightSequenceExecutor {
 public:
     FlightSequenceExecutor(
-        LogManager& logManager,
+        logging::LogManager& logManager,
         ControlPD& controlPID,
         RotationAccumulator& rotationAccumulator,
         BarometricHeightCalculator& barometricHeightCalculator,
         VerticalMovementTracker& verticalMovementTracker,
         HorizontalMovementTracker& horizontalMovementTracker,
-        MotorIgniter& motorIgniter,
-        Parachute& parachute
+        hardware::MotorIgniter& motorIgniter,
+        hardware::Parachute& parachute
     );
 
     // Dumb hardware sequences. All return false on failure, never change FlightState.
@@ -47,12 +47,12 @@ public:
     bool hasTouchedDown(float initialHeight_m) const;
 
 private:
-    LogManager& _logManager;
+    logging::LogManager& _logManager;
     ControlPD& _controlPID;
     RotationAccumulator& _rotationAccumulator;
     BarometricHeightCalculator& _barometricHeightCalculator;
     VerticalMovementTracker& _verticalMovementTracker;
     HorizontalMovementTracker& _horizontalMovementTracker;
-    MotorIgniter& _motorIgniter;
-    Parachute& _parachute;
+    hardware::MotorIgniter& _motorIgniter;
+    hardware::Parachute& _parachute;
 };

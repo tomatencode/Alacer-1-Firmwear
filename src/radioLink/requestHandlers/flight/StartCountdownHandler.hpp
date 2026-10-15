@@ -8,6 +8,8 @@
 #include "../../../helpers/codec/FixedPointCodec.hpp"
 #include "../../../helpers/codec/FixedPointCodec.hpp"
 
+namespace radioLink {
+
 // START_COUNTDOWN request:
 //   payload (58 bytes):
 //   [0..3]   countdown duration in ms, little-endian uint32
@@ -29,7 +31,7 @@ class StartCountdownHandler {
 public:
     static constexpr size_t PAYLOAD_SIZE = 58;
 
-    explicit StartCountdownHandler(FlightStateManager& flightStateManager, std::span<PyroChannel*> pyroChannels)
+    explicit StartCountdownHandler(FlightStateManager& flightStateManager, std::span<hardware::PyroChannel*> pyroChannels)
         : _flightStateManager(flightStateManager), _pyroChannels(pyroChannels) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t>) {
@@ -60,5 +62,7 @@ public:
 
 private:
     FlightStateManager& _flightStateManager;
-    std::span<PyroChannel*> _pyroChannels;
+    std::span<hardware::PyroChannel*> _pyroChannels;
 };
+
+} // namespace radioLink

@@ -1,14 +1,14 @@
 #include "FlightStateManager.hpp"
 
 FlightStateManager::FlightStateManager(
-    LogManager& logManager,
+    logging::LogManager& logManager,
     ControlPD& controlPID,
     RotationAccumulator& rotationAccumulator,
     BarometricHeightCalculator& barometricHeightCalculator,
     VerticalMovementTracker& verticalMovementTracker,
     HorizontalMovementTracker& horizontalMovementTracker,
-    MotorIgniter& motorIgniter,
-    Parachute& parachute)
+    hardware::MotorIgniter& motorIgniter,
+    hardware::Parachute& parachute)
     : _logManager(logManager),
       _executor(logManager,
         controlPID,

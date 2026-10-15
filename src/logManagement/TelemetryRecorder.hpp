@@ -2,7 +2,9 @@
 
 #include <cstdint>
 
+namespace logging {
 class LogManager;
+}
 class BarometricHeightCalculator;
 class VerticalMovementTracker;
 class HorizontalMovementTracker;
@@ -13,6 +15,8 @@ class IMU;
 class Barometer;
 class Gimbal;
 }
+
+namespace logging {
 
 // Samples raw and derived telemetry after sensors, estimators and control update.
 // LogManager/LastEventsTracker suppress unchanged samples at on-disk precision.
@@ -54,3 +58,5 @@ private:
     hardware::Gimbal& _gimbal;
     RotationAccumulator& _rotationAccumulator;
 };
+
+} // namespace logging

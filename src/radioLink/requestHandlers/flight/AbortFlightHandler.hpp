@@ -5,6 +5,8 @@
 #include "../../MessageScheduler.hpp"
 #include "../../../flightStateManagement/FlightStateManager.hpp"
 
+namespace radioLink {
+
 // ABORT_FLIGHT request:
 //   empty payload.
 // Response:
@@ -30,3 +32,5 @@ public:
 private:
     FlightStateManager& _flightStateManager;
 };
+
+} // namespace radioLink

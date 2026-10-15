@@ -6,6 +6,8 @@
 #include "../../../rotationEstimation/RotationAccumulator.hpp"
 #include "../../../helpers/codec/FixedPointCodec.hpp"
 
+namespace radioLink {
+
 // SET_ROTATION request:
 //   payload (16 bytes): orientation quaternion (x, y, z, w), each an int32
 //   fixed-point value scaled by 100 (fixedPoint::kScale).
@@ -33,3 +35,5 @@ public:
 private:
     RotationAccumulator& _rotationAccumulator;
 };
+
+} // namespace radioLink

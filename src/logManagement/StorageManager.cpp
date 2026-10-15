@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cstring>
 
+namespace logging {
+
 namespace {
 
 // Directory lives in the first two sectors (copies A/B for atomic swap).
@@ -223,6 +225,8 @@ bool StorageManager::formatDir(uint32_t dirAddr, const FileInfo *files,
     return _flashChip.write(dirAddr, std::span<const uint8_t>(hdr, kHdrSize));
 }
 
+namespace {
+
 // Parse one raw entry image into a FileInfo. Returns false for free/
 // deleted/torn slots. If wantOpen is true, only OPEN entries match;
 // otherwise only CLOSED entries match.
@@ -269,6 +273,8 @@ bool parseEntry(const uint8_t img[64], bool wantOpen,
     recoveredOut = (flags == kFlagRecovered);
     return true;
 }
+
+} // namespace
 
 int StorageManager::findFile(const Filename &filename) const {
     for (size_t i = 0; i < _files.size(); ++i) {
@@ -1131,3 +1137,5 @@ StorageManager::WriteResult StorageManager::write(std::span<const uint8_t> data)
     return WriteResult::Ok;
 }
 // === PART6 END ===
+
+} // namespace logging

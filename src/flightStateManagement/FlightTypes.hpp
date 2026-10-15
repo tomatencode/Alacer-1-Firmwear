@@ -27,8 +27,8 @@ struct FlightProfile {
     float pidKp;
     float pidKd;
 
-    PyroChannel* motorIgniterChannel;
-    PyroChannel* parachutePyroChannel;
+    hardware::PyroChannel* motorIgniterChannel;
+    hardware::PyroChannel* parachutePyroChannel;
 
     float initialHeight_m;
 };

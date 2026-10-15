@@ -6,6 +6,8 @@
 #include "../../../hardwareIO/imu/IMU.hpp"
 #include "../../../helpers/codec/FixedPointCodec.hpp"
 
+namespace radioLink {
+
 class GetImuHandler {
 public:
     explicit GetImuHandler(hardware::IMU& imu) : _imu(imu) {}
@@ -31,3 +33,5 @@ public:
 private:
     hardware::IMU& _imu;
 };
+
+} // namespace radioLink

@@ -1,6 +1,8 @@
 #include "LogManager.hpp"
 
 
+namespace logging {
+
 LogManager::LogManager(StorageManager &storageManager)
     : _storageManager(storageManager) {
 }
@@ -74,3 +76,5 @@ void LogManager::appendDroppedEventsIfNeeded(uint32_t nowMs) {
         _lastTimeSync_ms = nowMs; // marker carries an absolute time reference
     }
 }
+
+} // namespace logging

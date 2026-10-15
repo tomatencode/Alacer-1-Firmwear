@@ -143,15 +143,15 @@ void testEncoding() {
 
 void testSourceEvents() {
     MemoryFlash flash;
-    StorageManager storage(flash);
+    logging::StorageManager storage(flash);
     storage.begin();
-    LogManager logger(storage);
+    logging::LogManager logger(storage);
     const LogProtocol::LogMetadata metadata{0, Eigen::Quaternionf::Identity(), Eigen::Quaternionf::Identity(), 0, 0, 0, 0};
-    const StorageManager::Filename filename("events.bin");
+    const logging::StorageManager::Filename filename("events.bin");
     assert(logger.startLog(metadata, filename));
 
-    PyroArmManager arm(1);
-    PyroChannel pyro(2, 3, arm, &logger, 2);
+    hardware::PyroArmManager arm(1);
+    hardware::PyroChannel pyro(2, 3, arm, &logger, 2);
     pyro.begin();
     hostArduino::pins[1] = HIGH;
     hostArduino::pins[3] = HIGH;
@@ -167,7 +167,7 @@ void testSourceEvents() {
 
     TestRadio radio;
     Protocol::Parser parser;
-    MessageScheduler scheduler(parser, radio, {}, &logger);
+    radioLink::MessageScheduler scheduler(parser, radio, {}, &logger);
     radio.enqueue(static_cast<Protocol::MessageType>(0xFE), 42);
     for (uint8_t i = 0; i < 34; ++i) radio.enqueue(Protocol::MessageType::PING, i);
     scheduler.update();
@@ -204,7 +204,7 @@ const LogProtocol::LogMetadata testMetadata{
 
 template<typename T>
 void testCache(const T& first, const T& changed) {
-    LastEventsTracker tracker;
+    logging::LastEventsTracker tracker;
     assert(!tracker.checkSameAsLast(first));
     tracker.updateLast(first);
     assert(tracker.checkSameAsLast(first));
@@ -233,7 +233,7 @@ void testStreamCaches() {
               SensorHealthEvent{SensorId::IMU, true, true, SensorError::Read});
     testCache(RadioDiagnosticsEvent{}, RadioDiagnosticsEvent{0, 0, 0, 1});
 
-    LastEventsTracker tracker;
+    logging::LastEventsTracker tracker;
     tracker.updateLast(BatteryVoltageEvent{3.751f});
     assert(tracker.checkSameAsLast(BatteryVoltageEvent{3.759f})); // same encoded 3.75
     for (uint8_t channel = 0; channel < 3; ++channel) tracker.updateLast(PyroContinuityEvent{channel, true});
@@ -267,8 +267,8 @@ public:
 
 struct TelemetryFixture {
     MemoryFlash flash;
-    StorageManager storage{flash};
-    LogManager logger{storage};
+    logging::StorageManager storage{flash};
+    logging::LogManager logger{storage};
     hardware::Battery battery{10};
     TestIMU imu;
     TestBarometer barometer;
@@ -281,7 +281,7 @@ struct TelemetryFixture {
     hardware::Servo yaw{12, 2, -90, 90, 0, 500, 2500, 90};
     hardware::Gimbal gimbal{pitch, yaw, {0, 0}, -5, 5, -5, 5, 1, 1, 0, 0};
     ControlPID pid{rotation, gimbal};
-    TelemetryRecorder recorder{logger, battery, imu, barometer, pid, height, vertical, horizontal, gimbal, rotation};
+    logging::TelemetryRecorder recorder{logger, battery, imu, barometer, pid, height, vertical, horizontal, gimbal, rotation};
     TelemetryFixture() {
         assert(storage.begin());
         assert(height.calibrateTo(0));
@@ -295,7 +295,7 @@ void testTelemetryRecorder() {
     hostArduino::nowMicros = 1000000;
     f.recorder.update();
     assert(f.imu.reads == 0); // don't poll sensors when not logging
-    assert(f.logger.startLog(testMetadata, StorageManager::Filename("telemetry.bin")));
+    assert(f.logger.startLog(testMetadata, logging::StorageManager::Filename("telemetry.bin")));
     f.recorder.update();
     assert(f.imu.reads == 1);
     const size_t firstSize = f.storage.bufferedBytes();
@@ -315,13 +315,13 @@ void testTelemetryRecorder() {
     assert(f.imu.reads == 3 && f.storage.bufferedBytes() == firstSize + 27); // unchanged = no writes
     assert(f.logger.finishLog());
     std::array<uint8_t, 152> records{};
-    assert(f.storage.readFile(StorageManager::Filename("telemetry.bin"), LogProtocol::headerSize, records) == records.size());
+    assert(f.storage.readFile(logging::StorageManager::Filename("telemetry.bin"), LogProtocol::headerSize, records) == records.size());
     assert(records[0] == static_cast<uint8_t>(LogProtocol::EventType::IMU));
     assert(fixedPoint::decode32(records, 3) == 1.25f);
     assert(records[27] == static_cast<uint8_t>(LogProtocol::EventType::Barometer));
     assert(fixedPoint::decode32(records, 30) == 101325);
     // Restart without an idle update: session ID must bypass the 20ms gate.
-    assert(f.logger.startLog(testMetadata, StorageManager::Filename("restart.bin")));
+    assert(f.logger.startLog(testMetadata, logging::StorageManager::Filename("restart.bin")));
     f.recorder.update();
     assert(f.imu.reads == 4 && f.storage.bufferedBytes() == firstSize);
     assert(f.logger.finishLog());
@@ -329,7 +329,7 @@ void testTelemetryRecorder() {
     assert(f.imu.reads == 4);
     // unsigned elapsed-time arithmetic must also work across millis rollover.
     hostArduino::nowMillis = UINT32_MAX - 10;
-    assert(f.logger.startLog(testMetadata, StorageManager::Filename("rollover.bin")));
+    assert(f.logger.startLog(testMetadata, logging::StorageManager::Filename("rollover.bin")));
     f.recorder.update();
     hostArduino::nowMillis = 8;
     f.recorder.update();
@@ -342,10 +342,10 @@ void testTelemetryRecorder() {
 
 void testFailedWriteRetries() {
     TelemetryFixture f;
-    assert(f.logger.startLog(testMetadata, StorageManager::Filename("retry.bin")));
+    assert(f.logger.startLog(testMetadata, logging::StorageManager::Filename("retry.bin")));
     // Leave too little buffer space for a sample; force the necessary flush to fail.
     std::array<uint8_t, 764> filler{};
-    assert(f.storage.write(filler) == StorageManager::WriteResult::Ok);
+    assert(f.storage.write(filler) == logging::StorageManager::WriteResult::Ok);
     f.flash.failWrites = true;
     assert(!f.logger.appendEvent(LogProtocol::BatteryVoltageEvent{3.75f}));
     f.flash.failWrites = false;
@@ -359,7 +359,7 @@ void testFailedWriteRetries() {
 void testSensorHealth() {
     TelemetryFixture f;
     hostArduino::nowMillis = 2000;
-    assert(f.logger.startLog(testMetadata, StorageManager::Filename("health.bin")));
+    assert(f.logger.startLog(testMetadata, logging::StorageManager::Filename("health.bin")));
     SPIClass spi;
     hardware::MS5611 barometer(20, spi, f.logger);
     barometer.begin();
@@ -421,15 +421,15 @@ void testPIDAndFlightDetection() {
     f.pid.stopControlling();
     assert(!f.pid.getDiagnostics().controlling);
 
-    assert(f.logger.startLog(testMetadata, StorageManager::Filename("flight.bin")));
-    PyroArmManager arm(1, &f.logger);
+    assert(f.logger.startLog(testMetadata, logging::StorageManager::Filename("flight.bin")));
+    hardware::PyroArmManager arm(1, &f.logger);
     hostArduino::pins[1] = HIGH;
     arm.softwareArm();
-    PyroChannel motorPyro(2, 3, arm, &f.logger, 0);
-    PyroChannel chutePyro(4, 5, arm, &f.logger, 1);
+    hardware::PyroChannel motorPyro(2, 3, arm, &f.logger, 0);
+    hardware::PyroChannel chutePyro(4, 5, arm, &f.logger, 1);
     hostArduino::pins[3] = hostArduino::pins[5] = HIGH;
-    MotorIgniter motor;
-    Parachute chute;
+    hardware::MotorIgniter motor;
+    hardware::Parachute chute;
     FlightStateManager flight(f.pid, f.rotation, f.height, f.vertical, f.horizontal, motor, chute, f.logger);
     const FlightProfile profile{0, 0, Eigen::Quaternionf::Identity(), Eigen::Quaternionf::Identity(),
                                 1, 0, 0, &motorPyro, &chutePyro, 0};
@@ -459,10 +459,10 @@ void testPIDAndFlightDetection() {
 
 void testRadioFaults() {
     TelemetryFixture f;
-    assert(f.logger.startLog(testMetadata, StorageManager::Filename("radio.bin")));
+    assert(f.logger.startLog(testMetadata, logging::StorageManager::Filename("radio.bin")));
     Protocol::Parser parser;
     TestRadio radio;
-    MessageScheduler scheduler(parser, radio, {}, &f.logger);
+    radioLink::MessageScheduler scheduler(parser, radio, {}, &f.logger);
     radio.enqueue(Protocol::MessageType::PING, 1);
     radio.incoming.back() ^= 0x80; // bad CRC
     const std::array<uint8_t, 4> malformed{Protocol::START_BYTE, 1, 0, 0};
@@ -478,9 +478,9 @@ void testRadioFaults() {
 void testPyroStateAndTimeout() {
     TelemetryFixture f;
     hostArduino::nowMillis = 0; // firing must work even at the zero clock value
-    assert(f.logger.startLog(testMetadata, StorageManager::Filename("pyro.bin")));
-    PyroArmManager arm(1, &f.logger);
-    PyroChannel pyro(2, 3, arm, &f.logger, 0);
+    assert(f.logger.startLog(testMetadata, logging::StorageManager::Filename("pyro.bin")));
+    hardware::PyroArmManager arm(1, &f.logger);
+    hardware::PyroChannel pyro(2, 3, arm, &f.logger, 0);
     hostArduino::pins[1] = HIGH;
     hostArduino::pins[3] = HIGH;
     arm.update();
@@ -505,7 +505,7 @@ void testPyroStateAndTimeout() {
     assert(f.storage.bufferedBytes() == stoppedBytes + 18);
     assert(f.logger.finishLog());
     std::array<uint8_t, 32> records{};
-    assert(f.storage.readFile(StorageManager::Filename("pyro.bin"), LogProtocol::headerSize, records) == records.size());
+    assert(f.storage.readFile(logging::StorageManager::Filename("pyro.bin"), LogProtocol::headerSize, records) == records.size());
     assert(records[23] == static_cast<uint8_t>(LogProtocol::EventType::PyroStopped));
     assert(records[31] == static_cast<uint8_t>(LogProtocol::PyroStopReason::DurationElapsed));
 }

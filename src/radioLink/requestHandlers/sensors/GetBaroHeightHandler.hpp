@@ -6,6 +6,8 @@
 #include "../../../barometricHeightCalculation/BarometricHeightCalculator.hpp"
 #include "../../../helpers/codec/FixedPointCodec.hpp"
 
+namespace radioLink {
+
 // GET_BARO_HEIGHT request:
 //   empty payload.
 // Response:
@@ -33,3 +35,5 @@ public:
 private:
     BarometricHeightCalculator& _heightCalculator;
 };
+
+} // namespace radioLink

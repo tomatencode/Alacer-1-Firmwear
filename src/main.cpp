@@ -77,6 +77,8 @@
 
 #include "./flightStateManagement/FlightStateManager.hpp"
 
+namespace {
+
 hardware::BlinkLed statusLed(PB14, 35, 50);
 
 hardware::Buzzer buzzer(PA8);
@@ -96,20 +98,20 @@ hardware::MS5611 barometer(PB3, spiBus);
 hardware::Servo pitchServo(PA1, 2, 0.0f, 180.0f, 90.0f, 544, 2400, 180.0);
 hardware::Servo yawServo(PA2, 3, 0.0f, 180.0f, 90.0f, 544, 2400, 180.0);
 
-PyroArmManager pyroArmManager(PC13);
+hardware::PyroArmManager pyroArmManager(PC13);
 
-PyroChannel pyroChannel1(PB5, PB4, pyroArmManager);
-PyroChannel pyroChannel2(PB6, PB7, pyroArmManager);
-PyroChannel pyroChannel3(PB8, PB9, pyroArmManager);
+hardware::PyroChannel pyroChannel1(PB5, PB4, pyroArmManager);
+hardware::PyroChannel pyroChannel2(PB6, PB7, pyroArmManager);
+hardware::PyroChannel pyroChannel3(PB8, PB9, pyroArmManager);
 
-std::array<PyroChannel*, 3> pyroChannels = {
+std::array<hardware::PyroChannel*, 3> pyroChannels = {
     &pyroChannel1,
     &pyroChannel2,
     &pyroChannel3
 };
 
-MotorIgniter motorIgniter;
-Parachute parachute;
+hardware::MotorIgniter motorIgniter;
+hardware::Parachute parachute;
 
 hardware::Gimbal gimbal(
     pitchServo, yawServo,
@@ -120,8 +122,8 @@ hardware::Gimbal gimbal(
     GIMBAL_PITCH_SERVO_OFFSET_deg, GIMBAL_YAW_SERVO_OFFSET_deg
 );
 
-StorageManager storageManager(flashMemory);
-LogManager logManager(storageManager);
+logging::StorageManager storageManager(flashMemory);
+logging::LogManager logManager(storageManager);
 
 const Eigen::Matrix3f imuToRocketRotationMatrix = (Eigen::Matrix3f() <<
     IMU_TO_ROCKET_ROTATION_MATRIX[0][0], IMU_TO_ROCKET_ROTATION_MATRIX[0][1], IMU_TO_ROCKET_ROTATION_MATRIX[0][2],
@@ -155,49 +157,49 @@ FlightStateManager flightStateManager(
 );
 
 Protocol::Parser radioLinkParser;
-MessageScheduler messageScheduler(radioLinkParser, radioHC12);
+radioLink::MessageScheduler messageScheduler(radioLinkParser, radioHC12);
 
 // Radio Request handlers
-DoBeepHandler beepHandler(buzzer);
-GetImuHandler imuHandler(imu);
-GetBarometerHandler barometerHandler(barometer);
-GetGimbalHandler getGimbalHandler(gimbal);
-SetGimbalHandler setGimbalHandler(gimbal);
-GetRotationHandler getRotationHandler(rotationAccumulator);
-SetRotationHandler setRotationHandler(rotationAccumulator);
-SetAccumulatingRotationHandler setAccumulatingRotationHandler(rotationAccumulator);
-FirePyroHandler firePyroHandler(pyroChannels);
-GetPyroContinuityHandler getPyroContinuityHandler(pyroChannels);
-GetPyroSoftwareArmedHandler getPyroSoftwareArmedHandler(pyroArmManager);
-SetPyroSoftwareArmedHandler setPyroSoftwareArmedHandler(pyroArmManager);
-GetPyroHardwareArmedHandler getPyroHardwareArmedHandler(pyroArmManager);
-AbortFlightHandler abortFlightHandler(flightStateManager);
-EndFlightHandler endFlightHandler(flightStateManager);
-GetBaroHeightHandler baroHeightHandler(barometricHeightCalculator);
-CalibrateBaroHeightHandler calibrateBaroHeightHandler(barometricHeightCalculator);
-GetFlightLocationHandler flightLocationHandler(verticalMovementTracker, horizontalMovementTracker);
-GetFlightStateHandler flightStateHandler(flightStateManager);
-GetCountdownTimeHandler countdownTimeHandler(flightStateManager);
-StartCountdownHandler startCountdownHandler(flightStateManager, pyroChannels);
-RetryDeployParachuteHandler retryDeployParachuteHandler(flightStateManager);
-SetPDParametersHandler setPIDParametersHandler(controlPID);
-GetPDParametersHandler getPIDParametersHandler(controlPID);
-SetControllingHandler setControllingHandler(controlPID);
-GetControllingHandler getControllingHandler(controlPID);
-SetPDTargetHandler setPIDTargetHandler(controlPID);
-GetPDTargetHandler getPIDTargetHandler(controlPID);
-FlashLedHandler flashLedHandler(statusLed);
-GetBatteryVoltageHandler getBatteryVoltageHandler(battery);
-StartLogHandler startLogHandler(logManager);
-FinishLogHandler finishLogHandler(logManager);
-IsLoggingHandler isLoggingHandler(logManager);
-ListLogsHandler listLogsHandler(storageManager);
-GetLogSizeHandler getLogSizeHandler(storageManager);
-DeleteLogHandler deleteLogHandler(storageManager);
-DeleteAllLogsHandler deleteAllLogsHandler(storageManager);
-DownloadManager downloadManager(storageManager);
+radioLink::DoBeepHandler beepHandler(buzzer);
+radioLink::GetImuHandler imuHandler(imu);
+radioLink::GetBarometerHandler barometerHandler(barometer);
+radioLink::GetGimbalHandler getGimbalHandler(gimbal);
+radioLink::SetGimbalHandler setGimbalHandler(gimbal);
+radioLink::GetRotationHandler getRotationHandler(rotationAccumulator);
+radioLink::SetRotationHandler setRotationHandler(rotationAccumulator);
+radioLink::SetAccumulatingRotationHandler setAccumulatingRotationHandler(rotationAccumulator);
+radioLink::FirePyroHandler firePyroHandler(pyroChannels);
+radioLink::GetPyroContinuityHandler getPyroContinuityHandler(pyroChannels);
+radioLink::GetPyroSoftwareArmedHandler getPyroSoftwareArmedHandler(pyroArmManager);
+radioLink::SetPyroSoftwareArmedHandler setPyroSoftwareArmedHandler(pyroArmManager);
+radioLink::GetPyroHardwareArmedHandler getPyroHardwareArmedHandler(pyroArmManager);
+radioLink::AbortFlightHandler abortFlightHandler(flightStateManager);
+radioLink::EndFlightHandler endFlightHandler(flightStateManager);
+radioLink::GetBaroHeightHandler baroHeightHandler(barometricHeightCalculator);
+radioLink::CalibrateBaroHeightHandler calibrateBaroHeightHandler(barometricHeightCalculator);
+radioLink::GetFlightLocationHandler flightLocationHandler(verticalMovementTracker, horizontalMovementTracker);
+radioLink::GetFlightStateHandler flightStateHandler(flightStateManager);
+radioLink::GetCountdownTimeHandler countdownTimeHandler(flightStateManager);
+radioLink::StartCountdownHandler startCountdownHandler(flightStateManager, pyroChannels);
+radioLink::RetryDeployParachuteHandler retryDeployParachuteHandler(flightStateManager);
+radioLink::SetPDParametersHandler setPIDParametersHandler(controlPID);
+radioLink::GetPDParametersHandler getPIDParametersHandler(controlPID);
+radioLink::SetControllingHandler setControllingHandler(controlPID);
+radioLink::GetControllingHandler getControllingHandler(controlPID);
+radioLink::SetPDTargetHandler setPIDTargetHandler(controlPID);
+radioLink::GetPDTargetHandler getPIDTargetHandler(controlPID);
+radioLink::FlashLedHandler flashLedHandler(statusLed);
+radioLink::GetBatteryVoltageHandler getBatteryVoltageHandler(battery);
+radioLink::StartLogHandler startLogHandler(logManager);
+radioLink::FinishLogHandler finishLogHandler(logManager);
+radioLink::IsLoggingHandler isLoggingHandler(logManager);
+radioLink::ListLogsHandler listLogsHandler(storageManager);
+radioLink::GetLogSizeHandler getLogSizeHandler(storageManager);
+radioLink::DeleteLogHandler deleteLogHandler(storageManager);
+radioLink::DeleteAllLogsHandler deleteAllLogsHandler(storageManager);
+radioLink::DownloadManager downloadManager(storageManager);
 
-TelemetryRecorder telemetryRecorder(
+logging::TelemetryRecorder telemetryRecorder(
     logManager, battery,
     imu, barometer,
     barometricHeightCalculator,
@@ -211,6 +213,8 @@ const hardware::Buzzer::Melody startupMelody = {
     {294, 200},
     {330, 200}
 };
+
+} // namespace
 
 void setup() {
     statusLed.begin();

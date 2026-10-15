@@ -5,6 +5,8 @@
 #include "../../MessageScheduler.hpp"
 #include "../../../rotationEstimation/RotationAccumulator.hpp"
 
+namespace radioLink {
+
 // SET_ACCUMULATING_ROTATION request:
 //   payload[0] = 1 to start accumulating rotation from the IMU gyro,
 //                0 to stop accumulating.
@@ -39,3 +41,5 @@ public:
 private:
     RotationAccumulator& _rotationAccumulator;
 };
+
+} // namespace radioLink

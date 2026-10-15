@@ -6,6 +6,8 @@
 #include "../../../controlPD/ControlPD.hpp"
 #include "../../../helpers/codec/FixedPointCodec.hpp"
 
+namespace radioLink {
+
 // SET_PID_PARAMETERS request:
 //   payload (8 bytes): kp, kd, each an int32 fixed-point value scaled by
 //   100 (fixedPoint::kScale).
@@ -36,3 +38,5 @@ public:
 private:
     ControlPD& _controlPID;
 };
+
+} // namespace radioLink

@@ -5,10 +5,12 @@
 #include "../../MessageScheduler.hpp"
 #include "../../../logManagement/LogManager.hpp"
 
+namespace radioLink {
+
 // IS_LOGGING: empty request; SUCCESS with one byte (1 = logging, 0 = idle).
 class IsLoggingHandler {
 public:
-    explicit IsLoggingHandler(LogManager& logManager) : _logManager(logManager) {}
+    explicit IsLoggingHandler(logging::LogManager& logManager) : _logManager(logManager) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t> response) {
         if (!payload.empty() || response.empty()) {
@@ -23,5 +25,7 @@ public:
     }
 
 private:
-    LogManager& _logManager;
+    logging::LogManager& _logManager;
 };
+
+} // namespace radioLink

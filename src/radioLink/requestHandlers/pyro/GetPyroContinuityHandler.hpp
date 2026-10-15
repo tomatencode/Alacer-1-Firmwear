@@ -5,6 +5,8 @@
 #include "../../MessageScheduler.hpp"
 #include "../../../hardwareIO/pyro/PyroChannel.hpp"
 
+namespace radioLink {
+
 // GET_PYRO_CONTINUITY request:
 //   payload[0] = channel index (0-based into the channels array given at construction)
 // Response:
@@ -12,7 +14,7 @@
 //   FAILURE with empty payload if index out of range.
 class GetPyroContinuityHandler {
 public:
-    explicit GetPyroContinuityHandler(std::span<PyroChannel*> channels) : _channels(channels) {}
+    explicit GetPyroContinuityHandler(std::span<hardware::PyroChannel*> channels) : _channels(channels) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t> response) {
         if (payload.size() < 1) {
@@ -33,5 +35,7 @@ public:
     }
 
 private:
-    std::span<PyroChannel*> _channels;
+    std::span<hardware::PyroChannel*> _channels;
 };
+
+} // namespace radioLink

@@ -2,6 +2,8 @@
 
 #include "../../hardwareIO/pyro/PyroChannel.hpp"
 
+namespace hardware {
+
 class MotorIgniter{
 public:
     MotorIgniter() = default;
@@ -18,3 +20,5 @@ private:
 
     PyroChannel* _pyroChannel = nullptr;
 };
+
+} // namespace hardware

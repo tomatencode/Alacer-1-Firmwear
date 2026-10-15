@@ -7,6 +7,8 @@
 #include "../../../logManagement/StorageManager.hpp"
 #include "../../../helpers/codec/StringCodec.hpp"
 
+namespace radioLink {
+
 // LIST_LOGS: empty request starts at index 0; otherwise one uint8 start index.
 // SUCCESS response: [total files, next index, page count], followed by
 // length-prefixed filenames. next index == total files means end of list.
@@ -15,7 +17,7 @@
 // Invalid index, unmounted storage or insufficient response space => FAILURE.
 class ListLogsHandler {
 public:
-    explicit ListLogsHandler(StorageManager& storageManager) : _storageManager(storageManager) {}
+    explicit ListLogsHandler(logging::StorageManager& storageManager) : _storageManager(storageManager) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t> response) {
         if (payload.size() > 1 || response.size() < 3 || !_storageManager.isMounted()) {
@@ -51,5 +53,7 @@ public:
     }
 
 private:
-    StorageManager& _storageManager;
+    logging::StorageManager& _storageManager;
 };
+
+} // namespace radioLink

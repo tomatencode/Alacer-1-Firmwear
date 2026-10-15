@@ -4,6 +4,8 @@
 
 #include "PyroChannel.hpp"
 
+namespace hardware {
+
 PyroArmManager::PyroArmManager(int hardwareArmPin)
     : _hardwareArmPin(hardwareArmPin), _softwareArm(false)
 {}
@@ -31,3 +33,5 @@ void PyroArmManager::softwareDisarm() {
 bool PyroArmManager::isSoftwareArmed() {
     return _softwareArm;
 }
+
+} // namespace hardware

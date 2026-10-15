@@ -4,6 +4,8 @@
 
 #include "PyroArmManager.hpp"
 
+namespace hardware {
+
 class PyroChannel {
 public:
     PyroChannel(int mosfetPin, int contPin, PyroArmManager& pyroArmManager);
@@ -28,3 +30,5 @@ private:
 
     PyroArmManager& _pyroArmManager;
 };
+
+} // namespace hardware

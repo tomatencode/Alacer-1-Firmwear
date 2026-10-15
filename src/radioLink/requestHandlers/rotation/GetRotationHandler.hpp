@@ -6,6 +6,8 @@
 #include "../../../rotationEstimation/RotationAccumulator.hpp"
 #include "../../../helpers/codec/QuaternionCodec.hpp"
 
+namespace radioLink {
+
 // GET_ROTATION request:
 //   empty payload.
 // Response:
@@ -28,3 +30,5 @@ public:
 private:
     RotationAccumulator& _rotationAccumulator;
 };
+
+} // namespace radioLink

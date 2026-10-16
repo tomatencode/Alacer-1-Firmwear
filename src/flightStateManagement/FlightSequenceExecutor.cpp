@@ -87,18 +87,18 @@ bool FlightSequenceExecutor::deployForDescent() {
     return deployed;
 }
 
-void FlightSequenceExecutor::finishLanding() {
-    _verticalMovementTracker.stopTracking();
-    _horizontalMovementTracker.stopTracking();
-    _logManager.finishLog();
-}
-
 void FlightSequenceExecutor::finishFlight() {
     _controlPID.stopControlling();
     _verticalMovementTracker.stopTracking();
     _horizontalMovementTracker.stopTracking();
     _logManager.finishLog();
 }
+
+void FlightSequenceExecutor::resetPosEstimate() {
+    _verticalMovementTracker.reset();
+    _horizontalMovementTracker.reset();
+}
+
 
 void FlightSequenceExecutor::abortThrust() {
     _controlPID.stopControlling();

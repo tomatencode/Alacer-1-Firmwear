@@ -38,8 +38,8 @@ public:
     bool launch();
     void finishBurn();
     bool deployForDescent();
-    void finishLanding();
     void finishFlight();
+    void resetPosEstimate();
 
     void abortThrust();
     bool deployParachute();

@@ -34,6 +34,8 @@ bool FlightStateManager::trySetIdle() {
     if (_currentState == FlightState::COUNTDOWN || _currentState == FlightState::ABORTED || _currentState == FlightState::LANDED) {
         changeState(FlightState::IDLE);
         _executor.finishFlight();
+        _executor.resetPosEstimate();
+
         return true;
     }
     return false; // Deny setting to IDLE if not allowed
@@ -142,7 +144,7 @@ void FlightStateManager::update() {
         break;
     case FlightState::DESCENDING:
         if (_executor.hasTouchedDown(_flightProfile.initialHeight_m)) {
-            _executor.finishLanding();
+            _executor.finishFlight();
             changeState(FlightState::LANDED);
         }
         break;

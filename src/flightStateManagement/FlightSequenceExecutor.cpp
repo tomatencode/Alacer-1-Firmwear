@@ -35,7 +35,7 @@ bool FlightSequenceExecutor::configureForFlight(const FlightProfile& profile) {
     _horizontalMovementTracker.reset();
 
 
-    _logManager.startLog(profile.name);
+    bool logStarted = _logManager.startLog(profile.name);
 
     _logManager.appendEvent(LogProtocol::FlightConfigurationEvent{
         .name = profile.name,
@@ -45,14 +45,14 @@ bool FlightSequenceExecutor::configureForFlight(const FlightProfile& profile) {
         .initialRotation = profile.initialRotation,
     });
 
-    return true;
+    return logStarted;
 }
 
 bool FlightSequenceExecutor::preflightChecks() const {
     if (!_motorIgniter.canIgnite()) return false;
     if (!_parachute.canDeploy()) return false;
     if (!_controlPID.canStartControlling()) return false;
-    if (_logManager.isLogging()) return false;
+    if (!_logManager.isLogging()) return false;
 
     return true;
 }

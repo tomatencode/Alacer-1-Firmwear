@@ -86,8 +86,8 @@ bool FlightStateManager::startCountdown(FlightProfile flightProfile) {
     _flightProfile = flightProfile;
     
     bool configSuccess = _executor.configureForFlight(_flightProfile);
-    //bool checksSuccess = _executor.preflightChecks();
-    bool checksSuccess = true; // testing
+    bool checksSuccess = _executor.preflightChecks();
+    //bool checksSuccess = true; // testing
 
     if (configSuccess && checksSuccess) {
         _countdownStartTime = _clock.getTimeFlight_ms();

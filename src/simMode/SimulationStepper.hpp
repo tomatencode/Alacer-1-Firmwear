@@ -19,7 +19,7 @@ public:
         const auto now = _clock.getTime_us();
         _pending_us += static_cast<uint64_t>(now - _lastReal_us) * _speed;
         _lastReal_us = now;
-        const auto step = static_cast<uint32_t>(std::min(_pending_us, uint64_t{1000}));
+        const auto step = static_cast<uint32_t>(std::min(_pending_us, uint64_t{5000}));
         _pending_us -= step;
         _clock.advanceTimeBy_us(step);
     }

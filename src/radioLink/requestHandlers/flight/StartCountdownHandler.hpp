@@ -46,7 +46,7 @@ public:
         }
 
         const size_t offset = *filenameSize;
-        flightProfile.burnPhaseDuration_ms = fixedPoint::decode32(payload, offset);
+        flightProfile.burnPhaseDuration_ms = littleEndian::decodeU32(payload, offset);
         flightProfile.initialRotation = quaternionCodec::decode(payload, offset + 4);
         flightProfile.pidKp = fixedPoint::decode32(payload, offset + 20);
         flightProfile.pidKd = fixedPoint::decode32(payload, offset + 24);

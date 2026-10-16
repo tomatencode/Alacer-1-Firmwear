@@ -63,3 +63,15 @@ The simulation-mode host suite checks 1:1 timing, bounded steps, pending-time
 draining, timer rollover,
 virtual gimbal dispatch, arming and continuity, millisecond pulse timing, delayed
 ignition, sensor feedback, parachute deployment and eventual touchdown.
+
+## VS Code host-test diagnostics
+
+The simulation-mode test runner requires `g++` and Python 3. It also generates
+`/home/simon/src/Alacer-1-Firmwear/.pio/host-tests/compile_commands.json` for the
+workspace's C/C++ IntelliSense settings. Run the test script once after cloning
+or removing `.pio` to generate it.
+
+This gives `SimulationModeTest.cpp` the host Arduino stub, native compiler and
+`ALACER_SIMULATION` definition instead of the default STM32 firmware configuration.
+Firmware source files continue to use PlatformIO's configuration. If stale errors
+remain, run **C/C++: Reset IntelliSense Database** from the VS Code command palette.

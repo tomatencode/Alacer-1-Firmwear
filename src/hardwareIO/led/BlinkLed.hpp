@@ -1,11 +1,12 @@
 #pragma once
+#include "timing/Clock.hpp"
 #include <cstdint>
 
 namespace hardware {
 
 class BlinkLed {
 public:
-    BlinkLed(int pin, uint8_t brightness, uint32_t defaultOnDuration_ms = 100);
+    BlinkLed(const Clock& clock, int pin, uint8_t brightness, uint32_t defaultOnDuration_ms = 100);
 
     void begin();
 
@@ -13,6 +14,7 @@ public:
     void flash();
     void flash(uint32_t duration_ms);
 private:
+    const Clock& _clock;
     int _pin;
     uint32_t _defaultOnDuration_ms;
     uint8_t _brightness;

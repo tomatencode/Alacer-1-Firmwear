@@ -3,8 +3,8 @@
 
 namespace hardware {
 
-BlinkLed::BlinkLed(int pin, uint8_t brightness, uint32_t defaultOnDuration_ms)
-    : _pin(pin), _defaultOnDuration_ms(defaultOnDuration_ms), _flashDuration_ms(0), _brightness(brightness) {
+BlinkLed::BlinkLed(const Clock& clock, int pin, uint8_t brightness, uint32_t defaultOnDuration_ms)
+    : _clock(clock), _pin(pin), _defaultOnDuration_ms(defaultOnDuration_ms), _flashDuration_ms(0), _brightness(brightness) {
 }
 
 void BlinkLed::begin() {
@@ -13,7 +13,7 @@ void BlinkLed::begin() {
 }
 
 void BlinkLed::update() {
-    if (millis() - _flashTime >= _flashDuration_ms) {
+    if (_clock.getTime_ms() - _flashTime >= _flashDuration_ms) {
         analogWrite(_pin, 0);
     }
 }
@@ -24,7 +24,7 @@ void BlinkLed::flash() {
 
 void BlinkLed::flash(uint32_t duration_ms) {
     analogWrite(_pin, _brightness);
-    _flashTime = millis();
+    _flashTime = _clock.getTime_ms();
     _flashDuration_ms = duration_ms;
 }
 

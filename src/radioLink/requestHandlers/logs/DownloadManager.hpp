@@ -1,4 +1,5 @@
 #pragma once
+#include "timing/Clock.hpp"
 
 #include <Arduino.h>
 #include <algorithm>
@@ -33,10 +34,11 @@ public:
     static constexpr uint32_t TIMEOUT_MS = 60000;
     static_assert(CHUNK_HEADER_SIZE + CHUNK_BYTES <= 255);
 
-    explicit DownloadManager(logging::StorageManager& storage) : _storage(storage) {}
+    DownloadManager(const Clock& clock, logging::StorageManager& storage)
+        : _clock(clock), _storage(storage) {}
 
     void update() {
-        const uint32_t now = millis();
+        const uint32_t now = _clock.getTime_ms();
         if (_reader && (!_reader->valid() || uint32_t{now - _lastActivity} >= TIMEOUT_MS)) {
             clear();
         }
@@ -74,7 +76,7 @@ public:
                           (_reader->size() % CHUNK_BYTES != 0);
             _cachedIndex.reset();
         }
-        _lastActivity = millis(); // validation scan can take time
+        _lastActivity = _clock.getTime_ms(); // validation scan can take time
         littleEndian::encodeU32(_session, response, 0);
         littleEndian::encodeU32(_reader->size(), response, 4);
         littleEndian::encodeU16(CHUNK_BYTES, response, 8);
@@ -117,7 +119,7 @@ public:
         std::copy_n(_chunk.begin(), count, response.begin() + CHUNK_HEADER_SIZE);
         littleEndian::encodeU32(_session, response, 0);
         littleEndian::encodeU32(index, response, 4);
-        _lastActivity = millis();
+        _lastActivity = _clock.getTime_ms();
         return {MessageScheduler::HandlerResultStatus::SUCCESS, CHUNK_HEADER_SIZE + count};
     }
 
@@ -151,6 +153,7 @@ public:
     }
 
 private:
+    const Clock& _clock;
     static MessageScheduler::HandlerResult failure() {
         return {MessageScheduler::HandlerResultStatus::FAILURE, 0};
     }

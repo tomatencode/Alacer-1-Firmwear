@@ -1,3 +1,7 @@
+#include "timing/Clock.hpp"
+
+static Clock testClock;
+
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -89,7 +93,7 @@ void testStringCodec() {
 void testHandlers() {
     MemoryFlash flash;
     logging::StorageManager storage(flash);
-    logging::LogManager manager(storage);
+    logging::LogManager manager(testClock, storage);
     radioLink::StartLogHandler start(manager);
     radioLink::FinishLogHandler finish(manager);
     radioLink::IsLoggingHandler status(manager);
@@ -581,7 +585,7 @@ void testSequentialReader() {
 void testDownloadManager() {
     MemoryFlash flash;
     logging::StorageManager storage(flash);
-    radioLink::DownloadManager download(storage);
+    radioLink::DownloadManager download(testClock, storage);
     const logging::StorageManager::Filename filename("session.bin"), empty("empty.bin");
     const auto start = makeStartDownloadRequest(filename, 123);
     std::array<uint8_t, 256> response{};
@@ -704,7 +708,7 @@ void testSessionDownloadScheduling() {
     std::array<uint8_t, 240> data{};
     data.fill(73);
     assert(storage.write(data) == logging::StorageManager::WriteResult::Ok && storage.finishFile());
-    radioLink::DownloadManager download(storage);
+    radioLink::DownloadManager download(testClock, storage);
     MemoryRadio radio;
     Protocol::Parser parser;
     struct FlightState {

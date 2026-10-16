@@ -1,4 +1,5 @@
 #pragma once
+#include "timing/Clock.hpp"
 
 #include <stdint.h>
 #include <cstddef>
@@ -21,7 +22,7 @@ public:
         DESCENDING_CHUTE
     };
 
-    HorizontalMovementTracker(VerticalMovementTracker& verticalTracker, RotationAccumulator& rotationAccumulator);
+    HorizontalMovementTracker(const Clock& clock, VerticalMovementTracker& verticalTracker, RotationAccumulator& rotationAccumulator);
 
     void stopTracking();
     void startTracking();
@@ -37,6 +38,7 @@ public:
 
     void update();
 private:
+    const Clock& _clock;
     // One horizontal position sample, so velocity can be fitted from a window of
     // samples the same way the vertical tracker fits height samples.
     struct MovementSample {

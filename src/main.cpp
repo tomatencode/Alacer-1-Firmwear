@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "timing/Clock.hpp"
 #include <array>
 #include <span>
 
@@ -79,39 +80,53 @@
 
 namespace {
 
-hardware::BlinkLed statusLed(PB14, 35, 50);
+// All timing consumers share this clock; simulation can supply a SimClock instead.
+Clock clock;
 
-hardware::Buzzer buzzer(PA8);
+hardware::BlinkLed statusLed(clock, PB14, 35, 50);
+
+hardware::Buzzer buzzer(clock, PA8);
 
 hardware::Battery battery(PB1);
 
-hardware::HC12 radioHC12(PB15, PA9, PA10);
+hardware::HC12 radioHC12(clock, PB15, PA9, PA10);
 
 SPIClass spiBus(PA7, PA6, PA5);
 
-hardware::W25Q32JV flashMemory(PB12, spiBus);
+hardware::W25Q32JV flashMemory(clock, PB12, spiBus);
 
 hardware::ICM45686 imu(PB10, spiBus);
 
 hardware::MS5611 barometer(PB3, spiBus);
 
-hardware::Servo pitchServo(PA1, 2, 0.0f, 180.0f, 90.0f, 544, 2400, 180.0);
-hardware::Servo yawServo(PA2, 3, 0.0f, 180.0f, 90.0f, 544, 2400, 180.0);
+hardware::Servo pitchServo(clock, PA1, 2, 0.0f, 180.0f, 90.0f, 544, 2400, 180.0);
+hardware::Servo yawServo(clock, PA2, 3, 0.0f, 180.0f, 90.0f, 544, 2400, 180.0);
 
 hardware::PyroArmManager pyroArmManager(PC13);
 
-hardware::PyroChannel pyroChannel1(PB5, PB4, pyroArmManager);
-hardware::PyroChannel pyroChannel2(PB6, PB7, pyroArmManager);
-hardware::PyroChannel pyroChannel3(PB8, PB9, pyroArmManager);
+hardware::PyroChannel pyroChannel1(clock, PB5, PB4, pyroArmManager);
+hardware::PyroChannel pyroChannel2(clock, PB6, PB7, pyroArmManager);
+hardware::PyroChannel pyroChannel3(clock, PB8, PB9, pyroArmManager);
 
-std::array<hardware::PyroChannel*, 3> pyroChannels = {
+std::array<hardware::IPyroChannel*, 3> pyroChannels = {
     &pyroChannel1,
     &pyroChannel2,
     &pyroChannel3
 };
 
-hardware::MotorIgniter motorIgniter;
+hardware::PyroMotorIgniter motorIgniter;
 hardware::Parachute parachute;
+
+bool configureFlightPyroChannels(uint8_t motorIndex, uint8_t parachuteIndex) {
+    if (motorIndex >= pyroChannels.size() || parachuteIndex >= pyroChannels.size() ||
+        pyroChannels[motorIndex] == nullptr || pyroChannels[parachuteIndex] == nullptr) {
+        return false;
+    }
+
+    motorIgniter.setPyroChannel(*pyroChannels[motorIndex]);
+    parachute.setPyroChannel(*pyroChannels[parachuteIndex]);
+    return true;
+}
 
 hardware::Gimbal gimbal(
     pitchServo, yawServo,
@@ -123,7 +138,7 @@ hardware::Gimbal gimbal(
 );
 
 logging::StorageManager storageManager(flashMemory);
-logging::LogManager logManager(storageManager);
+logging::LogManager logManager(clock, storageManager);
 
 const Eigen::Matrix3f imuToRocketRotationMatrix = (Eigen::Matrix3f() <<
     IMU_TO_ROCKET_ROTATION_MATRIX[0][0], IMU_TO_ROCKET_ROTATION_MATRIX[0][1], IMU_TO_ROCKET_ROTATION_MATRIX[0][2],
@@ -136,16 +151,17 @@ IMURocketCoordinateConverter imuRocketConverter(
     Eigen::Vector3f{IMU_TO_ROCKET_X, IMU_TO_ROCKET_Y, IMU_TO_ROCKET_Z},
     imuToRocketRotation);
 
-RotationAccumulator rotationAccumulator(imu, imuRocketConverter, 10000);
+RotationAccumulator rotationAccumulator(clock, imu, imuRocketConverter, 10000);
 
 BarometricHeightCalculator barometricHeightCalculator(barometer);
 
-VerticalMovementTracker verticalMovementTracker(barometricHeightCalculator);
-HorizontalMovementTracker horizontalMovementTracker(verticalMovementTracker, rotationAccumulator);
+VerticalMovementTracker verticalMovementTracker(clock, barometricHeightCalculator);
+HorizontalMovementTracker horizontalMovementTracker(clock, verticalMovementTracker, rotationAccumulator);
 
-ControlPD controlPID(rotationAccumulator, gimbal);
+ControlPD controlPID(clock, rotationAccumulator, gimbal);
 
 FlightStateManager flightStateManager(
+    clock,
     logManager,
     controlPID,
     rotationAccumulator,
@@ -180,7 +196,8 @@ radioLink::CalibrateBaroHeightHandler calibrateBaroHeightHandler(barometricHeigh
 radioLink::GetFlightLocationHandler flightLocationHandler(verticalMovementTracker, horizontalMovementTracker);
 radioLink::GetFlightStateHandler flightStateHandler(flightStateManager);
 radioLink::GetCountdownTimeHandler countdownTimeHandler(flightStateManager);
-radioLink::StartCountdownHandler startCountdownHandler(flightStateManager, pyroChannels);
+radioLink::StartCountdownHandler startCountdownHandler(flightStateManager,
+    radioLink::StartCountdownHandler::ConfigureChannels::create<configureFlightPyroChannels>());
 radioLink::RetryDeployParachuteHandler retryDeployParachuteHandler(flightStateManager);
 radioLink::SetPDParametersHandler setPIDParametersHandler(controlPID);
 radioLink::GetPDParametersHandler getPIDParametersHandler(controlPID);
@@ -197,9 +214,10 @@ radioLink::ListLogsHandler listLogsHandler(storageManager);
 radioLink::GetLogSizeHandler getLogSizeHandler(storageManager);
 radioLink::DeleteLogHandler deleteLogHandler(storageManager);
 radioLink::DeleteAllLogsHandler deleteAllLogsHandler(storageManager);
-radioLink::DownloadManager downloadManager(storageManager);
+radioLink::DownloadManager downloadManager(clock, storageManager);
 
 logging::TelemetryRecorder telemetryRecorder(
+    clock,
     logManager, battery,
     imu, barometer,
     barometricHeightCalculator,

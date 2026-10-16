@@ -7,8 +7,8 @@ FlightSequenceExecutor::FlightSequenceExecutor(
     BarometricHeightCalculator& barometricHeightCalculator,
     VerticalMovementTracker& verticalMovementTracker,
     HorizontalMovementTracker& horizontalMovementTracker,
-    hardware::MotorIgniter& motorIgniter,
-    hardware::Parachute& parachute)
+    hardware::IMotorIgniter& motorIgniter,
+    hardware::IParachute& parachute)
     : _logManager(logManager),
       _controlPID(controlPID),
       _rotationAccumulator(rotationAccumulator),
@@ -20,13 +20,6 @@ FlightSequenceExecutor::FlightSequenceExecutor(
 {}
 
 bool FlightSequenceExecutor::configureForFlight(const FlightProfile& profile) {
-    if (profile.parachutePyroChannel == nullptr || profile.motorIgniterChannel == nullptr) {
-        return false;
-    }
-
-    _parachute.setPyroChannel(*profile.parachutePyroChannel);
-    _motorIgniter.setPyroChannel(*profile.motorIgniterChannel);
-
     _barometricHeightCalculator.calibrateTo(profile.initialHeight_m);
 
     _rotationAccumulator.stopAccumulation();

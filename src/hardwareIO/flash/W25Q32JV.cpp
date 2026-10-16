@@ -8,8 +8,8 @@ namespace {
 
 namespace hardware {
 
-W25Q32JV::W25Q32JV(int csPin, SPIClass &spi)
-    : _csPin(csPin), _spi(spi) {
+W25Q32JV::W25Q32JV(const Clock& clock, int csPin, SPIClass &spi)
+    : _clock(clock), _csPin(csPin), _spi(spi) {
 }
 
 void W25Q32JV::begin() {
@@ -192,9 +192,9 @@ uint8_t W25Q32JV::readStatus() {
 }
 
 bool W25Q32JV::waitUntilReady(uint32_t timeoutMs) {
-    const uint32_t start = millis();
+    const uint32_t start = _clock.getTime_ms();
     while ((readStatus() & STATUS_BUSY) != 0) {
-        if (static_cast<uint32_t>(millis() - start) >= timeoutMs) {
+        if (static_cast<uint32_t>(_clock.getTime_ms() - start) >= timeoutMs) {
             return false;
         }
         delay(1);

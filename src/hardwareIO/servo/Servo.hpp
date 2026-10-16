@@ -1,4 +1,5 @@
 #pragma once
+#include "timing/Clock.hpp"
 
 #include <Arduino.h>
 #include <HardwareTimer.h>
@@ -8,6 +9,7 @@ namespace hardware {
 class Servo {
 public:
     Servo(
+        const Clock& clock,
         uint32_t pin,
         uint32_t channel,
         float minAngle_deg,
@@ -37,6 +39,7 @@ public:
     float getSpeed_deg_s() const { return _servoSpeed_deg_s; }
 
 private:
+    const Clock& _clock;
     uint32_t _pin;
     uint32_t _channel;
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "timing/Clock.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -8,8 +9,8 @@
 
 class VerticalMovementTracker {
 public:
-    explicit VerticalMovementTracker(BarometricHeightCalculator& heightSource)
-        : _heightSource(heightSource) {}
+    VerticalMovementTracker(const Clock& clock, BarometricHeightCalculator& heightSource)
+        : _clock(clock), _heightSource(heightSource) {}
 
     void stopTracking();
     void startTracking();
@@ -25,6 +26,7 @@ public:
     void update();
 
 private:
+    const Clock& _clock;
     struct HeightSample {
         float height_m;
         uint32_t time_us;

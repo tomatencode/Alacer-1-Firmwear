@@ -1,4 +1,5 @@
 #pragma once
+#include "timing/Clock.hpp"
 
 #include <Arduino.h>
 #include <SPI.h>
@@ -9,7 +10,7 @@ namespace hardware {
 
 class W25Q32JV : public FlashChip {
 public:
-    explicit W25Q32JV(int csPin, SPIClass &spi = SPI);
+    explicit W25Q32JV(const Clock& clock, int csPin, SPIClass &spi = SPI);
 
     // Uses standard SPI mode 0 at 8 MHz; /WP and /HOLD must be held high.
     // begin() wakes the chip and checks its ID, but does not change protection.
@@ -29,6 +30,7 @@ public:
     bool eraseBlock64K(uint32_t address);
 
 private:
+    const Clock& _clock;
     static constexpr uint32_t CAPACITY = 4U * 1024U * 1024U;
     static constexpr size_t PAGE_SIZE = 256;
     static constexpr size_t SECTOR_SIZE = 4096;

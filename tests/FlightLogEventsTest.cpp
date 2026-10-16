@@ -1,3 +1,7 @@
+#include "timing/Clock.hpp"
+
+static Clock testClock;
+
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -16,9 +20,9 @@
 #include <limits>
 
 // Software-only servo implementation for exercising the real gimbal/PID code.
-hardware::Servo::Servo(uint32_t pin, uint32_t channel, float low, float high, float initial,
+hardware::Servo::Servo(const Clock& clock, uint32_t pin, uint32_t channel, float low, float high, float initial,
                        int minPulse, int maxPulse, float speed)
-    : _pin(pin), _channel(channel), _targetAngle_deg(initial), _minAngle_deg(low),
+    : _clock(clock), _pin(pin), _channel(channel), _targetAngle_deg(initial), _minAngle_deg(low),
       _maxAngle_deg(high), _minPulse_us(minPulse), _maxPulse_us(maxPulse),
       _servoSpeed_deg_s(speed), _targetSetTime(0), _targetSetPosition_deg(initial) {}
 void hardware::Servo::begin() {}
@@ -145,13 +149,13 @@ void testSourceEvents() {
     MemoryFlash flash;
     logging::StorageManager storage(flash);
     storage.begin();
-    logging::LogManager logger(storage);
+    logging::LogManager logger(testClock, storage);
     const LogProtocol::LogMetadata metadata{0, Eigen::Quaternionf::Identity(), Eigen::Quaternionf::Identity(), 0, 0, 0, 0};
     const logging::StorageManager::Filename filename("events.bin");
     assert(logger.startLog(metadata, filename));
 
     hardware::PyroArmManager arm(1);
-    hardware::PyroChannel pyro(2, 3, arm, &logger, 2);
+    hardware::PyroChannel pyro(testClock, 2, 3, arm, &logger, 2);
     pyro.begin();
     hostArduino::pins[1] = HIGH;
     hostArduino::pins[3] = HIGH;
@@ -268,20 +272,20 @@ public:
 struct TelemetryFixture {
     MemoryFlash flash;
     logging::StorageManager storage{flash};
-    logging::LogManager logger{storage};
+    logging::LogManager logger{testClock, storage};
     hardware::Battery battery{10};
     TestIMU imu;
     TestBarometer barometer;
     IMURocketCoordinateConverter converter{Eigen::Vector3f::Zero(), Eigen::Quaternionf::Identity()};
-    RotationAccumulator rotation{imu, converter, 10000};
+    RotationAccumulator rotation{testClock, imu, converter, 10000};
     BarometricHeightCalculator height{barometer};
-    VerticalMovementTracker vertical{height};
-    HorizontalMovementTracker horizontal{vertical, rotation};
-    hardware::Servo pitch{11, 1, -90, 90, 0, 500, 2500, 90};
-    hardware::Servo yaw{12, 2, -90, 90, 0, 500, 2500, 90};
+    VerticalMovementTracker vertical{testClock, height};
+    HorizontalMovementTracker horizontal{testClock, vertical, rotation};
+    hardware::Servo pitch{testClock, 11, 1, -90, 90, 0, 500, 2500, 90};
+    hardware::Servo yaw{testClock, 12, 2, -90, 90, 0, 500, 2500, 90};
     hardware::Gimbal gimbal{pitch, yaw, {0, 0}, -5, 5, -5, 5, 1, 1, 0, 0};
     ControlPID pid{rotation, gimbal};
-    logging::TelemetryRecorder recorder{logger, battery, imu, barometer, pid, height, vertical, horizontal, gimbal, rotation};
+    logging::TelemetryRecorder recorder{testClock, logger, battery, imu, barometer, pid, height, vertical, horizontal, gimbal, rotation};
     TelemetryFixture() {
         assert(storage.begin());
         assert(height.calibrateTo(0));
@@ -425,12 +429,12 @@ void testPIDAndFlightDetection() {
     hardware::PyroArmManager arm(1, &f.logger);
     hostArduino::pins[1] = HIGH;
     arm.softwareArm();
-    hardware::PyroChannel motorPyro(2, 3, arm, &f.logger, 0);
-    hardware::PyroChannel chutePyro(4, 5, arm, &f.logger, 1);
+    hardware::PyroChannel motorPyro(testClock, 2, 3, arm, &f.logger, 0);
+    hardware::PyroChannel chutePyro(testClock, 4, 5, arm, &f.logger, 1);
     hostArduino::pins[3] = hostArduino::pins[5] = HIGH;
     hardware::MotorIgniter motor;
     hardware::Parachute chute;
-    FlightStateManager flight(f.pid, f.rotation, f.height, f.vertical, f.horizontal, motor, chute, f.logger);
+    FlightStateManager flight(testClock, f.pid, f.rotation, f.height, f.vertical, f.horizontal, motor, chute, f.logger);
     const FlightProfile profile{0, 0, Eigen::Quaternionf::Identity(), Eigen::Quaternionf::Identity(),
                                 1, 0, 0, &motorPyro, &chutePyro, 0};
     assert(flight.startCountdown(profile));
@@ -480,7 +484,7 @@ void testPyroStateAndTimeout() {
     hostArduino::nowMillis = 0; // firing must work even at the zero clock value
     assert(f.logger.startLog(testMetadata, logging::StorageManager::Filename("pyro.bin")));
     hardware::PyroArmManager arm(1, &f.logger);
-    hardware::PyroChannel pyro(2, 3, arm, &f.logger, 0);
+    hardware::PyroChannel pyro(testClock, 2, 3, arm, &f.logger, 0);
     hostArduino::pins[1] = HIGH;
     hostArduino::pins[3] = HIGH;
     arm.update();

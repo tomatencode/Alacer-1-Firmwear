@@ -1,6 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <algorithm>
+
+using std::min;
 
 namespace hostArduino {
 // Controllable clock for deterministic timeout tests; no wall-clock delays.

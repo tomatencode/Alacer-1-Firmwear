@@ -1,15 +1,16 @@
 #include "FlightStateManager.hpp"
 
 FlightStateManager::FlightStateManager(
+    const Clock& clock,
     logging::LogManager& logManager,
     ControlPD& controlPID,
     RotationAccumulator& rotationAccumulator,
     BarometricHeightCalculator& barometricHeightCalculator,
     VerticalMovementTracker& verticalMovementTracker,
     HorizontalMovementTracker& horizontalMovementTracker,
-    hardware::MotorIgniter& motorIgniter,
-    hardware::Parachute& parachute)
-    : _logManager(logManager),
+    hardware::IMotorIgniter& motorIgniter,
+    hardware::IParachute& parachute)
+    : _clock(clock), _logManager(logManager),
       _executor(logManager,
         controlPID,
         rotationAccumulator,
@@ -84,7 +85,7 @@ bool FlightStateManager::startCountdown(FlightProfile flightProfile) {
     bool checksSuccess = _executor.preflightChecks();
 
     if (configSuccess && checksSuccess) {
-        _countdownStartTime = millis();
+        _countdownStartTime = _clock.getTimeFlight_ms();
         changeState(FlightState::COUNTDOWN);
         return true; // Countdown successfully started
     }
@@ -97,7 +98,7 @@ std::optional<uint32_t> FlightStateManager::getCountdownRemaining_ms() const {
         return std::nullopt;
     }
 
-    const uint32_t elapsed = millis() - _countdownStartTime;
+    const uint32_t elapsed = _clock.getTimeFlight_ms() - _countdownStartTime;
     if (elapsed >= _flightProfile.countdownDuration_ms) {
         return std::nullopt;
     }
@@ -112,9 +113,9 @@ void FlightStateManager::update() {
         break;
     case FlightState::COUNTDOWN:
         // Handle COUNTDOWN state
-        if (millis() - _countdownStartTime >= _flightProfile.countdownDuration_ms) {
+        if (_clock.getTimeFlight_ms() - _countdownStartTime >= _flightProfile.countdownDuration_ms) {
             if (_executor.launch()) {
-                _motorStartBurnTime = millis();
+                _motorStartBurnTime = _clock.getTimeFlight_ms();
                 changeState(FlightState::BURNING);
             } else {
                 // Ignition failed: do not enter BURNING, fail safe to ABORTED.
@@ -123,7 +124,7 @@ void FlightStateManager::update() {
         }
         break;
     case FlightState::BURNING:
-        if (millis() - _motorStartBurnTime >= _flightProfile.motorBurnDuration_ms) {
+        if (_clock.getTimeFlight_ms() - _motorStartBurnTime >= _flightProfile.motorBurnDuration_ms) {
             _executor.finishBurn();
             changeState(FlightState::COASTING);
         }

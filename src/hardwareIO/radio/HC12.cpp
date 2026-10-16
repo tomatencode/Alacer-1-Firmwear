@@ -3,8 +3,8 @@
 
 namespace hardware {
 
-HC12::HC12(int setPin, int rxPin, int txPin)
-    : _setPin(setPin), _rxPin(rxPin), _txPin(txPin), _serial(_rxPin, _txPin), _atState(ATState::IDLE) {
+HC12::HC12(const Clock& clock, int setPin, int rxPin, int txPin)
+    : _clock(clock), _setPin(setPin), _rxPin(rxPin), _txPin(txPin), _serial(_rxPin, _txPin), _atState(ATState::IDLE) {
 }
 
 void HC12::begin() {
@@ -48,7 +48,7 @@ bool HC12::sendATCommand(const char* command, uint32_t timeout_ms) {
 
     _atCommand = command;
     _atResponse.clear();
-    _atStartStepTime = millis();
+    _atStartStepTime = _clock.getTime_ms();
     _atTimeout = timeout_ms;
 
     digitalWrite(_setPin, LOW);
@@ -61,8 +61,8 @@ void HC12::update() {
         case HC12::ATState::IDLE:
             break; // Do nothing
         case HC12::ATState::ENTERING_AT_MODE: {
-            if (millis() - _atStartStepTime > 100) { // wait for the module to enter AT mode
-                _atStartStepTime = millis();
+            if (_clock.getTime_ms() - _atStartStepTime > 100) { // wait for the module to enter AT mode
+                _atStartStepTime = _clock.getTime_ms();
                 _atState = ATState::AWAITING_RESPONSE;
                 while (_serial.available()) _serial.read();
                 _serial.print(_atCommand.c_str());
@@ -80,17 +80,17 @@ void HC12::update() {
                 _atResponse[_atResponse.size() - 2] == '\r' &&
                 _atResponse.back() == '\n';
             const bool timedOut =
-                millis() - _atStartStepTime > _atTimeout;
+                _clock.getTime_ms() - _atStartStepTime > _atTimeout;
 
             if (responseComplete || timedOut) {
-                _atStartStepTime = millis();
+                _atStartStepTime = _clock.getTime_ms();
                 digitalWrite(_setPin, HIGH);
                 _atState = ATState::EXITING_AT_MODE;
             }
             break;
         }
         case HC12::ATState::EXITING_AT_MODE:{
-            if (millis() - _atStartStepTime > 100) { // wait for the module to exit AT mode
+            if (_clock.getTime_ms() - _atStartStepTime > 100) { // wait for the module to exit AT mode
                 _atState = ATState::DONE;
             }
             break;

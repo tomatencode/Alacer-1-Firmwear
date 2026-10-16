@@ -4,8 +4,8 @@
 #include <cmath>
 
 
-ControlPD::ControlPD(RotationAccumulator& rotationAccumulator, hardware::Gimbal& gimbal)
-    : _rotationAccumulator(rotationAccumulator),
+ControlPD::ControlPD(const Clock& clock, RotationAccumulator& rotationAccumulator, hardware::Gimbal& gimbal)
+    : _clock(clock), _rotationAccumulator(rotationAccumulator),
       _gimbal(gimbal),
       _targetAngle(std::nullopt),
       _isControlling(false),
@@ -67,11 +67,11 @@ void ControlPD::update() {
     }
 
     if (_lastUpdateTime_us == 0) { // first update, initialize the last update time
-        _lastUpdateTime_us = micros();
+        _lastUpdateTime_us = _clock.getTimeFlight_us();
         return;
     }
 
-    uint32_t currentTime_us = micros();
+    uint32_t currentTime_us = _clock.getTimeFlight_us();
     uint32_t dt_us = min(currentTime_us - _lastUpdateTime_us, MAX_DT_us);
     float deltaTime_s = dt_us * 1e-6f;
     _lastUpdateTime_us = currentTime_us;

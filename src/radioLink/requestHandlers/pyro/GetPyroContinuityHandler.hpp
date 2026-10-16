@@ -3,7 +3,7 @@
 #include <span>
 
 #include "../../MessageScheduler.hpp"
-#include "../../../hardwareIO/pyro/PyroChannel.hpp"
+#include "../../../hardwareIO/pyro/IPyroChannel.hpp"
 
 namespace radioLink {
 
@@ -14,7 +14,7 @@ namespace radioLink {
 //   FAILURE with empty payload if index out of range.
 class GetPyroContinuityHandler {
 public:
-    explicit GetPyroContinuityHandler(std::span<hardware::PyroChannel*> channels) : _channels(channels) {}
+    explicit GetPyroContinuityHandler(std::span<hardware::IPyroChannel*> channels) : _channels(channels) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t> response) {
         if (payload.size() < 1) {
@@ -35,7 +35,7 @@ public:
     }
 
 private:
-    std::span<hardware::PyroChannel*> _channels;
+    std::span<hardware::IPyroChannel*> _channels;
 };
 
 } // namespace radioLink

@@ -2,8 +2,6 @@
 
 #include <Arduino.h>
 
-#include "PyroChannel.hpp"
-
 namespace hardware {
 
 PyroArmManager::PyroArmManager(int hardwareArmPin)

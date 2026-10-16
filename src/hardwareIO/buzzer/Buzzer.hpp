@@ -1,4 +1,5 @@
 #pragma once
+#include "timing/Clock.hpp"
 
 #include <Arduino.h>
 #include <etl/vector.h>
@@ -14,7 +15,7 @@ public:
 
     using Melody = etl::vector<Note, 32>;
 
-    Buzzer(uint8_t pin);
+    Buzzer(const Clock& clock, uint8_t pin);
 
     void begin();
     void on(uint16_t frequency = 1000); 
@@ -25,6 +26,7 @@ public:
     void update();
 
 private:
+    const Clock& _clock;
     uint8_t _pin;
     bool _active;
     uint16_t _frequency;

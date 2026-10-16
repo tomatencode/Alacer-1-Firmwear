@@ -3,8 +3,8 @@
 
 namespace logging {
 
-LogManager::LogManager(StorageManager &storageManager)
-    : _storageManager(storageManager) {
+LogManager::LogManager(const Clock& clock, StorageManager &storageManager)
+    : _clock(clock), _storageManager(storageManager) {
 }
 
 bool LogManager::startLog(const LogProtocol::LogMetadata &metadata, StorageManager::Filename filename) {
@@ -28,7 +28,7 @@ bool LogManager::startLog(const LogProtocol::LogMetadata &metadata, StorageManag
     _droppedEvents = 0;
     _hasTimestamp = false;
     _lastTimestampUs = 0;
-    _startTime_ms = millis();
+    _startTime_ms = _clock.getTimeFlight_ms();
     _lastTimeSync_ms = _startTime_ms;
     _lastEventsTracker.clearLasts();
 
@@ -39,7 +39,7 @@ bool LogManager::finishLog() {
     if (!_storageManager.isFileOpen()) {
         return false;
     }
-    const uint32_t nowMs = millis();
+    const uint32_t nowMs = _clock.getTimeFlight_ms();
     appendDroppedEventsIfNeeded(nowMs);
     addTimesyncIfNeeded(nowMs, true); // final anchor even if interval not due
     return _storageManager.finishFile();

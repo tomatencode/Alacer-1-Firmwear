@@ -4,8 +4,8 @@
 #include <cmath>
 
 
-HorizontalMovementTracker::HorizontalMovementTracker(VerticalMovementTracker& verticalTracker, RotationAccumulator& rotationAccumulator)
-    : verticalTracker(verticalTracker),
+HorizontalMovementTracker::HorizontalMovementTracker(const Clock& clock, VerticalMovementTracker& verticalTracker, RotationAccumulator& rotationAccumulator)
+    : _clock(clock), verticalTracker(verticalTracker),
       rotationAccumulator(rotationAccumulator),
       _totalMovement(Eigen::Vector2f::Zero()),
       _velocity_m_s(Eigen::Vector2f::Zero())
@@ -46,7 +46,7 @@ void HorizontalMovementTracker::setAscentStage(AscentStage stage) {
 void HorizontalMovementTracker::update() {
     if (!_tracking) { return; }
 
-    const uint32_t currentTime_us = micros();
+    const uint32_t currentTime_us = _clock.getTimeFlight_us();
     
     if (_lastUpdateTime_us == 0) {
         _lastUpdateTime_us = currentTime_us;

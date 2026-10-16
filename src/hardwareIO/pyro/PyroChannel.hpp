@@ -1,25 +1,28 @@
 #pragma once
+#include "timing/Clock.hpp"
 
 #include <cstdint>
 
-#include "PyroArmManager.hpp"
+#include "IPyroChannel.hpp"
+#include "IPyroArmManager.hpp"
 
 namespace hardware {
 
-class PyroChannel {
+class PyroChannel : public IPyroChannel {
 public:
-    PyroChannel(int mosfetPin, int contPin, PyroArmManager& pyroArmManager);
+    PyroChannel(const Clock& clock, int mosfetPin, int contPin, IPyroArmManager& pyroArmManager);
 
-    void begin();
+    void begin() override;
 
-    bool canFire() { return hasContinuity() && _pyroArmManager.isArmed(); };
-    bool fire(uint32_t duration);
-    void stopFiring();
+    bool canFire() override { return hasContinuity() && _pyroArmManager.isArmed(); };
+    bool fire(uint32_t duration) override;
+    void stopFiring() override;
 
-    bool hasContinuity();
+    bool hasContinuity() override;
 
-    void update();
+    void update() override;
 private:
+    const Clock& _clock;
 
 
     int _mosfetPin;
@@ -28,7 +31,7 @@ private:
     uint32_t _fireTime = 0;
     uint32_t _fireDuration = 0;
 
-    PyroArmManager& _pyroArmManager;
+    IPyroArmManager& _pyroArmManager;
 };
 
 } // namespace hardware

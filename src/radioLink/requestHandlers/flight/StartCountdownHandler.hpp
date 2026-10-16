@@ -1,12 +1,13 @@
 #pragma once
 
 #include <span>
+#include <etl/delegate.h>
 
 #include "../../MessageScheduler.hpp"
 #include "../../../flightStateManagement/FlightStateManager.hpp"
 #include "../../../helpers/codec/LittleEndianCodec.hpp"
 #include "../../../helpers/codec/FixedPointCodec.hpp"
-#include "../../../helpers/codec/FixedPointCodec.hpp"
+#include "../../../helpers/codec/QuaternionCodec.hpp"
 
 namespace radioLink {
 
@@ -31,11 +32,17 @@ class StartCountdownHandler {
 public:
     static constexpr size_t PAYLOAD_SIZE = 58;
 
-    explicit StartCountdownHandler(FlightStateManager& flightStateManager, std::span<hardware::PyroChannel*> pyroChannels)
-        : _flightStateManager(flightStateManager), _pyroChannels(pyroChannels) {}
+    // Application-owned binding keeps hardware configuration out of flight logic.
+    // Simulation wiring can validate the indices without binding real channels.
+    using ConfigureChannels = etl::delegate<bool(uint8_t, uint8_t)>;
+
+    explicit StartCountdownHandler(FlightStateManager& flightStateManager, ConfigureChannels configureChannels)
+        : _flightStateManager(flightStateManager), _configureChannels(configureChannels) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t>) {
-        if (payload.size() < PAYLOAD_SIZE) {
+        if (payload.size() < PAYLOAD_SIZE ||
+            _flightStateManager.getCurrentState() != FlightState::IDLE ||
+            !_configureChannels.is_valid()) {
             return {MessageScheduler::HandlerResultStatus::FAILURE, 0};
         }
 
@@ -46,9 +53,11 @@ public:
         flightProfile.targetAngle = quaternionCodec::decode(payload, 24);
         flightProfile.pidKp = fixedPoint::decode32(payload, 40);
         flightProfile.pidKd = fixedPoint::decode32(payload, 44);
-        flightProfile.motorIgniterChannel = _pyroChannels[payload[48]];
-        flightProfile.parachutePyroChannel = _pyroChannels[payload[49]];
         flightProfile.initialHeight_m = fixedPoint::decode32(payload, 50);
+
+        if (!_configureChannels(payload[48], payload[49])) {
+            return {MessageScheduler::HandlerResultStatus::FAILURE, 0};
+        }
 
         const bool started = _flightStateManager.startCountdown(flightProfile);
         return {started ? MessageScheduler::HandlerResultStatus::SUCCESS
@@ -62,7 +71,7 @@ public:
 
 private:
     FlightStateManager& _flightStateManager;
-    std::span<hardware::PyroChannel*> _pyroChannels;
+    ConfigureChannels _configureChannels;
 };
 
 } // namespace radioLink

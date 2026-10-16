@@ -1,4 +1,5 @@
 #pragma once
+#include "timing/Clock.hpp"
 
 #include <ArduinoEigen.h>
 #include <optional>
@@ -15,7 +16,7 @@ public:
         float kd;
     };
 
-    ControlPD(RotationAccumulator& rotationAccumulator, hardware::Gimbal& gimbal);
+    ControlPD(const Clock& clock, RotationAccumulator& rotationAccumulator, hardware::Gimbal& gimbal);
 
     void setPDParameters(float kp, float kd);
     std::optional<PDParameters> getPDParameters() const; // std::nullopt until both are set
@@ -35,6 +36,7 @@ public:
     void update();
     
 private:
+    const Clock& _clock;
     static constexpr uint32_t MAX_DT_us = 10000; 
 
     RotationAccumulator& _rotationAccumulator;

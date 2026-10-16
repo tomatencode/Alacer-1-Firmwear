@@ -7,8 +7,8 @@ namespace {
 HardwareTimer servoTimer(TIM2);
 }
 
-Servo::Servo(uint32_t pin, uint32_t channel, float minAngle_deg, float maxAngle_deg, float initialAngle_deg, int minPulse_us, int maxPulse_us, float servoSpeed_deg_s)
-    : _pin(pin),
+Servo::Servo(const Clock& clock, uint32_t pin, uint32_t channel, float minAngle_deg, float maxAngle_deg, float initialAngle_deg, int minPulse_us, int maxPulse_us, float servoSpeed_deg_s)
+    : _clock(clock), _pin(pin),
       _channel(channel),
       _minAngle_deg(minAngle_deg),
       _maxAngle_deg(maxAngle_deg),
@@ -34,7 +34,7 @@ void Servo::setTarget(float angle_deg) {
     // time it was set, before either is overwritten. Otherwise getPosition_deg() runs with
     // a zero elapsed time and the reference never moves, so reported positions drift.
     _targetSetPosition_deg = getPosition_deg();
-    _targetSetTime = millis();
+    _targetSetTime = _clock.getTime_ms();
 
     _targetAngle_deg = std::clamp(angle_deg, _minAngle_deg, _maxAngle_deg);
 
@@ -50,7 +50,7 @@ float Servo::getTarget_deg() const {
 }
 
 float Servo::getPosition_deg() const {
-    const uint32_t elapsedTime = millis() - _targetSetTime;
+    const uint32_t elapsedTime = _clock.getTime_ms() - _targetSetTime;
     const float maxDelta = _servoSpeed_deg_s * (elapsedTime / 1000.0);
     const float delta = _targetAngle_deg - _targetSetPosition_deg;
     const float clampedDelta = std::clamp(delta, -maxDelta, maxDelta);

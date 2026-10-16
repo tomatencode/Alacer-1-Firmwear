@@ -15,7 +15,7 @@ void VerticalMovementTracker::update() {
     _hasSampled = true;
     _lastSampledHeight_m = height_m;
 
-    pushHeightSample(height_m, micros());
+    pushHeightSample(height_m, _clock.getTimeFlight_us());
     updateEstimates();
 }
 

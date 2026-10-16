@@ -2,8 +2,8 @@
 
 namespace hardware {
 
-    Buzzer::Buzzer(uint8_t pin)
-    : _pin(pin), _active(false),
+    Buzzer::Buzzer(const Clock& clock, uint8_t pin)
+    : _clock(clock), _pin(pin), _active(false),
       _frequency(0), _endTime(0),
       _melodyIndex(0) {}
 
@@ -31,7 +31,7 @@ void Buzzer::beep(uint16_t frequency, uint16_t duration) {
     _frequency = frequency;
     tone(_pin, _frequency);
     _active = true;
-    _endTime = millis() + duration;
+    _endTime = _clock.getTime_ms() + duration;
     _melody.clear();
 }
 
@@ -46,13 +46,13 @@ void Buzzer::playMelody(const Melody& melody) {
     else tone(_pin, _frequency);
 
     _active = true;
-    _endTime = millis() + _melody[0].durationMs;
+    _endTime = _clock.getTime_ms() + _melody[0].durationMs;
 }
 
 void Buzzer::update() {
     if (!_active) return;
 
-    unsigned long now = millis();
+    unsigned long now = _clock.getTime_ms();
 
     if (!_melody.empty() && now >= _endTime) {
         _melodyIndex++;

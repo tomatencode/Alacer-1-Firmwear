@@ -4,8 +4,6 @@
 
 #include <ArduinoEigen.h>
 
-#include "../hardwareIO/pyro/PyroChannel.hpp"
-
 enum class FlightState {
     IDLE,
     COUNTDOWN,
@@ -26,9 +24,6 @@ struct FlightProfile {
 
     float pidKp;
     float pidKd;
-
-    hardware::PyroChannel* motorIgniterChannel;
-    hardware::PyroChannel* parachutePyroChannel;
 
     float initialHeight_m;
 };

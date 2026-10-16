@@ -3,7 +3,7 @@
 #include <span>
 
 #include "../../MessageScheduler.hpp"
-#include "../../../hardwareIO/pyro/PyroArmManager.hpp"
+#include "../../../hardwareIO/pyro/IPyroArmManager.hpp"
 
 namespace radioLink {
 
@@ -14,7 +14,7 @@ namespace radioLink {
 //   FAILURE with empty payload if payload missing or payload[0] not 0/1.
 class SetPyroSoftwareArmedHandler {
 public:
-    explicit SetPyroSoftwareArmedHandler(hardware::PyroArmManager& pyroArmManager) : _pyroArmManager(pyroArmManager) {}
+    explicit SetPyroSoftwareArmedHandler(hardware::IPyroArmManager& pyroArmManager) : _pyroArmManager(pyroArmManager) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t>) {
         if (payload.size() < 1) {
@@ -37,7 +37,7 @@ public:
     }
 
 private:
-    hardware::PyroArmManager& _pyroArmManager;
+    hardware::IPyroArmManager& _pyroArmManager;
 };
 
 } // namespace radioLink

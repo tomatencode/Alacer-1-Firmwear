@@ -1,4 +1,5 @@
 #pragma once
+#include "timing/Clock.hpp"
 
 #include <array>
 #include <cstdint>
@@ -15,7 +16,7 @@ namespace logging {
 
 class LogManager {
 public:
-    LogManager(StorageManager &storageManager);
+    LogManager(const Clock& clock, StorageManager &storageManager);
 
     bool startLog(const LogProtocol::LogMetadata &metadata, StorageManager::Filename filename);
     bool finishLog();
@@ -31,8 +32,8 @@ public:
             if (_lastEventsTracker.checkSameAsLast(event)) return true;
         }
 
-        const uint32_t nowUs = micros();
-        const uint32_t nowMs = millis();
+        const uint32_t nowUs = _clock.getTimeFlight_us();
+        const uint32_t nowMs = _clock.getTimeFlight_ms();
 
         uint16_t dt;
         if (!_hasTimestamp) {
@@ -70,6 +71,7 @@ public:
     }
 
 private:
+    const Clock& _clock;
 
     static constexpr uint32_t TIME_SYNC_INTERVAL_MS = 50; // before 16 bit us delta timestamp overflows
     static constexpr uint32_t kMaxDeltaUs = 60000; // margin below 65535 wrap

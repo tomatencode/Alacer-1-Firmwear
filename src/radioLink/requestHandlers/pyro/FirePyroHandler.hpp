@@ -3,7 +3,7 @@
 #include <span>
 
 #include "../../MessageScheduler.hpp"
-#include "../../../hardwareIO/pyro/PyroChannel.hpp"
+#include "../../../hardwareIO/pyro/IPyroChannel.hpp"
 #include "../../../helpers/codec/LittleEndianCodec.hpp"
 
 namespace radioLink {
@@ -21,7 +21,7 @@ public:
     static constexpr uint32_t DEFAULT_FIRE_DURATION_MS = 1000;
     static constexpr uint32_t MAX_FIRE_DURATION_MS = 5000;
 
-    explicit FirePyroHandler(std::span<hardware::PyroChannel*> channels) : _channels(channels) {}
+    explicit FirePyroHandler(std::span<hardware::IPyroChannel*> channels) : _channels(channels) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t>) {
         if (payload.size() < 1) {
@@ -53,7 +53,7 @@ public:
     }
 
 private:
-    std::span<hardware::PyroChannel*> _channels;
+    std::span<hardware::IPyroChannel*> _channels;
 };
 
 } // namespace radioLink

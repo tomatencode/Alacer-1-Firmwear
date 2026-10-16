@@ -4,8 +4,8 @@
 
 namespace hardware {
 
-PyroChannel::PyroChannel(int mosfetPin, int contPin, PyroArmManager& pyroArmManager)
-    : _mosfetPin(mosfetPin), _contPin(contPin), _pyroArmManager(pyroArmManager)
+PyroChannel::PyroChannel(const Clock& clock, int mosfetPin, int contPin, IPyroArmManager& pyroArmManager)
+    : _clock(clock), _mosfetPin(mosfetPin), _contPin(contPin), _pyroArmManager(pyroArmManager)
 {}
 
 void PyroChannel::begin() {
@@ -20,7 +20,7 @@ bool PyroChannel::hasContinuity() {
 bool PyroChannel::fire(uint32_t duration) {
     if (!canFire()) return false;
 
-    _fireTime = millis();
+    _fireTime = _clock.getTime_ms();
     _fireDuration = duration;
     digitalWrite(_mosfetPin, HIGH);
     return true;
@@ -34,7 +34,7 @@ void PyroChannel::stopFiring() {
 
 void PyroChannel::update() {
     bool firing = _fireTime > 0;
-    bool expired = _fireTime > 0 && (millis() - _fireTime >= _fireDuration);
+    bool expired = _fireTime > 0 && (_clock.getTime_ms() - _fireTime >= _fireDuration);
     bool unarmed = !_pyroArmManager.isArmed();
 
     if (firing && (expired || unarmed)) {

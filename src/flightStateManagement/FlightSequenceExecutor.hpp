@@ -3,8 +3,8 @@
 #include "FlightTypes.hpp"
 
 #include "../rotationEstimation/RotationAccumulator.hpp"
-#include "../hardwareComponents/parachute/Parachute.hpp"
-#include "../hardwareComponents/motor/MotorIgniter.hpp"
+#include "../hardwareComponents/parachute/IParachute.hpp"
+#include "../hardwareComponents/motor/IMotorIgniter.hpp"
 
 #include "../barometricHeightCalculation/BarometricHeightCalculator.hpp"
 #include "../ascentTracking/VerticalMovementTracker.hpp"
@@ -26,8 +26,8 @@ public:
         BarometricHeightCalculator& barometricHeightCalculator,
         VerticalMovementTracker& verticalMovementTracker,
         HorizontalMovementTracker& horizontalMovementTracker,
-        hardware::MotorIgniter& motorIgniter,
-        hardware::Parachute& parachute
+        hardware::IMotorIgniter& motorIgniter,
+        hardware::IParachute& parachute
     );
 
     // Dumb hardware sequences. All return false on failure, never change FlightState.
@@ -53,6 +53,6 @@ private:
     BarometricHeightCalculator& _barometricHeightCalculator;
     VerticalMovementTracker& _verticalMovementTracker;
     HorizontalMovementTracker& _horizontalMovementTracker;
-    hardware::MotorIgniter& _motorIgniter;
-    hardware::Parachute& _parachute;
+    hardware::IMotorIgniter& _motorIgniter;
+    hardware::IParachute& _parachute;
 };

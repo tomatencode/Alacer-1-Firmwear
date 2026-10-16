@@ -1,7 +1,7 @@
 #include "RotationAccumulator.hpp"
 
-RotationAccumulator::RotationAccumulator(hardware::IMU& imu, IMURocketCoordinateConverter& imuRocketConverter, uint32_t maxDt_us)
-    : _imu(imu), _imuRocketConverter(imuRocketConverter), _maxDt_us(maxDt_us)
+RotationAccumulator::RotationAccumulator(const Clock& clock, hardware::IMU& imu, IMURocketCoordinateConverter& imuRocketConverter, uint32_t maxDt_us)
+    : _clock(clock), _imu(imu), _maxDt_us(maxDt_us), _imuRocketConverter(imuRocketConverter)
 {}
 
 Eigen::Quaternionf RotationAccumulator::getRotationQuaternion() const {
@@ -17,17 +17,17 @@ Eigen::Vector3f RotationAccumulator::getEulerAngles_rad() const {
 }
 
 void RotationAccumulator::setRotationQuaternion(const Eigen::Quaternionf& rotation) {
-    _lastUpdate_us = micros(); // accumulation should start here
+    _lastUpdate_us = _clock.getTimeFlight_us(); // accumulation should start here
     _rotation = rotation.normalized();
 }
 
 void RotationAccumulator::setRotationMatrix(const Eigen::Matrix3f& rotationMatrix) {
-    _lastUpdate_us = micros(); // accumulation should start here
+    _lastUpdate_us = _clock.getTimeFlight_us(); // accumulation should start here
     _rotation = Eigen::Quaternionf(rotationMatrix).normalized();
 }
 
 void RotationAccumulator::setEulerAngles_rad(const Eigen::Vector3f& eulerAngles) {
-    _lastUpdate_us = micros(); // accumulation should start here
+    _lastUpdate_us = _clock.getTimeFlight_us(); // accumulation should start here
     _rotation = Eigen::Quaternionf(
         Eigen::AngleAxisf(eulerAngles[0], Eigen::Vector3f::UnitX()) *
         Eigen::AngleAxisf(eulerAngles[1], Eigen::Vector3f::UnitY()) *
@@ -41,7 +41,7 @@ Eigen::Vector3f RotationAccumulator::getAngularVelocity_rad_s() const {
 
 void RotationAccumulator::startAccumulation() {
     _isAccumulating = true;
-    _lastUpdate_us = micros(); // accumulation should start here
+    _lastUpdate_us = _clock.getTimeFlight_us(); // accumulation should start here
 }
 void RotationAccumulator::stopAccumulation() {
     _isAccumulating = false;
@@ -50,7 +50,7 @@ void RotationAccumulator::stopAccumulation() {
 void RotationAccumulator::update() {
     if (!_isAccumulating) { return; }
 
-    const uint32_t currentTime_us = micros();
+    const uint32_t currentTime_us = _clock.getTimeFlight_us();
 
     auto gyro = _imu.getGyro();
     
@@ -63,11 +63,7 @@ void RotationAccumulator::update() {
     _angularVelocity_rad_s = _imuRocketConverter.rotateIMUVectorToRocket(angularVelocityIMU_rad_s);
 
 
-    if (_lastUpdate_us == 0) { // First update, initialize the last update time
-        _lastUpdate_us = currentTime_us;
-        return;
-    }
-
+    // startAccumulation() anchors the timestamp, including flight time zero.
     const uint32_t measuredDt_us = currentTime_us - _lastUpdate_us;
     _lastUpdate_us = currentTime_us;
 

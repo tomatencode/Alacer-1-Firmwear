@@ -1,4 +1,5 @@
 #pragma once
+#include "timing/Clock.hpp"
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 #include <cstdint>
@@ -14,7 +15,7 @@ namespace hardware {
 class HC12 : public Radio {
 public:
 
-    HC12(int setPin,
+    HC12(const Clock& clock, int setPin,
          int rxPin,
          int txPin
         );
@@ -33,6 +34,7 @@ public:
     void update();
 
 private:
+    const Clock& _clock;
     enum class ATState { IDLE, ENTERING_AT_MODE, AWAITING_RESPONSE, EXITING_AT_MODE, DONE, };
 
     int _setPin;

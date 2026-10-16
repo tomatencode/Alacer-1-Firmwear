@@ -14,13 +14,13 @@
 
 namespace logging {
 
-TelemetryRecorder::TelemetryRecorder(LogManager& logManager, hardware::Battery& battery,
+TelemetryRecorder::TelemetryRecorder(const Clock& clock, LogManager& logManager, hardware::Battery& battery,
                                      hardware::IMU& imu, hardware::Barometer& barometer,
                                      BarometricHeightCalculator& heightCalculator,
                                      VerticalMovementTracker& verticalTracker,
                                      HorizontalMovementTracker& horizontalTracker,
                                      hardware::Gimbal& gimbal, RotationAccumulator& rotationAccumulator)
-    : _logManager(logManager), _battery(battery), _imu(imu), _barometer(barometer),
+    : _clock(clock), _logManager(logManager), _battery(battery), _imu(imu), _barometer(barometer),
       _heightCalculator(heightCalculator),
       _verticalTracker(verticalTracker), _horizontalTracker(horizontalTracker),
       _gimbal(gimbal), _rotationAccumulator(rotationAccumulator) {}
@@ -31,7 +31,7 @@ void TelemetryRecorder::update() {
         return;
     }
 
-    const uint32_t now_ms = millis();
+    const uint32_t now_ms = _clock.getTimeFlight_ms();
     if (_hasSample && now_ms - _lastSample_ms < SAMPLE_INTERVAL_ms) return;
     _lastSample_ms = now_ms;
     _hasSample = true;

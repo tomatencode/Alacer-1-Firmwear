@@ -1,4 +1,5 @@
 #pragma once
+#include "timing/Clock.hpp"
 
 #include <ArduinoEigen.h>
 
@@ -8,7 +9,7 @@
 
 class RotationAccumulator {
 public:
-    RotationAccumulator(hardware::IMU& imu, IMURocketCoordinateConverter& imuRocketConverter, uint32_t maxDt_us);
+    RotationAccumulator(const Clock& clock, hardware::IMU& imu, IMURocketCoordinateConverter& imuRocketConverter, uint32_t maxDt_us);
 
     Eigen::Quaternionf getRotationQuaternion() const;
     Eigen::Matrix3f getRotationMatrix() const;
@@ -26,6 +27,7 @@ public:
     void update();
 
 private:
+    const Clock& _clock;
     hardware::IMU& _imu;
 
     bool _isAccumulating = false;

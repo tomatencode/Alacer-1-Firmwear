@@ -1,4 +1,5 @@
 #pragma once
+#include "timing/Clock.hpp"
 
 #include <cstdint>
 #include <optional>
@@ -10,8 +11,8 @@
 #include "FlightSequenceExecutor.hpp"
 
 #include "../rotationEstimation/RotationAccumulator.hpp"
-#include "../hardwareComponents/parachute/Parachute.hpp"
-#include "../hardwareComponents/motor/MotorIgniter.hpp"
+#include "../hardwareComponents/parachute/IParachute.hpp"
+#include "../hardwareComponents/motor/IMotorIgniter.hpp"
 
 #include "../barometricHeightCalculation/BarometricHeightCalculator.hpp"
 #include "../ascentTracking/VerticalMovementTracker.hpp"
@@ -23,14 +24,15 @@
 class FlightStateManager {
 public:
     FlightStateManager(
+        const Clock& clock,
         logging::LogManager& logManager,
         ControlPD& controlPID,
         RotationAccumulator& rotationAccumulator,
         BarometricHeightCalculator& barometricHeightCalculator,
         VerticalMovementTracker& verticalMovementTracker,
         HorizontalMovementTracker& horizontalMovementTracker,
-        hardware::MotorIgniter& motorIgniter,
-        hardware::Parachute& parachute
+        hardware::IMotorIgniter& motorIgniter,
+        hardware::IParachute& parachute
     );
 
     FlightState getCurrentState() const; // should not be used in logic, only for debugging
@@ -52,6 +54,7 @@ public:
 
     void update();
 private:
+    const Clock& _clock;
     FlightProfile _flightProfile;
 
     void changeState(FlightState newState) {

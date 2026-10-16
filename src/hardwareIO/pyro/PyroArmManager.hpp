@@ -1,25 +1,23 @@
 #pragma once
 
-#include <span>
-#include <optional>
-
+#include "IPyroArmManager.hpp"
 
 namespace hardware {
 
-class PyroArmManager {
+class PyroArmManager : public IPyroArmManager {
 public:
     PyroArmManager(int hardwareArmPin);
 
-    void begin();
+    void begin() override;
 
-    bool isArmed();
+    bool isArmed() override;
 
-    bool isHardwareArmed();
+    bool isHardwareArmed() override;
 
-    void softwareArm();
-    void softwareDisarm();
+    void softwareArm() override;
+    void softwareDisarm() override;
     
-    bool isSoftwareArmed();
+    bool isSoftwareArmed() override;
 private:
     int _hardwareArmPin;
     bool _softwareArm = false;

@@ -1,4 +1,5 @@
 #pragma once
+#include "timing/Clock.hpp"
 
 #include <cstdint>
 
@@ -23,7 +24,7 @@ namespace logging {
 // Discrete actions and driver health reporting remain at their source.
 class TelemetryRecorder {
 public:
-    TelemetryRecorder(LogManager& logManager, hardware::Battery& battery,
+    TelemetryRecorder(const Clock& clock, LogManager& logManager, hardware::Battery& battery,
                       hardware::IMU& imu, hardware::Barometer& barometer,
                       BarometricHeightCalculator& heightCalculator,
                       VerticalMovementTracker& verticalTracker,
@@ -33,6 +34,7 @@ public:
     void update();
 
 private:
+    const Clock& _clock;
 
     void appendIMUEvent();
     void appendBarometerEvent();

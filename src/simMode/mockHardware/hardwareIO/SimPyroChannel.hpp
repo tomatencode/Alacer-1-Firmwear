@@ -6,17 +6,18 @@
 
 namespace simHardware {
 
-// Declarations only; no GPIO access. Timing uses the simulation clock.
+// No GPIO access. Pulse duration is milliseconds in flight time.
 class SimPyroChannel : public hardware::IPyroChannel {
 public:
-    SimPyroChannel(Clock& clock, hardware::IPyroArmManager& pyroArmManager);
+    SimPyroChannel(Clock& clock, hardware::IPyroArmManager& pyroArmManager)
+        : _clock(clock), _pyroArmManager(pyroArmManager) {}
 
     void begin() override {};
     bool canFire() override { return _hasContinuity && _pyroArmManager.isArmed() && !_isFiring; };
     bool fire(uint32_t duration) override {
         if (canFire()) {
             _isFiring = true;
-            _fireTime = _clock.getTimeFlight_us();
+            _fireTime = _clock.getTimeFlight_ms();
             _fireDuration = duration;
             return true;
         }
@@ -25,7 +26,8 @@ public:
     void stopFiring() override { _isFiring = false; };
     bool hasContinuity() override { return _hasContinuity; };
     void update() override {
-        if (_isFiring && (_clock.getTimeFlight_us() - _fireTime >= _fireDuration)) {
+        if (_isFiring && (!_pyroArmManager.isArmed() ||
+            _clock.getTimeFlight_ms() - _fireTime >= _fireDuration)) {
             _isFiring = false;
         }
     };

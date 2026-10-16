@@ -1,19 +1,20 @@
 #pragma once
 
-#include "hardwareComponents/motor/IMotorIgniter.hpp"
+#include "hardwareComponents/motor/MotorIgniter.hpp"
 
 #include "simMode/SimRocket.hpp"
 
 namespace simHardware {
 
-// Declarations only; simulation behavior is implemented separately.
-class SimMotorIgniter : public hardware::IMotorIgniter {
+class SimMotorIgniter : public hardware::PyroMotorIgniter {
 public:
-    explicit SimMotorIgniter(SimRocket& simRocket);
+    explicit SimMotorIgniter(SimRocket& simRocket) : _simRocket(simRocket) {}
 
-    bool canIgnite() override { return true; };
-    bool ignite() override { _simRocket.igniteMotor();  return true; };
-    bool stopIgniting() override { return true; };
+    bool ignite() override {
+        if (!hardware::PyroMotorIgniter::ignite()) return false;
+        _simRocket.igniteMotor();
+        return true;
+    }
 
 private:
     SimRocket& _simRocket;

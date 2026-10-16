@@ -14,7 +14,7 @@ namespace hardware {
 class Battery;
 class IMU;
 class Barometer;
-class Gimbal;
+class IGimbal;
 }
 
 namespace logging {
@@ -29,7 +29,7 @@ public:
                       BarometricHeightCalculator& heightCalculator,
                       VerticalMovementTracker& verticalTracker,
                       HorizontalMovementTracker& horizontalTracker,
-                      hardware::Gimbal& gimbal, RotationAccumulator& rotationAccumulator);
+                      hardware::IGimbal& gimbal, RotationAccumulator& rotationAccumulator);
 
     void update();
 
@@ -57,7 +57,7 @@ private:
     BarometricHeightCalculator& _heightCalculator;
     VerticalMovementTracker& _verticalTracker;
     HorizontalMovementTracker& _horizontalTracker;
-    hardware::Gimbal& _gimbal;
+    hardware::IGimbal& _gimbal;
     RotationAccumulator& _rotationAccumulator;
 };
 

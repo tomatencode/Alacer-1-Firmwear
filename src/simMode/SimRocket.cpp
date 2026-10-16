@@ -17,6 +17,16 @@ void SimRocket::deployParachute() {
     parachuteDeployed = true;
 }
 
+void SimRocket::igniteMotor() {
+    if (motorIgnited) return;
+    motorIgnited = true;
+    motorIgnitionTime_ms = clock.getTimeFlight_ms();
+}
+
+void SimRocket::setGimbalPos(const hardware::IGimbal::GimbalPos& pos) {
+    gimbalPos = pos;
+}
+
 void SimRocket::applyAerodynamicDrag(float coefficient, float area_m2, float centerOfPressure_m) {
     const Eigen::Vector3f offsetBody(0.0f, 0.0f, centerOfPressure_m);
     const Eigen::Vector3f offsetWorld = rigidBody.getOrientation() * offsetBody;
@@ -50,13 +60,7 @@ void SimRocket::update() {
     lastUpdateTime = currentTime_us;
 
     // Apply gravity force to the rocket's center of mass
-    if (getPosition().z() > 0.0f) {
-        rigidBody.applyForceWorld(Eigen::Vector3f(0.0f, 0.0f, -mass_kg * gravity_m_s2));
-    } else {
-        rigidBody.setVelocityWorld(Eigen::Vector3f::Zero());
-        rigidBody.setAngularVelocityWorld(Eigen::Vector3f::Zero());
-        rigidBody.setPosition(Eigen::Vector3f(getPosition().x(), getPosition().y(), 0.0f));
-    }
+    rigidBody.applyForceWorld(Eigen::Vector3f(0.0f, 0.0f, -mass_kg * gravity_m_s2));
 
     applyAerodynamicDrag(dragCoefficient, crossSectionalArea_m2, centerOfPressure_m);
     if (parachuteDeployed) {
@@ -65,7 +69,8 @@ void SimRocket::update() {
     }
 
     if (motorIgnited) {
-        float motorThrust = motorThrust_N(static_cast<float>(currentTime_us) * 1e-6f);
+        const float motorThrust = motorThrust_N(
+            static_cast<float>(clock.getTimeFlight_ms() - motorIgnitionTime_ms) * 1e-3f);
 
         constexpr float degToRad = std::numbers::pi_v<float> / 180.0f;
         const float pitch = gimbalPos.pitch_deg * degToRad;
@@ -86,4 +91,12 @@ void SimRocket::update() {
 
     // Step the rigid body simulation
     rigidBody.step();
+
+    // The pad supports a stationary rocket; stop penetration after touchdown.
+    if (getPosition().z() < 0.0f) {
+        const auto position = getPosition();
+        rigidBody.setPosition({position.x(), position.y(), 0.0f});
+        rigidBody.setVelocityWorld(Eigen::Vector3f::Zero());
+        rigidBody.setAngularVelocityWorld(Eigen::Vector3f::Zero());
+    }
 }

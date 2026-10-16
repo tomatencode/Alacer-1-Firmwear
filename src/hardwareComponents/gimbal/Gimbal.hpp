@@ -1,4 +1,5 @@
 #pragma once
+#include "IGimbal.hpp"
 
 #include "../../hardwareIO/servo/Servo.hpp"
 
@@ -6,13 +7,10 @@ class ControlPD; // forward declaration
 
 namespace hardware {
 
-class Gimbal {
+class Gimbal : public IGimbal {
 public:
 
-    struct GimbalPos {
-        float pitch_deg;
-        float yaw_deg;
-    };
+    using GimbalPos = IGimbal::GimbalPos;
 
     Gimbal(
         hardware::Servo& pitchServo, hardware::Servo& yawServo,
@@ -26,13 +24,13 @@ public:
         float pitchServoTrim_deg, float yawServoTrim_deg  // offsets for servo to gimbal angle conversion
     );
 
-    void begin();
+    void begin() override;
 
-    void setTarget(const GimbalPos& target);
+    void setTarget(const GimbalPos& target) override;
 
-    GimbalPos getTarget() const;
+    GimbalPos getTarget() const override;
 
-    GimbalPos getCurrentPos() const; // approximation takes servo speeds into account
+    GimbalPos getCurrentPos() const override; // approximation takes servo speeds into account
     
 private:
 

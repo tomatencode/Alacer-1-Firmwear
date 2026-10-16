@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <ArduinoEigen.h>
 
-#include "hardwareComponents/gimbal/Gimbal.hpp"
+#include "hardwareComponents/gimbal/IGimbal.hpp"
 #include "simMode/physics/RigidBody.hpp"
 #include "timing/Clock.hpp"
 
@@ -14,9 +14,9 @@ public:
     void igniteMotor();
     void deployParachute();
 
-    void setGimbalPos(const hardware::Gimbal::GimbalPos& gimbalPos);
+    void setGimbalPos(const hardware::IGimbal::GimbalPos& gimbalPos);
 
-    hardware::Gimbal::GimbalPos getGimbalPos() { return gimbalPos; }
+    hardware::IGimbal::GimbalPos getGimbalPos() const { return gimbalPos; }
 
     Eigen::Vector3f getPosition() { return rigidBody.getPosition(); }
     Eigen::Vector3f getVelocityWorld() { return rigidBody.getVelocityWorld(); }
@@ -38,11 +38,8 @@ private:
     static constexpr float mass_kg = 0.17;
     static inline const Eigen::Matrix3f inertia = Eigen::Matrix3f::Identity();
     static constexpr float gimbalLever_m = 0.1f;
-    float motorThrust_N(float time_s) { // upgrade later
-        if (time_s > 5.0f) {
-            return 3.0f;
-        }
-        return 0.0f;
+    float motorThrust_N(float time_s) const {
+        return time_s < 5.0f ? 3.0f : 0.0f;
     }
 
     // position of the center of pressure along the rocket's body axis
@@ -68,7 +65,7 @@ private:
 
     bool parachuteDeployed;
 
-    hardware::Gimbal::GimbalPos gimbalPos;
+    hardware::IGimbal::GimbalPos gimbalPos;
 
     uint32_t lastUpdateTime;
     bool lastUpdateTimeInitialized;

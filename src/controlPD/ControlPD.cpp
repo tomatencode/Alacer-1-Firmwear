@@ -4,7 +4,7 @@
 #include <cmath>
 
 
-ControlPD::ControlPD(const Clock& clock, RotationAccumulator& rotationAccumulator, hardware::Gimbal& gimbal)
+ControlPD::ControlPD(const Clock& clock, RotationAccumulator& rotationAccumulator, hardware::IGimbal& gimbal)
     : _clock(clock), _rotationAccumulator(rotationAccumulator),
       _gimbal(gimbal),
       _targetAngle(std::nullopt),
@@ -120,7 +120,7 @@ void ControlPD::update() {
     float pitchOutput_rad = _kp.value() * pitchError_rad
                           - _kd.value() * pitchRate_rad_s;
 
-    hardware::Gimbal::GimbalPos targetPos{
+    hardware::IGimbal::GimbalPos targetPos{
         // Preserve the installed hardware mapping: rocket yaw uses the pitch
         // gimbal channel and rocket pitch uses the yaw gimbal channel.
         .pitch_deg = yawOutput_rad * 180.0f / std::numbers::pi_v<float>,

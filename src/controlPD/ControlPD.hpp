@@ -7,7 +7,7 @@
 #include <numbers>
 
 #include "../rotationEstimation/RotationAccumulator.hpp"
-#include "../hardwareComponents/gimbal/Gimbal.hpp"
+#include "../hardwareComponents/gimbal/IGimbal.hpp"
 
 class ControlPD {
 public:
@@ -16,7 +16,7 @@ public:
         float kd;
     };
 
-    ControlPD(const Clock& clock, RotationAccumulator& rotationAccumulator, hardware::Gimbal& gimbal);
+    ControlPD(const Clock& clock, RotationAccumulator& rotationAccumulator, hardware::IGimbal& gimbal);
 
     void setPDParameters(float kp, float kd);
     std::optional<PDParameters> getPDParameters() const; // std::nullopt until both are set
@@ -40,7 +40,7 @@ private:
     static constexpr uint32_t MAX_DT_us = 10000; 
 
     RotationAccumulator& _rotationAccumulator;
-    hardware::Gimbal& _gimbal;
+    hardware::IGimbal& _gimbal;
 
     std::optional<Eigen::Quaternionf> _targetAngle;
 

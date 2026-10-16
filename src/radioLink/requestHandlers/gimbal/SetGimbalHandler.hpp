@@ -3,20 +3,20 @@
 #include <span>
 
 #include "../../MessageScheduler.hpp"
-#include "../../../hardwareComponents/gimbal/Gimbal.hpp"
+#include "../../../hardwareComponents/gimbal/IGimbal.hpp"
 #include "../../../helpers/codec/FixedPointCodec.hpp"
 
 namespace radioLink {
 
 class SetGimbalHandler {
 public:
-    explicit SetGimbalHandler(hardware::Gimbal& gimbal) : _gimbal(gimbal) {}
+    explicit SetGimbalHandler(hardware::IGimbal& gimbal) : _gimbal(gimbal) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t>) {
         if (payload.size() < 4) {
             return {MessageScheduler::HandlerResultStatus::FAILURE, 0};
         }
-        hardware::Gimbal::GimbalPos target;
+        hardware::IGimbal::GimbalPos target;
         target.pitch_deg = fixedPoint::decode16(payload, 0);
         target.yaw_deg = fixedPoint::decode16(payload, 2);
         _gimbal.setTarget(target);
@@ -28,7 +28,7 @@ public:
     }
 
 private:
-    hardware::Gimbal& _gimbal;
+    hardware::IGimbal& _gimbal;
 };
 
 } // namespace radioLink

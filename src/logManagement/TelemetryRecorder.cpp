@@ -7,7 +7,7 @@
 #include "../hardwareIO/battery/Battery.hpp"
 #include "../hardwareIO/imu/IMU.hpp"
 #include "../hardwareIO/barometer/Barometer.hpp"
-#include "../hardwareComponents/gimbal/Gimbal.hpp"
+#include "../hardwareComponents/gimbal/IGimbal.hpp"
 #include "../barometricHeightCalculation/BarometricHeightCalculator.hpp"
 #include "../ascentTracking/VerticalMovementTracker.hpp"
 #include "../ascentTracking/HorizontalMovementTracker.hpp"
@@ -19,7 +19,7 @@ TelemetryRecorder::TelemetryRecorder(const Clock& clock, LogManager& logManager,
                                      BarometricHeightCalculator& heightCalculator,
                                      VerticalMovementTracker& verticalTracker,
                                      HorizontalMovementTracker& horizontalTracker,
-                                     hardware::Gimbal& gimbal, RotationAccumulator& rotationAccumulator)
+                                     hardware::IGimbal& gimbal, RotationAccumulator& rotationAccumulator)
     : _clock(clock), _logManager(logManager), _battery(battery), _imu(imu), _barometer(barometer),
       _heightCalculator(heightCalculator),
       _verticalTracker(verticalTracker), _horizontalTracker(horizontalTracker),

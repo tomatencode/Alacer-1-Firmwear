@@ -21,6 +21,7 @@ static void testDrag(const Eigen::Vector3f& velocity, bool parachute,
                      const Eigen::Quaternionf& orientation = Eigen::Quaternionf::Identity()) {
     SimClock clock;
     SimRocket rocket(clock);
+    rocket.rigidBody.setPosition(Eigen::Vector3f(0.0f, 0.0f, 100.0f));
     rocket.update();
     rocket.rigidBody.setOrientation(orientation);
     rocket.rigidBody.setVelocityWorld(velocity);
@@ -57,6 +58,7 @@ static void testDrag(const Eigen::Vector3f& velocity, bool parachute,
 static void testRotationalDamping() {
     SimClock clock;
     SimRocket rocket(clock);
+    rocket.rigidBody.setPosition(Eigen::Vector3f(0.0f, 0.0f, 100.0f));
     rocket.update();
     rocket.rigidBody.setAngularVelocityWorld(Eigen::Vector3f(2.0f, 0.0f, 0.0f));
     // Use a long enough interval for this tiny damping term to change a float.

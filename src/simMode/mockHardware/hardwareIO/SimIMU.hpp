@@ -10,7 +10,8 @@ namespace simHardware {
 
 class SimIMU : public hardware::IMU {
 public:
-    explicit SimIMU(SimRocket &simRocket, IMURocketCoordinateConverter& imuRocketCoordinateConverter);
+    SimIMU(SimRocket& simRocket, IMURocketCoordinateConverter& converter)
+        : _imuRocketCoordinateConverter(converter), _simRocket(simRocket) {}
 
     void begin() override {};
     void update() override {};

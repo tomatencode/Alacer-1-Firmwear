@@ -6,19 +6,19 @@ RigidBody::RigidBody(
         const Eigen::Matrix3f& inertia,
         const Eigen::Vector3f& position,
         const Eigen::Vector3f& velocity
-    ) : clock(clock),
-      mass(mass),
-      inertia(inertia),
-      position(position),
+    ) : position(position),
       velocity_world(velocity),
       acceleration_world(Eigen::Vector3f::Zero()),
       orientation(Eigen::Quaternionf::Identity()),
       angularVelocity_world(Eigen::Vector3f::Zero()),
       angularAcceleration_world(Eigen::Vector3f::Zero()),
+      mass(mass),
+      inertia(inertia),
       accumulatedForce_world(Eigen::Vector3f::Zero()),
       accumulatedTorque_world(Eigen::Vector3f::Zero()),
       lastUpdateTime(0),
-      lastUpdateTimeInitialized(false) {
+      lastUpdateTimeInitialized(false),
+      clock(clock) {
 }
 
 void RigidBody::step() {
@@ -54,7 +54,11 @@ void RigidBody::step() {
 
     angularAcceleration_world = orientation * alphaBody;
     angularVelocity_world += angularAcceleration_world * deltaTime_s;
-    orientation = Eigen::Quaternionf(Eigen::AngleAxisf(angularVelocity_world.norm() * deltaTime_s, angularVelocity_world.normalized())) * orientation;
+    const float angularSpeed = angularVelocity_world.norm();
+    if (angularSpeed > 0.0f) {
+        orientation = Eigen::Quaternionf(Eigen::AngleAxisf(
+            angularSpeed * deltaTime_s, angularVelocity_world / angularSpeed)) * orientation;
+    }
     orientation.normalize();
 
     // Clear accumulated forces and torques

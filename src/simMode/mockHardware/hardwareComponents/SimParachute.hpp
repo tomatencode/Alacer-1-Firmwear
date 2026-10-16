@@ -1,25 +1,22 @@
 #pragma once
 
-#include "hardwareComponents/parachute/IParachute.hpp"
+#include "hardwareComponents/parachute/Parachute.hpp"
 #include "simMode/SimRocket.hpp"
 
 namespace simHardware {
 
-// Declarations only; simulation behavior is implemented separately.
-class SimParachute : public hardware::IParachute {
+class SimParachute : public hardware::Parachute {
 public:
-    explicit SimParachute(SimRocket& simRocket);
+    explicit SimParachute(SimRocket& simRocket) : _simRocket(simRocket) {}
 
-    bool canDeploy() override { return !_didDeploy; };
-    bool deploy() override { _simRocket.deployParachute(); _didDeploy = true; return true; };
-    bool stopDeploying() override { return true; };
-
-    void reset() override { _didDeploy = false; };
-    bool isDeployed() override { return _didDeploy; };
+    bool deploy() override {
+        if (!hardware::Parachute::deploy()) return false;
+        _simRocket.deployParachute();
+        return true;
+    }
 
 private:
     SimRocket& _simRocket;
-    bool _didDeploy = false;
 };
 
 } // namespace simHardware

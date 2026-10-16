@@ -50,6 +50,7 @@ private:
     static constexpr size_t VELOCITY_WINDOW_CAPACITY = 128;
 
     static constexpr uint32_t VELOCITY_MIN_WINDOW_us = VELOCITY_WINDOW_us / 2;
+    static constexpr uint32_t MIN_SAMPLE_INTERVAL_us = VELOCITY_WINDOW_us / VELOCITY_WINDOW_CAPACITY;
 
     // Below this the nose axis is too close to horizontal for the
     // deltaHeight / noseUp model to say anything useful.

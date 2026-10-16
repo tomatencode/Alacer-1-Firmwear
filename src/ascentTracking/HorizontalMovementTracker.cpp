@@ -73,6 +73,13 @@ void HorizontalMovementTracker::update() {
 
     _totalMovement += horizontalDisplacement;
 
+    // Same as the vertical tracker: a loop faster than the window can hold would never
+    // span the minimum window, so only keep samples spaced across the whole window.
+    if (_sampleCount > 0) {
+        const size_t newestIndex = (_oldestSampleIndex + _sampleCount - 1) % VELOCITY_WINDOW_CAPACITY;
+        if (currentTime_us - _movementSamples[newestIndex].time_us < MIN_SAMPLE_INTERVAL_us) { return; }
+    }
+
     pushMovementSample(_totalMovement, currentTime_us);
     updateVelocityEstimate();
 }

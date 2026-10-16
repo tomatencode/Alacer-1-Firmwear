@@ -118,6 +118,6 @@ bool FlightSequenceExecutor::hasTouchedDown(float initialHeight_m) const {
     static constexpr float TOUCHDOWN_VELOCITY_m_s = 1.0f;
 
     return _verticalMovementTracker.hasVelocityEstimate() &&
-           _verticalMovementTracker.getVelocity_m_s() <= TOUCHDOWN_VELOCITY_m_s &&
+           std::abs(_verticalMovementTracker.getVelocity_m_s()) <= TOUCHDOWN_VELOCITY_m_s &&
            _verticalMovementTracker.getHeight_m() <= initialHeight_m + TOUCHDOWN_HEIGHT_TOLERANCE_m;
 }

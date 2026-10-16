@@ -36,6 +36,7 @@ private:
     static constexpr size_t VELOCITY_WINDOW_CAPACITY = 128;
 
     static constexpr uint32_t VELOCITY_MIN_WINDOW_us = VELOCITY_WINDOW_us / 2;
+    static constexpr uint32_t MIN_SAMPLE_INTERVAL_us = VELOCITY_WINDOW_us / VELOCITY_WINDOW_CAPACITY;
 
     void pushHeightSample(float height_m, uint32_t time_us);
     void updateEstimates();

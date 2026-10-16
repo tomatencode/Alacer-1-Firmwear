@@ -12,10 +12,20 @@ void VerticalMovementTracker::update() {
     // The main loop runs far more often than the barometer produces fresh readings, a
     // height that did not change carries no new information about the movement.
     if (_hasSampled && height_m == _lastSampledHeight_m) { return; }
+
+    // A loop faster than the window can hold (e.g. simulation, where every loop sees a new
+    // height) would fill the buffer with a span shorter than the minimum window, so the
+    // velocity would never be estimated. Space the samples out to cover the whole window.
+    const uint32_t time_us = _clock.getTimeFlight_us();
+    if (_sampleCount > 0) {
+        const size_t newestIndex = (_oldestSampleIndex + _sampleCount - 1) % VELOCITY_WINDOW_CAPACITY;
+        if (time_us - _heightSamples[newestIndex].time_us < MIN_SAMPLE_INTERVAL_us) { return; }
+    }
+
     _hasSampled = true;
     _lastSampledHeight_m = height_m;
 
-    pushHeightSample(height_m, _clock.getTimeFlight_us());
+    pushHeightSample(height_m, time_us);
     updateEstimates();
 }
 

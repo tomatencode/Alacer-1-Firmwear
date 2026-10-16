@@ -1,5 +1,5 @@
 #pragma once
-#include <cmath>
+#include <numbers>
 
 #include "simMode/SimRocket.hpp"
 #include "hardwareIO/barometer/Barometer.hpp"
@@ -18,7 +18,8 @@ public:
             return _lastValidPressure_Pa;
         }
 
-        const float pressure_Pa = seaLevelPressure_Pa * std::exp(-altitude / scaleHeight_m);
+        const float noise_Pa = 0.4 * std::sin(static_cast<float>(std::rand()) / RAND_MAX * 2.0f * std::numbers::pi_v<float>) * 10.0f; // Add some noise if desired
+        const float pressure_Pa = seaLevelPressure_Pa * std::exp(-altitude / scaleHeight_m) + noise_Pa;
         // Preserve the last good reading if the simulation or exponential is invalid.
         if (std::isfinite(pressure_Pa) && pressure_Pa > 0.0f) {
             _lastValidPressure_Pa = pressure_Pa;

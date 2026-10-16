@@ -35,7 +35,7 @@ bool FlightSequenceExecutor::configureForFlight(const FlightProfile& profile) {
     _horizontalMovementTracker.reset();
 
 
-    _logManager.startLog(LogProtocol::LogMetadata{_clock.getTimeFlight_ms(), profile.name}, profile.name);
+    _logManager.startLog(profile.name);
 
     _logManager.appendEvent(LogProtocol::FlightConfigurationEvent{
         .name = profile.name,

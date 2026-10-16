@@ -35,16 +35,6 @@ void encodeEventPrefix(LogProtocol::EventType type, uint16_t timestampDeltaUs,
 
 } // namespace
 
-size_t LogProtocol::encodeHeader(const LogMetadata& metadata, std::span<uint8_t> buffer) {
-	requireBufferSize(buffer, headerSize);
-	std::fill_n(buffer.begin(), headerSize, 0);
-
-	littleEndian::encodeU32(metadata.timestamp_unix, buffer, 0);
-	const auto nameSize = stringCodec::encode(metadata.logName, buffer, 4);
-	assert(nameSize.has_value());
-	return headerSize;
-}
-
 size_t LogProtocol::encodeTimeSync(uint32_t time_since_start_ms, std::span<uint8_t> buffer) {
 	requireBufferSize(buffer, kTimeSyncSize);
 	buffer[0] = static_cast<uint8_t>(EventType::TimeSync);

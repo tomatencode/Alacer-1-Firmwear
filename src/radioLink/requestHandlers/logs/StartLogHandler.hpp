@@ -18,22 +18,16 @@ namespace radioLink {
 // Response: SUCCESS/FAILURE with an empty payload.
 class StartLogHandler {
 public:
-    static constexpr size_t METADATA_SIZE = 4;
-
     explicit StartLogHandler(logging::LogManager& logManager) : _logManager(logManager) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t>) {
         logging::StorageManager::Filename filename;
-        const auto filenameSize = stringCodec::decode(payload, METADATA_SIZE, filename);
-        if (!filenameSize || filename.empty() || payload.size() != METADATA_SIZE + *filenameSize) {
+        const auto filenameSize = stringCodec::decode(payload, 0, filename);
+        if (!filenameSize || filename.empty() || payload.size() != *filenameSize) {
             return {MessageScheduler::HandlerResultStatus::FAILURE, 0};
         }
 
-        LogProtocol::LogMetadata metadata;
-        metadata.timestamp_unix = littleEndian::decodeU32(payload, 0);
-        metadata.logName = filename;
-
-        const bool started = _logManager.startLog(metadata, filename);
+        const bool started = _logManager.startLog(filename);
         return {started ? MessageScheduler::HandlerResultStatus::SUCCESS
                         : MessageScheduler::HandlerResultStatus::FAILURE, 0};
     }

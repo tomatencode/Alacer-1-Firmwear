@@ -7,21 +7,12 @@ LogManager::LogManager(const Clock& clock, StorageManager &storageManager)
     : _clock(clock), _storageManager(storageManager) {
 }
 
-bool LogManager::startLog(const LogProtocol::LogMetadata &metadata, StorageManager::Filename filename) {
+bool LogManager::startLog(StorageManager::Filename filename) {
     if (_storageManager.isFileOpen()) {
         return false; // finish the previous log first; don't orphan it
     }
     bool fileCreated = _storageManager.startFile(filename);
     if (!fileCreated) {
-        return false;
-    }
-
-    std::array<uint8_t, LogProtocol::headerSize> buffer;
-    size_t encodedSize = LogProtocol::encodeHeader(metadata, buffer);
-    StorageManager::WriteResult writeSuccess = _storageManager.write({buffer.data(), encodedSize});
-
-    if (writeSuccess != StorageManager::WriteResult::Ok) {
-        _storageManager.deleteFile(filename);
         return false;
     }
 

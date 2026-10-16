@@ -18,7 +18,7 @@ class LogManager {
 public:
     LogManager(const Clock& clock, StorageManager &storageManager);
 
-    bool startLog(const LogProtocol::LogMetadata &metadata, StorageManager::Filename filename);
+    bool startLog(StorageManager::Filename filename);
     bool finishLog();
 
     bool isLogging() const { return _storageManager.isFileOpen(); }

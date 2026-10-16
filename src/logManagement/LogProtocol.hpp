@@ -36,11 +36,6 @@ enum class EventType : uint8_t {
     FlightConfiguration = 0x0C,
 };
 
-struct LogMetadata {
-    uint32_t timestamp_unix;
-    etl::string<32> logName;
-};
-
 struct TimeSyncEvent {
     uint32_t absolute_timestamp_ms;
 };
@@ -51,7 +46,7 @@ struct DroppedEvents {
 
 struct FlightConfigurationEvent {
     etl::string<32> name;
-    
+
     float burnPhaseDuration_ms;
 
     float pidKp;
@@ -107,8 +102,6 @@ struct VerticalMovementEvent {
 
 struct UpdateCycleDoneEvent {
 };
-
-size_t encodeHeader(const LogMetadata& metadata, std::span<uint8_t> buffer);
 
 // TimeSync: event type followed by uint32 milliseconds since log start.
 size_t encodeTimeSync(uint32_t time_since_start_ms, std::span<uint8_t> buffer);

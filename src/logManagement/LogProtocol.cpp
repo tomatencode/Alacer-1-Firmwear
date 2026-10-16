@@ -65,10 +65,12 @@ size_t LogProtocol::encodeDroppedEvents(uint32_t count, uint32_t time_since_star
 size_t LogProtocol::encodeEvent(const FlightConfigurationEvent& event, uint16_t timestamp_d_us, std::span<uint8_t> buffer) {
 	requireBufferSize(buffer, kFlightConfigurationEventSize);
 	encodeEventPrefix(EventType::FlightConfiguration, timestamp_d_us, buffer);
-	stringCodec::encode(event.name, buffer, 3);
-	fixedPoint::encode32(event.pidKp, buffer, 35);
-	fixedPoint::encode32(event.pidKd, buffer, 39);
-	quaternionCodec::encode(event.initialRotation, buffer, 43);
+	const auto nameSize = stringCodec::encode(event.name, buffer, 3);
+	const size_t nameOffset = nameSize.value_or(0);
+	fixedPoint::encode32(event.burnPhaseDuration_ms, buffer, 3 + nameOffset);
+	fixedPoint::encode32(event.pidKp, buffer, 7 + nameOffset);
+	fixedPoint::encode32(event.pidKd, buffer, 11 + nameOffset);
+	quaternionCodec::encode(event.initialRotation, buffer, 15 + nameOffset);
 	return kFlightConfigurationEventSize;
 }
 

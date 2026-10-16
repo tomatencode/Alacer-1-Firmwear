@@ -57,7 +57,6 @@ public:
 private:
 
     static constexpr uint32_t COUNTDOWN_DURATION_MS = 5000; // 5 seconds countdown duration
-    static constexpr uint32_t MOTOR_BURN_DURATION_MS = 6000; // 6 seconds motor burn duration
 
 
     const Clock& _clock;

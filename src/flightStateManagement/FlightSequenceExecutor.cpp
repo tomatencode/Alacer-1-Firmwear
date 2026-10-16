@@ -39,6 +39,7 @@ bool FlightSequenceExecutor::configureForFlight(const FlightProfile& profile) {
 
     _logManager.appendEvent(LogProtocol::FlightConfigurationEvent{
         .name = profile.name,
+        .burnPhaseDuration_ms = profile.burnPhaseDuration_ms,
         .pidKp = profile.pidKp,
         .pidKd = profile.pidKd,
         .initialRotation = profile.initialRotation,

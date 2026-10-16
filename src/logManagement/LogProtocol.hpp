@@ -51,6 +51,8 @@ struct DroppedEvents {
 
 struct FlightConfigurationEvent {
     etl::string<32> name;
+    
+    float burnPhaseDuration_ms;
 
     float pidKp;
     float pidKd;

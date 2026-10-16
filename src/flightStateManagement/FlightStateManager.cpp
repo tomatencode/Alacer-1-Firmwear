@@ -131,7 +131,7 @@ void FlightStateManager::update() {
         }
         break;
     case FlightState::BURNING:
-        if (_clock.getTimeFlight_ms() - _motorStartBurnTime >= MOTOR_BURN_DURATION_MS) {
+        if (_clock.getTimeFlight_ms() - _motorStartBurnTime >= _flightProfile.burnPhaseDuration_ms) {
             _executor.finishBurn();
             changeState(FlightState::COASTING);
         }

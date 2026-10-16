@@ -26,7 +26,7 @@ namespace radioLink {
 //   was refused.
 class StartCountdownHandler {
 public:
-    static constexpr size_t PROFILE_SIZE = quaternionCodec::ENCODED_SIZE + 2 * sizeof(int32_t) + 2;
+    static constexpr size_t PROFILE_SIZE = quaternionCodec::ENCODED_SIZE + 3 * sizeof(int32_t) + 2;
 
     // Application-owned binding keeps hardware configuration out of flight logic.
     // Simulation wiring can validate the indices without binding real channels.
@@ -46,9 +46,10 @@ public:
         }
 
         const size_t offset = *filenameSize;
-        flightProfile.initialRotation = quaternionCodec::decode(payload, offset);
-        flightProfile.pidKp = fixedPoint::decode32(payload, offset + quaternionCodec::ENCODED_SIZE);
-        flightProfile.pidKd = fixedPoint::decode32(payload, offset + quaternionCodec::ENCODED_SIZE + sizeof(int32_t));
+        flightProfile.burnPhaseDuration_ms = fixedPoint::decode32(payload, offset);
+        flightProfile.initialRotation = quaternionCodec::decode(payload, offset + 4);
+        flightProfile.pidKp = fixedPoint::decode32(payload, offset + 20);
+        flightProfile.pidKd = fixedPoint::decode32(payload, offset + 24);
 
         if (!_configureChannels(payload[offset + PROFILE_SIZE - 2], payload[offset + PROFILE_SIZE - 1])) {
             return {MessageScheduler::HandlerResultStatus::FAILURE, 0};

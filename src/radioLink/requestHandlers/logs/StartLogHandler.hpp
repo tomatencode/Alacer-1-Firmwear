@@ -12,8 +12,7 @@
 namespace radioLink {
 
 // START_LOG payload:
-//   [0..3] UNIX timestamp, little-endian uint32
-//   [4..] length-prefixed filename (1..32 bytes), no trailing bytes.
+//   [0..] length-prefixed filename (1..32 bytes), no trailing bytes.
 // The filename is also the log name; the configuration is logged as a FlightConfigurationEvent.
 // Response: SUCCESS/FAILURE with an empty payload.
 class StartLogHandler {

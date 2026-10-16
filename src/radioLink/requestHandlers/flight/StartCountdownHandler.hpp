@@ -13,12 +13,13 @@ namespace radioLink {
 
 // START_COUNTDOWN request:
 //   [0..N]   length-prefixed log filename (1..32 bytes including the length byte)
-//   [N..N+15] initial rotation, quaternion (x, y, z, w), each an int32 fixed-point
+//   [N..N+3] burn phase duration in milliseconds, little-endian uint32
+//   [N+4..N+19] initial rotation, quaternion (x, y, z, w), each an int32 fixed-point
 //            value scaled by 100 (fixedPoint::kScale)
-//   [N+16..N+19] PID kp, int32 fixed-point scaled by 100
-//   [N+20..N+23] PID kd, int32 fixed-point scaled by 100
-//   [N+24]  motor igniter pyro channel index (uint8)
-//   [N+25]  parachute pyro channel index (uint8)
+//   [N+20..N+23] PID kp, int32 fixed-point scaled by 100
+//   [N+24..N+27] PID kd, int32 fixed-point scaled by 100
+//   [N+28]  motor igniter pyro channel index (uint8)
+//   [N+29]  parachute pyro channel index (uint8)
 // Response:
 //   SUCCESS with empty payload if FlightStateManager::startCountdown() accepted
 //   the profile (state was IDLE and configuration/preflight checks passed).
@@ -26,7 +27,7 @@ namespace radioLink {
 //   was refused.
 class StartCountdownHandler {
 public:
-    static constexpr size_t PROFILE_SIZE = quaternionCodec::ENCODED_SIZE + 3 * sizeof(int32_t) + 2;
+    static constexpr size_t PROFILE_SIZE = 30;
 
     // Application-owned binding keeps hardware configuration out of flight logic.
     // Simulation wiring can validate the indices without binding real channels.
@@ -51,7 +52,7 @@ public:
         flightProfile.pidKp = fixedPoint::decode32(payload, offset + 20);
         flightProfile.pidKd = fixedPoint::decode32(payload, offset + 24);
 
-        if (!_configureChannels(payload[offset + PROFILE_SIZE - 2], payload[offset + PROFILE_SIZE - 1])) {
+        if (!_configureChannels(payload[offset + 28], payload[offset + 29])) {
             return {MessageScheduler::HandlerResultStatus::FAILURE, 0};
         }
 

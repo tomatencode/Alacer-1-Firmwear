@@ -83,6 +83,7 @@ bool FlightSequenceExecutor::deployForDescent() {
 
 void FlightSequenceExecutor::finishFlight() {
     _controlPID.stopControlling();
+    _rotationAccumulator.stopAccumulation();
     _verticalMovementTracker.stopTracking();
     _horizontalMovementTracker.stopTracking();
     _logManager.finishLog();

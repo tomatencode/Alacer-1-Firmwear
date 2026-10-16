@@ -13,6 +13,7 @@
 #include "../rotationEstimation/RotationAccumulator.hpp"
 #include "../hardwareComponents/parachute/IParachute.hpp"
 #include "../hardwareComponents/motor/IMotorIgniter.hpp"
+#include "../hardwareIO/led/BlinkLed.hpp"
 
 #include "../barometricHeightCalculation/BarometricHeightCalculator.hpp"
 #include "../ascentTracking/VerticalMovementTracker.hpp"

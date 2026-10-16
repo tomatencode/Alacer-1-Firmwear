@@ -18,9 +18,9 @@ void SimRocket::deployParachute() {
 }
 
 void SimRocket::igniteMotor() {
-    if (motorIgnited) return;
     motorIgnited = true;
     motorIgnitionTime_ms = clock.getTimeFlight_ms();
+    parachuteDeployed = false;
 }
 
 void SimRocket::setGimbalPos(const hardware::IGimbal::GimbalPos& pos) {

@@ -1,6 +1,8 @@
 #include "FlightSequenceExecutor.hpp"
+#include "etl/string.h"
 
 FlightSequenceExecutor::FlightSequenceExecutor(
+    const Clock& clock,
     logging::LogManager& logManager,
     ControlPD& controlPID,
     RotationAccumulator& rotationAccumulator,
@@ -9,7 +11,8 @@ FlightSequenceExecutor::FlightSequenceExecutor(
     HorizontalMovementTracker& horizontalMovementTracker,
     hardware::IMotorIgniter& motorIgniter,
     hardware::IParachute& parachute)
-    : _logManager(logManager),
+    : _clock(clock),
+      _logManager(logManager),
       _controlPID(controlPID),
       _rotationAccumulator(rotationAccumulator),
       _barometricHeightCalculator(barometricHeightCalculator),
@@ -30,6 +33,15 @@ bool FlightSequenceExecutor::configureForFlight(const FlightProfile& profile) {
 
     _verticalMovementTracker.reset();
     _horizontalMovementTracker.reset();
+
+    char name[32];
+    const long id = random(0, 0x1000000L); // 24-bit value
+    std::snprintf(name, sizeof(name), "flight-%06lX",
+                static_cast<unsigned long>(id));
+    const etl::string<32> logName{name};
+
+
+    _logManager.startLog(LogProtocol::LogMetadata{_clock.getTimeFlight_ms(), logName}, logName);
 
     _logManager.appendEvent(LogProtocol::FlightConfigurationEvent{
         .initialRotation = profile.initialRotation,
@@ -78,6 +90,14 @@ bool FlightSequenceExecutor::deployForDescent() {
 void FlightSequenceExecutor::finishLanding() {
     _verticalMovementTracker.stopTracking();
     _horizontalMovementTracker.stopTracking();
+    _logManager.finishLog();
+}
+
+void FlightSequenceExecutor::finishFlight() {
+    _controlPID.stopControlling();
+    _verticalMovementTracker.stopTracking();
+    _horizontalMovementTracker.stopTracking();
+    _logManager.finishLog();
 }
 
 void FlightSequenceExecutor::abortThrust() {

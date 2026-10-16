@@ -20,6 +20,7 @@
 class FlightSequenceExecutor {
 public:
     FlightSequenceExecutor(
+        const Clock& clock,
         logging::LogManager& logManager,
         ControlPD& controlPID,
         RotationAccumulator& rotationAccumulator,
@@ -38,6 +39,7 @@ public:
     void finishBurn();
     bool deployForDescent();
     void finishLanding();
+    void finishFlight();
 
     void abortThrust();
     bool deployParachute();
@@ -47,6 +49,7 @@ public:
     bool hasTouchedDown(float initialHeight_m) const;
 
 private:
+    const Clock& _clock;
     logging::LogManager& _logManager;
     ControlPD& _controlPID;
     RotationAccumulator& _rotationAccumulator;

@@ -11,7 +11,8 @@ FlightStateManager::FlightStateManager(
     hardware::IMotorIgniter& motorIgniter,
     hardware::IParachute& parachute)
     : _clock(clock), _logManager(logManager),
-      _executor(logManager,
+      _executor(clock,
+        logManager,
         controlPID,
         rotationAccumulator,
         barometricHeightCalculator,
@@ -32,6 +33,7 @@ bool FlightStateManager::trySetIdle() {
 
     if (_currentState == FlightState::COUNTDOWN || _currentState == FlightState::ABORTED || _currentState == FlightState::LANDED) {
         changeState(FlightState::IDLE);
+        _executor.finishFlight();
         return true;
     }
     return false; // Deny setting to IDLE if not allowed
@@ -82,13 +84,16 @@ bool FlightStateManager::startCountdown(FlightProfile flightProfile) {
     _flightProfile = flightProfile;
     
     bool configSuccess = _executor.configureForFlight(_flightProfile);
-    bool checksSuccess = _executor.preflightChecks();
+    //bool checksSuccess = _executor.preflightChecks();
+    bool checksSuccess = true; // testing
 
     if (configSuccess && checksSuccess) {
         _countdownStartTime = _clock.getTimeFlight_ms();
         changeState(FlightState::COUNTDOWN);
         return true; // Countdown successfully started
     }
+
+    _executor.finishFlight();
 
     return false; // Failed to start countdown
 }

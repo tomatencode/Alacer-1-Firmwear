@@ -13,8 +13,17 @@ public:
     void begin() override {};
 
     float getPressure_Pa() const override {
-        float altitude = _simRocket.getPosition().z();
-        return 101325.0f * std::exp(-altitude / 8434.5f);
+        const float altitude = _simRocket.getPosition().z();
+        if (!std::isfinite(altitude)) {
+            return _lastValidPressure_Pa;
+        }
+
+        const float pressure_Pa = seaLevelPressure_Pa * std::exp(-altitude / scaleHeight_m);
+        // Preserve the last good reading if the simulation or exponential is invalid.
+        if (std::isfinite(pressure_Pa) && pressure_Pa > 0.0f) {
+            _lastValidPressure_Pa = pressure_Pa;
+        }
+        return _lastValidPressure_Pa;
     };
     float getTemperature_C() const override {
         return 23.0f;
@@ -22,7 +31,11 @@ public:
 
     void update() override {};
 private:
+    static constexpr float seaLevelPressure_Pa = 101325.0f;
+    static constexpr float scaleHeight_m = 8434.5f;
+
     SimRocket &_simRocket;
+    mutable float _lastValidPressure_Pa = seaLevelPressure_Pa;
 };
 
 } // namespace hardware

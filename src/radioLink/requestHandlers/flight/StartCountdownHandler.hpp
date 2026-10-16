@@ -30,7 +30,7 @@ namespace radioLink {
 //   was refused.
 class StartCountdownHandler {
 public:
-    static constexpr size_t PAYLOAD_SIZE = 58;
+    static constexpr size_t PAYLOAD_SIZE = 53;
 
     // Application-owned binding keeps hardware configuration out of flight logic.
     // Simulation wiring can validate the indices without binding real channels.

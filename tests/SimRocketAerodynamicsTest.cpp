@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
+#include <limits>
 
 #include "hardwareComponents/gimbal/Gimbal.hpp"
 #include "simMode/physics/RigidBody.hpp"
@@ -11,6 +12,37 @@
 #define private public
 #include "simMode/SimRocket.hpp"
 #undef private
+
+#include "simMode/mockHardware/hardwareIO/SimBarometer.hpp"
+
+static void testBarometerInvalidAltitude() {
+    SimClock clock;
+    SimRocket rocket(clock);
+    const hardware::SimBarometer barometer(rocket);
+    const float nan = std::numeric_limits<float>::quiet_NaN();
+    const float infinity = std::numeric_limits<float>::infinity();
+    const float max = std::numeric_limits<float>::max();
+
+    rocket.rigidBody.setPosition({0.0f, 0.0f, nan});
+    assert(barometer.getPressure_Pa() == 101325.0f); // Safe before any valid reading.
+    rocket.rigidBody.setPosition(Eigen::Vector3f::Zero());
+    assert(barometer.getPressure_Pa() == 101325.0f);
+
+    rocket.rigidBody.setPosition({0.0f, 0.0f, 1000.0f});
+    const float expected = 101325.0f * std::exp(-1000.0f / 8434.5f);
+    assert(std::abs(barometer.getPressure_Pa() - expected) < 0.01f);
+
+    for (float altitude : {nan, infinity, -infinity, max, -max}) {
+        rocket.rigidBody.setPosition({0.0f, 0.0f, altitude});
+        assert(barometer.getPressure_Pa() == expected);
+    }
+
+    // A valid reading recovers immediately, including below sea level.
+    rocket.rigidBody.setPosition({0.0f, 0.0f, -100.0f});
+    assert(barometer.getPressure_Pa() > 101325.0f);
+    rocket.rigidBody.setPosition(Eigen::Vector3f::Zero());
+    assert(barometer.getPressure_Pa() == 101325.0f);
+}
 
 static void expectVector(const Eigen::Vector3f& actual, const Eigen::Vector3f& expected) {
     assert(actual.allFinite());
@@ -74,6 +106,7 @@ static void testRotationalDamping() {
 }
 
 int main() {
+    testBarometerInvalidAltitude();
     testDrag(Eigen::Vector3f::Zero(), false);
     testDrag(Eigen::Vector3f::Zero(), true);
     testDrag(Eigen::Vector3f(0.0f, 0.0f, 10.0f), false);

@@ -12,13 +12,13 @@ public:
 
     explicit SimGimbal(SimRocket &simRocket);
 
-    void begin();
+    void begin() {};
 
-    void setTarget(const GimbalPos& target);
+    void setTarget(const GimbalPos& target) { _simRocket.setGimbalPos(target); }
 
-    GimbalPos getTarget() const;
+    GimbalPos getTarget() const { return _simRocket.getGimbalPos(); }
 
-    GimbalPos getCurrentPos() const;
+    GimbalPos getCurrentPos() const { return _simRocket.getGimbalPos(); }
 private:
     SimRocket &_simRocket;
 };

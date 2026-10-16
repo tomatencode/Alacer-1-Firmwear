@@ -9,12 +9,17 @@ class SimBarometer : public Barometer {
 public:
     SimBarometer(SimRocket &simRocket);
 
-    void begin() override;
+    void begin() override {};
 
-    float getPressure_Pa() const override;
-    float getTemperature_C() const override;
+    float getPressure_Pa() const {
+        float altitude = _simRocket.getPosition().z();
+        return 101325.0f * std::exp(-altitude / 8434.5f);
+    };
+    float getTemperature_C() const override {
+        return 23.0f;
+    };
 
-    void update() override;
+    void update() override {};
 private:
     SimRocket &_simRocket;
 };

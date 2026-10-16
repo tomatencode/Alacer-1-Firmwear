@@ -58,7 +58,7 @@ struct RealFlightHardware {
 struct SimulatedFlightHardware {
     SimClock clock;
     SimRocket rocket{clock};
-    SimulationStepper stepper{clock, 1.0f};
+    SimulationStepper stepper{clock, 1};
     simHardware::SimIMU imu;
     hardware::SimBarometer barometer{rocket};
     simHardware::SimPyroArmManager pyroArmManager;

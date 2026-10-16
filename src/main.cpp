@@ -328,7 +328,7 @@ void setup() {
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_BAROMETER, barometerHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_GIMBAL, getGimbalHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::SET_GIMBAL, setGimbalHandler.callback());
-    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_BATTERY_VOLTAGE, getBatteryVoltageHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::GET_BATTERY_VOLTAGE, getBatteryVoltageHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_ROTATION, getRotationHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::SET_ROTATION, setRotationHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::SET_ACCUMULATING_ROTATION, setAccumulatingRotationHandler.callback());

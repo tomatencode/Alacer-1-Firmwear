@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <etl/string.h>
 
 #include <ArduinoEigen.h>
 
@@ -16,14 +17,10 @@ enum class FlightState {
 };
 
 struct FlightProfile {
-    uint32_t countdownDuration_ms;
-    uint32_t motorBurnDuration_ms;
-
-    Eigen::Quaternionf initialRotation;
-    Eigen::Quaternionf targetAngle;
+    etl::string<32> name;
 
     float pidKp;
     float pidKd;
 
-    float initialHeight_m;
+    Eigen::Quaternionf initialRotation;
 };

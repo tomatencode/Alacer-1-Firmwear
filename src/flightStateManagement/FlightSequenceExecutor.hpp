@@ -46,7 +46,7 @@ public:
 
     // Phase-detection observers (read-only view of trackers for the manager).
     bool hasReachedApogee() const;
-    bool hasTouchedDown(float initialHeight_m) const;
+    bool hasTouchedDown() const;
 
 private:
     const Clock& _clock;

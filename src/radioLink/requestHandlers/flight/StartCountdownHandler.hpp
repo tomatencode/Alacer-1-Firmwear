@@ -5,32 +5,28 @@
 
 #include "../../MessageScheduler.hpp"
 #include "../../../flightStateManagement/FlightStateManager.hpp"
-#include "../../../helpers/codec/LittleEndianCodec.hpp"
 #include "../../../helpers/codec/FixedPointCodec.hpp"
 #include "../../../helpers/codec/QuaternionCodec.hpp"
+#include "../../../helpers/codec/StringCodec.hpp"
 
 namespace radioLink {
 
 // START_COUNTDOWN request:
-//   payload (58 bytes):
-//   [0..3]   countdown duration in ms, little-endian uint32
-//   [4..7]   motor burn duration in ms, little-endian uint32
-//   [8..23]  initial rotation, quaternion (x, y, z, w), each an int32 fixed-point
+//   [0..N]   length-prefixed log filename (1..32 bytes including the length byte)
+//   [N..N+15] initial rotation, quaternion (x, y, z, w), each an int32 fixed-point
 //            value scaled by 100 (fixedPoint::kScale)
-//   [24..39] target attitude, quaternion (x, y, z, w), same encoding as above
-//   [40..43] PID kp, int32 fixed-point scaled by 100
-//   [44..47] PID kd, int32 fixed-point scaled by 100
-//   [48]     motor igniter pyro channel index (uint8)
-//   [49]     parachute pyro channel index (uint8)
-//   [50..53] initial height in metres, int32 fixed-point scaled by 100
+//   [N+16..N+19] PID kp, int32 fixed-point scaled by 100
+//   [N+20..N+23] PID kd, int32 fixed-point scaled by 100
+//   [N+24]  motor igniter pyro channel index (uint8)
+//   [N+25]  parachute pyro channel index (uint8)
 // Response:
 //   SUCCESS with empty payload if FlightStateManager::startCountdown() accepted
 //   the profile (state was IDLE and configuration/preflight checks passed).
-//   FAILURE with empty payload if the payload is too short or the countdown
+//   FAILURE with empty payload if the payload is malformed or the countdown
 //   was refused.
 class StartCountdownHandler {
 public:
-    static constexpr size_t PAYLOAD_SIZE = 53;
+    static constexpr size_t PROFILE_SIZE = quaternionCodec::ENCODED_SIZE + 2 * sizeof(int32_t) + 2;
 
     // Application-owned binding keeps hardware configuration out of flight logic.
     // Simulation wiring can validate the indices without binding real channels.
@@ -40,22 +36,21 @@ public:
         : _flightStateManager(flightStateManager), _configureChannels(configureChannels) {}
 
     MessageScheduler::HandlerResult handle(std::span<const uint8_t> payload, std::span<uint8_t>) {
-        if (payload.size() < PAYLOAD_SIZE ||
+        FlightProfile flightProfile;
+        const auto filenameSize = stringCodec::decode(payload, 0, flightProfile.name);
+        if (!filenameSize || flightProfile.name.empty() ||
+            payload.size() != *filenameSize + PROFILE_SIZE ||
             _flightStateManager.getCurrentState() != FlightState::IDLE ||
             !_configureChannels.is_valid()) {
             return {MessageScheduler::HandlerResultStatus::FAILURE, 0};
         }
 
-        FlightProfile flightProfile;
-        flightProfile.countdownDuration_ms = littleEndian::decodeU32(payload, 0);
-        flightProfile.motorBurnDuration_ms = littleEndian::decodeU32(payload, 4);
-        flightProfile.initialRotation = quaternionCodec::decode(payload, 8);
-        flightProfile.targetAngle = quaternionCodec::decode(payload, 24);
-        flightProfile.pidKp = fixedPoint::decode32(payload, 40);
-        flightProfile.pidKd = fixedPoint::decode32(payload, 44);
-        flightProfile.initialHeight_m = fixedPoint::decode32(payload, 50);
+        const size_t offset = *filenameSize;
+        flightProfile.initialRotation = quaternionCodec::decode(payload, offset);
+        flightProfile.pidKp = fixedPoint::decode32(payload, offset + quaternionCodec::ENCODED_SIZE);
+        flightProfile.pidKd = fixedPoint::decode32(payload, offset + quaternionCodec::ENCODED_SIZE + sizeof(int32_t));
 
-        if (!_configureChannels(payload[48], payload[49])) {
+        if (!_configureChannels(payload[offset + PROFILE_SIZE - 2], payload[offset + PROFILE_SIZE - 1])) {
             return {MessageScheduler::HandlerResultStatus::FAILURE, 0};
         }
 

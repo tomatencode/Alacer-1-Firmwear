@@ -106,10 +106,10 @@ std::optional<uint32_t> FlightStateManager::getCountdownRemaining_ms() const {
     }
 
     const uint32_t elapsed = _clock.getTimeFlight_ms() - _countdownStartTime;
-    if (elapsed >= _flightProfile.countdownDuration_ms) {
+    if (elapsed >= COUNTDOWN_DURATION_MS) {
         return std::nullopt;
     }
-    return _flightProfile.countdownDuration_ms - elapsed;
+    return COUNTDOWN_DURATION_MS - elapsed;
 }
 
 void FlightStateManager::update() {
@@ -120,7 +120,7 @@ void FlightStateManager::update() {
         break;
     case FlightState::COUNTDOWN:
         // Handle COUNTDOWN state
-        if (_clock.getTimeFlight_ms() - _countdownStartTime >= _flightProfile.countdownDuration_ms) {
+        if (_clock.getTimeFlight_ms() - _countdownStartTime >= COUNTDOWN_DURATION_MS) {
             if (_executor.launch()) {
                 _motorStartBurnTime = _clock.getTimeFlight_ms();
                 changeState(FlightState::BURNING);
@@ -131,7 +131,7 @@ void FlightStateManager::update() {
         }
         break;
     case FlightState::BURNING:
-        if (_clock.getTimeFlight_ms() - _motorStartBurnTime >= _flightProfile.motorBurnDuration_ms) {
+        if (_clock.getTimeFlight_ms() - _motorStartBurnTime >= MOTOR_BURN_DURATION_MS) {
             _executor.finishBurn();
             changeState(FlightState::COASTING);
         }
@@ -143,7 +143,7 @@ void FlightStateManager::update() {
         }
         break;
     case FlightState::DESCENDING:
-        if (_executor.hasTouchedDown(_flightProfile.initialHeight_m)) {
+        if (_executor.hasTouchedDown()) {
             _executor.finishFlight();
             changeState(FlightState::LANDED);
         }

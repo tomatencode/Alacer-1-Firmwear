@@ -88,5 +88,4 @@ struct SimulatedFlightHardware {
     }
 };
 
-using FlightHardware = std::conditional_t<buildConfig::simulation,
-                                         SimulatedFlightHardware, RealFlightHardware>;
+using FlightHardware = std::conditional_t<buildConfig::simulation, SimulatedFlightHardware, RealFlightHardware>;

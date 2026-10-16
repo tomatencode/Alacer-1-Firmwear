@@ -50,14 +50,12 @@ struct DroppedEvents {
 };
 
 struct FlightConfigurationEvent {
-    Eigen::Quaternionf initialRotation;
-    Eigen::Quaternionf targetAngle;
+    etl::string<32> name;
 
     float pidKp;
-    float pidKi;
     float pidKd;
 
-    float initialHeight_m;
+    Eigen::Quaternionf initialRotation;
 };
 
 struct FlightStateChangedEvent {

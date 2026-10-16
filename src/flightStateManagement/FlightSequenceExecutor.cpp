@@ -23,32 +23,25 @@ FlightSequenceExecutor::FlightSequenceExecutor(
 {}
 
 bool FlightSequenceExecutor::configureForFlight(const FlightProfile& profile) {
-    _barometricHeightCalculator.calibrateTo(profile.initialHeight_m);
+    _barometricHeightCalculator.calibrateTo(0.0f);
 
     _rotationAccumulator.stopAccumulation();
     _rotationAccumulator.setRotationQuaternion(profile.initialRotation);
 
     _controlPID.setPDParameters(profile.pidKp, profile.pidKd);
-    _controlPID.setTarget(profile.targetAngle);
+    _controlPID.setTarget(Eigen::Quaternionf::Identity());
 
     _verticalMovementTracker.reset();
     _horizontalMovementTracker.reset();
 
-    char name[32];
-    const long id = random(0, 0x1000000L); // 24-bit value
-    std::snprintf(name, sizeof(name), "flight-%06lX",
-                static_cast<unsigned long>(id));
-    const etl::string<32> logName{name};
 
-
-    _logManager.startLog(LogProtocol::LogMetadata{_clock.getTimeFlight_ms(), logName}, logName);
+    _logManager.startLog(LogProtocol::LogMetadata{_clock.getTimeFlight_ms(), profile.name}, profile.name);
 
     _logManager.appendEvent(LogProtocol::FlightConfigurationEvent{
-        .initialRotation = profile.initialRotation,
-        .targetAngle = profile.targetAngle,
+        .name = profile.name,
         .pidKp = profile.pidKp,
         .pidKd = profile.pidKd,
-        .initialHeight_m = profile.initialHeight_m,
+        .initialRotation = profile.initialRotation,
     });
 
     return true;
@@ -113,11 +106,11 @@ bool FlightSequenceExecutor::hasReachedApogee() const {
     return _verticalMovementTracker.hasVelocityEstimate() && _verticalMovementTracker.getVelocity_m_s() <= 0.0f;
 }
 
-bool FlightSequenceExecutor::hasTouchedDown(float initialHeight_m) const {
+bool FlightSequenceExecutor::hasTouchedDown() const {
     static constexpr float TOUCHDOWN_HEIGHT_TOLERANCE_m = 3.0f;
     static constexpr float TOUCHDOWN_VELOCITY_m_s = 1.0f;
 
     return _verticalMovementTracker.hasVelocityEstimate() &&
            std::abs(_verticalMovementTracker.getVelocity_m_s()) <= TOUCHDOWN_VELOCITY_m_s &&
-           _verticalMovementTracker.getHeight_m() <= initialHeight_m + TOUCHDOWN_HEIGHT_TOLERANCE_m;
+           _verticalMovementTracker.getHeight_m() <= TOUCHDOWN_HEIGHT_TOLERANCE_m;
 }

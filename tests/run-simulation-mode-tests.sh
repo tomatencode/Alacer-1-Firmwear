@@ -6,7 +6,7 @@ build="$(mktemp -d)"
 trap 'rm -rf "$build"' EXIT
 
 g++ -std=c++20 -Wall -Wextra -Werror \
-    -DALACER_SIMULATION -DALACER_SIMULATION_SPEED=2 \
+    -DALACER_SIMULATION \
     -fsanitize=address,undefined -fno-omit-frame-pointer \
     -I"$root/tests/host" -I"$root/src" \
     -isystem "$deps/ArduinoEigen/ArduinoEigen" \

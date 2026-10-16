@@ -15,24 +15,25 @@
 #include "simMode/mockHardware/hardwareIO/SimPyroChannel.hpp"
 
 static_assert(buildConfig::simulation);
-static_assert(buildConfig::simulationSpeed == 2);
 static_assert(std::is_base_of_v<hardware::IGimbal, simHardware::SimGimbal>);
 
 static void testStepper() {
     SimClock clock;
-    SimulationStepper stepper(clock, buildConfig::simulationSpeed);
+    SimulationStepper stepper(clock);
     hostArduino::nowMicros = std::numeric_limits<uint32_t>::max() - 100;
     stepper.begin();
     hostArduino::nowMicros += 200; // Wrap the real-time counter.
     stepper.update();
-    assert(clock.getTimeFlight_us() == 400);
-    hostArduino::nowMicros += 1000;
+    assert(clock.getTimeFlight_us() == 200); // Flight time tracks real time at 1:1.
+    hostArduino::nowMicros += 2500;
     stepper.update();
-    assert(clock.getTimeFlight_us() == 1400); // At most 1 ms per control loop.
+    assert(clock.getTimeFlight_us() == 1200); // At most 1 ms per control loop.
     stepper.update();
-    assert(clock.getTimeFlight_us() == 2400); // Consume pending scaled time.
+    assert(clock.getTimeFlight_us() == 2200); // Consume pending real time.
     stepper.update();
-    assert(clock.getTimeFlight_us() == 2400);
+    assert(clock.getTimeFlight_us() == 2700); // Consume the remaining partial step.
+    stepper.update();
+    assert(clock.getTimeFlight_us() == 2700); // No pending or new real time.
 }
 
 static void testSimulatedFlight() {

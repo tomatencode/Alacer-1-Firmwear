@@ -13,11 +13,8 @@ Upload using `pio run -e custom_f411ce_sim -t upload`. The ordinary
 
 - Defining `ALACER_SIMULATION` selects simulation at compile time. Omit the
   definition entirely for real hardware (even `=0` counts as defined).
-- `ALACER_SIMULATION_SPEED` is an integer from 1 to 100, defaulting to 1.
-  Set it in the simulation environment's `build_flags` to change the target
-  flight-time/real-time ratio.
 
-`BuildConfig.hpp` translates flags to constexpr settings and `FlightHardware.hpp`
+`BuildConfig.hpp` translates the flag to a constexpr setting and `FlightHardware.hpp`
 selects the hardware bundle with `std::conditional_t`. Only the selected bundle
 is instantiated; there is no runtime mode switch or heap allocation for wiring.
 
@@ -29,7 +26,7 @@ flight sensors, servo PWM, pyro MOSFETs, or the hardware-arm input. PD control
 and gimbal radio handlers use the common `IGimbal` interface.
 
 Radio, flash storage/logging, battery measurement, status LED and buzzer remain
-real. Their timing stays real regardless of simulation speed. This mode still
+real. Their timing uses real time, independently of simulated flight time. This mode still
 needs an MCU and those peripherals; it is not a desktop firmware build.
 
 Simulated continuity and hardware arming start enabled. Software arming starts
@@ -41,10 +38,12 @@ simulated channel only; rocket ignition/deployment occurs via the flight sequenc
 
 ## Simulation timing and model
 
-Each firmware loop consumes at most 1 ms of scaled real time before running the
-sensors, estimators, flight state machine and controller. Pending time is retained,
-including across real-time counter rollover. If the MCU cannot sustain the requested
-speed, simulation falls behind rather than taking an unstable large physics step.
+The firmware targets a 1:1 flight-time/real-time ratio; there is no build flag for
+changing simulation speed. Each firmware loop consumes at most 1 ms of elapsed
+real time before running the sensors, estimators, flight state machine and
+controller. Pending time is retained, including across real-time counter rollover.
+If the MCU cannot keep up with real time, simulation falls behind rather than
+taking an unstable large physics step.
 
 The existing simplified model uses a 3 N, 5 s motor burn measured from ignition,
 quadratic drag, parachute drag and a ground-plane constraint. This is a functional
@@ -60,6 +59,7 @@ bash /home/simon/src/Alacer-1-Firmwear/tests/run-clock-tests.sh
 bash /home/simon/src/Alacer-1-Firmwear/tests/run-hardware-interface-tests.sh
 ```
 
-The simulation-mode host suite checks speed scaling, bounded steps, timer rollover,
+The simulation-mode host suite checks 1:1 timing, bounded steps, pending-time
+draining, timer rollover,
 virtual gimbal dispatch, arming and continuity, millisecond pulse timing, delayed
 ignition, sensor feedback, parachute deployment and eventual touchdown.

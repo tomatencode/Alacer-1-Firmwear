@@ -17,7 +17,7 @@ public:
     void update() override {};
 
     hardware::IMU::Accel getAccel() const override {
-        Eigen::Vector3f accel_body = _simRocket.getAccelerationBody();
+        Eigen::Vector3f accel_body = _simRocket.getAccelerationWorld() - Eigen::Vector3f(0.0f, 0.0f, -9.81f);
         Eigen::Vector3f accel = _imuRocketCoordinateConverter.rotateRocketVectorToIMU(accel_body);
         return hardware::IMU::Accel{accel.x(), accel.y(), accel.z()};
     };

@@ -85,7 +85,8 @@ void RigidBody::applyForceWorldAtPointBody(
         const Eigen::Vector3f& force_N,
         const Eigen::Vector3f& offsetFromCenterOfMass_m) {
     accumulatedForce_world += force_N;
-    accumulatedTorque_world += offsetFromCenterOfMass_m.cross(force_N);
+    accumulatedTorque_world += (orientation * offsetFromCenterOfMass_m).cross(force_N);
+
 }
 
 void RigidBody::applyTorqueWorld(const Eigen::Vector3f& torque) {

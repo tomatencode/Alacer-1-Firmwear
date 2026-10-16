@@ -77,8 +77,8 @@ void SimRocket::update() {
         const float yaw = gimbalPos.yaw_deg * degToRad;
 
         const Eigen::Quaternionf gimbalRotation =
-            Eigen::AngleAxisf(yaw, Eigen::Vector3f::UnitX()) *
-            Eigen::AngleAxisf(pitch, Eigen::Vector3f::UnitY());
+            Eigen::AngleAxisf(pitch, Eigen::Vector3f::UnitX()) *
+            Eigen::AngleAxisf(yaw, Eigen::Vector3f::UnitY());
 
         const Eigen::Vector3f motorForce =
             gimbalRotation * Eigen::Vector3f(0.0f, 0.0f, motorThrust);

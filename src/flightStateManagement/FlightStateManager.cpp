@@ -93,7 +93,7 @@ bool FlightStateManager::startCountdown(FlightProfile flightProfile) {
 
     if (configSuccess && checksSuccess) {
         _countdownStartTime = _clock.getTimeFlight_ms();
-        _lastCountdownTickFeedbackTime = _countdownStartTime;
+        _lastCountdownTickFeedbackTime = 0; // ensure the first tick feedback happens immediately
         changeState(FlightState::COUNTDOWN);
         return true; // Countdown successfully started
     }

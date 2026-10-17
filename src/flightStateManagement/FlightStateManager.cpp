@@ -9,7 +9,8 @@ FlightStateManager::FlightStateManager(
     VerticalMovementTracker& verticalMovementTracker,
     HorizontalMovementTracker& horizontalMovementTracker,
     hardware::IMotorIgniter& motorIgniter,
-    hardware::IParachute& parachute)
+    hardware::IParachute& parachute,
+    hardware::Buzzer& buzzer)
     : _clock(clock), _logManager(logManager),
       _executor(clock,
         logManager,
@@ -19,7 +20,8 @@ FlightStateManager::FlightStateManager(
         verticalMovementTracker,
         horizontalMovementTracker,
         motorIgniter,
-        parachute)
+        parachute,
+        buzzer)
 {}
 
 FlightState FlightStateManager::getCurrentState() const {
@@ -91,6 +93,7 @@ bool FlightStateManager::startCountdown(FlightProfile flightProfile) {
 
     if (configSuccess && checksSuccess) {
         _countdownStartTime = _clock.getTimeFlight_ms();
+        _lastCountdownTickFeedbackTime = _countdownStartTime;
         changeState(FlightState::COUNTDOWN);
         return true; // Countdown successfully started
     }
@@ -122,12 +125,17 @@ void FlightStateManager::update() {
         // Handle COUNTDOWN state
         if (_clock.getTimeFlight_ms() - _countdownStartTime >= COUNTDOWN_DURATION_MS) {
             if (_executor.launch()) {
+                _executor.playLaunchSound();
                 _motorStartBurnTime = _clock.getTimeFlight_ms();
                 changeState(FlightState::BURNING);
             } else {
                 // Ignition failed: do not enter BURNING, fail safe to ABORTED.
                 changeState(FlightState::ABORTED);
             }
+        } else if (_clock.getTimeFlight_ms() - _lastCountdownTickFeedbackTime >= COUNTDOWN_TICK_FEEDBACK_INTERVAL_MS) {
+            _lastCountdownTickFeedbackTime = _clock.getTimeFlight_ms();
+            const int remaining_ticks = (COUNTDOWN_DURATION_MS - ( _clock.getTimeFlight_ms() - _countdownStartTime)) / COUNTDOWN_TICK_FEEDBACK_INTERVAL_MS;
+            _executor.playCountdownTickSound(remaining_ticks);
         }
         break;
     case FlightState::BURNING:
@@ -149,7 +157,10 @@ void FlightStateManager::update() {
         }
         break;
     case FlightState::LANDED:
-        // Handle LANDED state
+        if (_clock.getTimeFlight_ms() - _lastLocatingSoundTime >= LOCATING_SOUND_INTERVAL_MS) {
+            _lastLocatingSoundTime = _clock.getTimeFlight_ms();
+            _executor.playLocatingSound();
+        }
         break;
     case FlightState::ABORTED:
         // Handle ABORTED state

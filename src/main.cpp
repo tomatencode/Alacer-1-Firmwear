@@ -204,7 +204,7 @@ std::array<hardware::IPyroChannel*, 3> pyroChannels = {
 
 bool configureFlightPyroChannels(uint8_t motorIndex, uint8_t parachuteIndex) {
     if (motorIndex >= pyroChannels.size() || parachuteIndex >= pyroChannels.size() ||
-        pyroChannels[motorIndex] == nullptr || pyroChannels[parachuteIndex] == nullptr) {
+        pyroChannels[motorIndex] == nullptr || pyroChannels[parachuteIndex] == nullptr || motorIndex == parachuteIndex) {
         return false;
     }
 
@@ -234,7 +234,8 @@ FlightStateManager flightStateManager(
     verticalMovementTracker,
     horizontalMovementTracker,
     motorIgniter,
-    parachute
+    parachute,
+    buzzer
 );
 
 Protocol::Parser radioLinkParser;

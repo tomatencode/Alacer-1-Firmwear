@@ -33,7 +33,8 @@ public:
         VerticalMovementTracker& verticalMovementTracker,
         HorizontalMovementTracker& horizontalMovementTracker,
         hardware::IMotorIgniter& motorIgniter,
-        hardware::IParachute& parachute
+        hardware::IParachute& parachute,
+        hardware::Buzzer& buzzer
     );
 
     FlightState getCurrentState() const; // should not be used in logic, only for debugging
@@ -57,6 +58,10 @@ public:
 private:
 
     static constexpr uint32_t COUNTDOWN_DURATION_MS = 5000; // 5 seconds countdown duration
+    static constexpr uint32_t COUNTDOWN_TICK_FEEDBACK_INTERVAL_MS =1000; // frequency of countdown tick feedback
+    uint32_t _lastCountdownTickFeedbackTime = 0;
+    static constexpr uint32_t LOCATING_SOUND_INTERVAL_MS = 2000;
+    uint32_t _lastLocatingSoundTime = 0;
 
 
     const Clock& _clock;

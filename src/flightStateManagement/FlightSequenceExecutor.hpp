@@ -5,6 +5,7 @@
 #include "../rotationEstimation/RotationAccumulator.hpp"
 #include "../hardwareComponents/parachute/IParachute.hpp"
 #include "../hardwareComponents/motor/IMotorIgniter.hpp"
+#include "../hardwareIO/buzzer/Buzzer.hpp"
 
 #include "../barometricHeightCalculation/BarometricHeightCalculator.hpp"
 #include "../ascentTracking/VerticalMovementTracker.hpp"
@@ -28,7 +29,8 @@ public:
         VerticalMovementTracker& verticalMovementTracker,
         HorizontalMovementTracker& horizontalMovementTracker,
         hardware::IMotorIgniter& motorIgniter,
-        hardware::IParachute& parachute
+        hardware::IParachute& parachute,
+        hardware::Buzzer& buzzer
     );
 
     // Dumb hardware sequences. All return false on failure, never change FlightState.
@@ -39,10 +41,15 @@ public:
     void finishBurn();
     bool deployForDescent();
     void finishFlight();
-    void resetPosEstimate();
 
     void abortThrust();
     bool deployParachute();
+
+    // cosmetic sequneces (not critical to flight)
+    void resetPosEstimate();
+    void playCountdownTickSound(int remaining_ticks);
+    void playLaunchSound();
+    void playLocatingSound(); // help locate the vehicle
 
     // Phase-detection observers (read-only view of trackers for the manager).
     bool hasReachedApogee() const;
@@ -58,4 +65,5 @@ private:
     HorizontalMovementTracker& _horizontalMovementTracker;
     hardware::IMotorIgniter& _motorIgniter;
     hardware::IParachute& _parachute;
+    hardware::Buzzer& _buzzer;
 };

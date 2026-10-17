@@ -10,7 +10,8 @@ FlightSequenceExecutor::FlightSequenceExecutor(
     VerticalMovementTracker& verticalMovementTracker,
     HorizontalMovementTracker& horizontalMovementTracker,
     hardware::IMotorIgniter& motorIgniter,
-    hardware::IParachute& parachute)
+    hardware::IParachute& parachute,
+    hardware::Buzzer& buzzer)
     : _clock(clock),
       _logManager(logManager),
       _controlPID(controlPID),
@@ -19,7 +20,8 @@ FlightSequenceExecutor::FlightSequenceExecutor(
       _verticalMovementTracker(verticalMovementTracker),
       _horizontalMovementTracker(horizontalMovementTracker),
       _motorIgniter(motorIgniter),
-      _parachute(parachute)
+      _parachute(parachute),
+      _buzzer(buzzer)
 {}
 
 bool FlightSequenceExecutor::configureForFlight(const FlightProfile& profile) {
@@ -89,11 +91,6 @@ void FlightSequenceExecutor::finishFlight() {
     _logManager.finishLog();
 }
 
-void FlightSequenceExecutor::resetPosEstimate() {
-    _verticalMovementTracker.reset();
-    _horizontalMovementTracker.reset();
-}
-
 
 void FlightSequenceExecutor::abortThrust() {
     _controlPID.stopControlling();
@@ -115,4 +112,30 @@ bool FlightSequenceExecutor::hasTouchedDown() const {
     return _verticalMovementTracker.hasVelocityEstimate() &&
            std::abs(_verticalMovementTracker.getVelocity_m_s()) <= TOUCHDOWN_VELOCITY_m_s &&
            _verticalMovementTracker.getHeight_m() <= TOUCHDOWN_HEIGHT_TOLERANCE_m;
+}
+
+
+void FlightSequenceExecutor::resetPosEstimate() {
+    _verticalMovementTracker.reset();
+    _horizontalMovementTracker.reset();
+}
+
+void FlightSequenceExecutor::playCountdownTickSound(int remaining_ticks) {
+    const int frequency = 523 + (4 - remaining_ticks) * 100;
+    const int duration = 150 + (4 - remaining_ticks) * 50;
+
+    _buzzer.beep(frequency, duration);
+}
+
+void FlightSequenceExecutor::playLaunchSound() {
+    _buzzer.beep(1047, 1000); // C6
+}
+
+void FlightSequenceExecutor::playLocatingSound() {
+    hardware::Buzzer::Melody locatingMelody{
+        {1047, 250}, // C6
+        {0, 100},    // pause
+        {1568, 250}, // G6
+    };
+    _buzzer.playMelody(locatingMelody);
 }

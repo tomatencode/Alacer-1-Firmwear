@@ -17,9 +17,11 @@ public:
     void begin() override { setTarget({0.0f, 0.0f}); }
 
     void setTarget(const GimbalPos& target) override {
+        const float pitchNoise = static_cast<float>(rand()) / RAND_MAX * 0.05f;
+        const float yawNoise = static_cast<float>(rand()) / RAND_MAX * 0.05f;
         _simRocket.setGimbalPos({
-            std::clamp(target.pitch_deg, -_limit_deg, _limit_deg),
-            std::clamp(target.yaw_deg, -_limit_deg, _limit_deg)});
+            std::clamp(target.pitch_deg + pitchNoise, -_limit_deg, _limit_deg),
+            std::clamp(target.yaw_deg + yawNoise, -_limit_deg, _limit_deg)});
     }
 
     GimbalPos getTarget() const override { return _simRocket.getGimbalPos(); }

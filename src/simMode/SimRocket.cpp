@@ -61,7 +61,7 @@ void SimRocket::update() {
 
     // Apply gravity force to the rocket's center of mass
     rigidBody.applyForceWorld(Eigen::Vector3f(0.0f, 0.0f, -mass_kg * gravity_m_s2));
-    
+
     applyAerodynamicDrag(dragCoefficient, crossSectionalArea_m2, centerOfPressure_m);
     if (parachuteDeployed) {
         applyAerodynamicDrag(parachuteDragCoefficient, parachuteCrossSectionalArea_m2,

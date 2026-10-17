@@ -52,6 +52,8 @@ public:
 
     std::optional<uint32_t> getCountdownRemaining_ms() const;
 
+    void setDoLocatingSound(bool enable) { _doLocatingSound = enable; }
+
     bool isMidFlight() const;
 
     void update();
@@ -62,6 +64,7 @@ private:
     uint32_t _lastCountdownTickFeedbackTime = 0;
     static constexpr uint32_t LOCATING_SOUND_INTERVAL_MS = 2000;
     uint32_t _lastLocatingSoundTime = 0;
+    bool _doLocatingSound = true;
 
 
     const Clock& _clock;

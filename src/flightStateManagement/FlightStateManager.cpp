@@ -94,6 +94,7 @@ bool FlightStateManager::startCountdown(FlightProfile flightProfile) {
     if (configSuccess && checksSuccess) {
         _countdownStartTime = _clock.getTimeFlight_ms();
         _lastCountdownTickFeedbackTime = 0; // ensure the first tick feedback happens immediately
+        _doLocatingSound = true;
         changeState(FlightState::COUNTDOWN);
         return true; // Countdown successfully started
     }
@@ -157,7 +158,7 @@ void FlightStateManager::update() {
         }
         break;
     case FlightState::LANDED:
-        if (_clock.getTimeFlight_ms() - _lastLocatingSoundTime >= LOCATING_SOUND_INTERVAL_MS) {
+        if (_doLocatingSound && _clock.getTimeFlight_ms() - _lastLocatingSoundTime >= LOCATING_SOUND_INTERVAL_MS) {
             _lastLocatingSoundTime = _clock.getTimeFlight_ms();
             _executor.playLocatingSound();
         }

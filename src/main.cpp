@@ -60,6 +60,7 @@
 #include "./radioLink/requestHandlers/flight/GetFlightLocationHandler.hpp"
 #include "./radioLink/requestHandlers/flight/StartCountdownHandler.hpp"
 #include "./radioLink/requestHandlers/flight/RetryDeployParachuteHandler.hpp"
+#include "./radioLink/requestHandlers/flight/SetDoLocatingSoundHandler.hpp"
 #include "./radioLink/requestHandlers/controlPD/SetPDParametersHandler.hpp"
 #include "./radioLink/requestHandlers/controlPD/GetPDParametersHandler.hpp"
 #include "./radioLink/requestHandlers/controlPD/SetControllingHandler.hpp"
@@ -265,6 +266,7 @@ radioLink::GetCountdownTimeHandler countdownTimeHandler(flightStateManager);
 radioLink::StartCountdownHandler startCountdownHandler(flightStateManager,
     radioLink::StartCountdownHandler::ConfigureChannels::create<configureFlightPyroChannels>());
 radioLink::RetryDeployParachuteHandler retryDeployParachuteHandler(flightStateManager);
+radioLink::SetDoLocatingSoundHandler setDoLocatingSoundHandler(flightStateManager);
 radioLink::SetPDParametersHandler setPIDParametersHandler(controlPID);
 radioLink::GetPDParametersHandler getPIDParametersHandler(controlPID);
 radioLink::SetControllingHandler setControllingHandler(controlPID);
@@ -347,6 +349,7 @@ void setup() {
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_COUNTDOWN_TIME, countdownTimeHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::START_COUNTDOWN, startCountdownHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::RETRY_DEPLOY_PARACHUTE, retryDeployParachuteHandler.callback());
+    messageScheduler.registerRequestHandler(Protocol::MessageType::SET_DO_LOCATING_SOUND, setDoLocatingSoundHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::SET_PID_PARAMETERS, setPIDParametersHandler.callback());
     messageScheduler.registerRequestHandler(Protocol::MessageType::GET_PID_PARAMETERS, getPIDParametersHandler.callback(), {.groundOnly = false});
     messageScheduler.registerRequestHandler(Protocol::MessageType::SET_CONTROLLING, setControllingHandler.callback());

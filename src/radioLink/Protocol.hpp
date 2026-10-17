@@ -49,6 +49,7 @@ enum class MessageType : uint8_t {
     IS_LOGGING = 0x22,
     LIST_LOGS = 0x23,
     GET_LOG_SIZE = 0x24,
+    SET_DO_LOCATING_SOUND = 0x25,
     DELETE_LOG = 0x26,
     DELETE_ALL_LOGS = 0x27,
     START_LOG_DOWNLOAD = 0x28,

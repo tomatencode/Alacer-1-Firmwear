@@ -43,6 +43,7 @@ void ControlPD::startControlling() {
 }
 void ControlPD::stopControlling() {
   _isControlling = false;
+  _gimbal.setTarget({0.0f, 0.0f});
 }
 
 bool ControlPD::setControlling(bool controlling) {

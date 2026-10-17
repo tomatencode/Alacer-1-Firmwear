@@ -11,6 +11,8 @@
 class SimRocket {
 public:
     SimRocket(Clock& clock);
+
+    void reset();
     
     void igniteMotor();
     void deployParachute();

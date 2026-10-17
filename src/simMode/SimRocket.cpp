@@ -13,6 +13,18 @@ SimRocket::SimRocket(Clock& clock)
       clock(clock) {
 }
 
+void SimRocket::reset() {
+    rigidBody.setPosition(Eigen::Vector3f::Zero());
+    rigidBody.setVelocityWorld(Eigen::Vector3f::Zero());
+    rigidBody.setAngularVelocityWorld(Eigen::Vector3f::Zero());
+    motorIgnited = false;
+    motorIgnitionTime_ms = 0;
+    parachuteDeployed = false;
+    gimbalPos = {0.0f, 0.0f};
+    lastUpdateTime = 0;
+    lastUpdateTimeInitialized = false;
+}
+
 void SimRocket::deployParachute() {
     parachuteDeployed = true;
 }
@@ -20,7 +32,6 @@ void SimRocket::deployParachute() {
 void SimRocket::igniteMotor() {
     motorIgnited = true;
     motorIgnitionTime_ms = clock.getTimeFlight_ms();
-    parachuteDeployed = false;
 }
 
 void SimRocket::setGimbalPos(const hardware::IGimbal::GimbalPos& pos) {

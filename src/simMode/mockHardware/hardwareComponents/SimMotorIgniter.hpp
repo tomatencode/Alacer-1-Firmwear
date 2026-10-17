@@ -12,6 +12,7 @@ public:
 
     bool ignite() override {
         if (!hardware::PyroMotorIgniter::ignite()) return false;
+        _simRocket.reset(); // Reset the simulated rocket state before new flight
         _simRocket.igniteMotor();
         return true;
     }

@@ -118,6 +118,7 @@ bool FlightSequenceExecutor::hasTouchedDown() const {
 void FlightSequenceExecutor::resetPosEstimate() {
     _verticalMovementTracker.reset();
     _horizontalMovementTracker.reset();
+    _rotationAccumulator.setRotationQuaternion(Eigen::Quaternionf::Identity());
 }
 
 void FlightSequenceExecutor::playCountdownTickSound(int remaining_ticks) {

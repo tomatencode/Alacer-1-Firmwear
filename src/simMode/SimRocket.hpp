@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <numbers>
 #include <ArduinoEigen.h>
 
 #include "hardwareComponents/gimbal/IGimbal.hpp"
@@ -35,11 +36,26 @@ private:
     void applyAerodynamicDrag(float coefficient, float area_m2, float centerOfPressure_m);
 
     // config
-    static constexpr float mass_kg = 0.17;
-    static inline const Eigen::Matrix3f inertia = Eigen::Matrix3f::Identity();
-    static constexpr float gimbalLever_m = 0.1f;
+    static constexpr float mass_kg = 0.16;
+
+    static inline const Eigen::Matrix3f inertia = (Eigen::Matrix3f() <<
+        9.7e-4, 0.0f, 0.0f,
+        0.0f, 9.7e-4, 0.0f,
+        0.0f, 0.0f, 6.1e-5).finished();
+
+    static constexpr float gimbalLever_m = 0.13f;
     float motorThrust_N(float time_s) const {
-        return time_s < 5.0f ? 3.0f : 0.0f;
+        if (time_s < 0.5) {
+            return 10 * time_s; // linear ramp-up of thrust to 5 N
+        } else if (time_s < 0.8) {
+            return 5 - 10 * (time_s - 0.5f); // linear ramp-down of thrust from 5 N to 2 N
+        } else if (time_s < 4.7) {
+            return 2.0f; // constant thrust of 2 N
+        } else if (time_s < 5.0) {
+            return 2.0f * (5.0f - time_s) / 0.3f; // linear ramp-down of thrust from 2 N to 0 N over 0.3 s
+        } else {
+            return 0.0f; // no thrust after 5 s
+        }
     }
 
     // position of the center of pressure along the rocket's body axis
@@ -48,7 +64,7 @@ private:
     static constexpr float parachuteCenterOfPressure_m = 0.2f;
 
     static constexpr float dragCoefficient = 0.5f;
-    static constexpr float crossSectionalArea_m2 = 0.01f;
+    static constexpr float crossSectionalArea_m2 = 0.019; // 2 * pi * (0.055m)²
 
     static constexpr float parachuteDragCoefficient = 1.5f;
     static constexpr float parachuteCrossSectionalArea_m2 = 0.1f;

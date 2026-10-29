@@ -34,6 +34,77 @@ Wisp is split into several cooperating hardware and software components:
 | [Rocket-Link Firmware](https://github.com/tomatencode/RocketLinkFirmwear) | Firmware for the Rocket-Link device |
 | [Rocket Monitor App](https://github.com/tomatencode/RocketMonitor) | Ground-station application for monitoring and operating the rocket |
 
+## How the components communicate
+
+The Wisp system is divided into an onboard side and a ground side:
+
+```text
+┌──────────────────────┐   USB    ┌──────────────────────┐  HC-12 radio  ┌────────────────────────┐
+│ Rocket Monitor App   │◄────────►│ Rocket-Link          │◄─────────────►│ Alacer-1 Flight        │
+│ Ground station       │          │ USB/radio bridge     │               │ Computer + firmware    │
+└──────────────────────┘          └──────────────────────┘               └────────────────────────┘
+                                                                            │
+                                                           Sensors, gimbal, │
+                                                           ignition, pyro,  │
+                                                           and recovery     │
+                                                                            ▼
+                                                                      Wisp Mk1 rocket hardware
+```
+
+### Component responsibilities
+
+- **Mechanical design** defines the airframe, payload mounting, gimbal
+  mechanism, recovery system, and the physical interfaces between the rocket
+  and its electronics. It does not communicate digitally, but it determines
+  where the sensors and actuators can be installed and how they behave in
+  flight.
+- **Alacer-1 hardware** is the onboard flight computer. It connects the
+  sensors and safety-critical actuators to the STM32 controller.
+- **Flight computer firmware** runs onboard the rocket. It reads the IMU and
+  barometer, estimates motion and altitude, controls the TVC gimbal, manages
+  the flight sequence, records telemetry and events, and operates the ignition
+  and recovery interfaces. The rocket can therefore continue a flight safely
+  without depending on a continuous ground-station connection.
+- **Rocket-Link hardware and firmware** form a small ground-side radio bridge.
+  The device exposes a USB serial connection to the computer and uses an HC-12
+  radio to transmit and receive bytes over the air. It forwards radio data
+  without implementing the flight computer's commands, keeping the bridge
+  simple and focused on transport.
+- **Rocket Monitor** is the ground-station application. It sends commands,
+  displays live telemetry and status, configures the flight computer, and
+  downloads or monitors flight logs. It also provides the operator interface
+  for the Rocket-Link USB connection.
+
+### Protocol layers
+
+Communication uses two separate framed protocols:
+
+1. **Rocket Monitor ↔ Rocket-Link:** a USB packet protocol with packet types
+   for pinging the bridge, sending radio data, receiving radio data, and
+   issuing HC-12 configuration commands. Packets include a length and checksum
+   so USB stream data can be recovered reliably.
+2. **Rocket Monitor/Rocket-Link ↔ flight computer:** a radio-link protocol
+   carried as the payload of the bridge packets. It supports multiple
+   request/response messages per frame, sequence IDs, status values, CRC
+   checking, and retries. Requests cover sensors, gimbal control, flight
+   state, PD control, pyro and recovery controls, telemetry, and log
+   management.
+
+Telemetry and responses travel back along the same path in reverse:
+the flight computer creates a response or telemetry message, Rocket-Link
+bridges the radio bytes to USB, and Rocket Monitor decodes and presents them
+to the operator.
+
+### Why the project is split this way
+
+The split keeps the time-critical and safety-sensitive work on the rocket,
+where it can continue operating even if the radio link is interrupted. The
+Rocket-Link device isolates radio and USB timing from the flight computer,
+while Rocket Monitor can provide a richer user interface without consuming
+onboard processor resources. Separating hardware, embedded firmware, radio
+transport, and ground software also makes each part easier to test, replace,
+and develop independently.
+
 ## Building
 
 The firmware is built with [PlatformIO](https://platformio.org/) and the

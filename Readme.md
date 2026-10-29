@@ -79,11 +79,11 @@ The Wisp system is divided into an onboard side and a ground side:
 
 Communication uses two separate framed protocols:
 
-1. **Rocket Monitor ↔ Rocket-Link:** a USB packet protocol with packet types
+- **Rocket Monitor ↔ Rocket-Link:** a USB packet protocol with packet types
    for pinging the bridge, sending radio data, receiving radio data, and
    issuing HC-12 configuration commands. Packets include a length and checksum
    so USB stream data can be recovered reliably.
-2. **Rocket Monitor/Rocket-Link ↔ flight computer:** a radio-link protocol
+- **Rocket Monitor/Rocket-Link ↔ flight computer:** a radio-link protocol
    carried as the payload of the bridge packets. It supports multiple
    request/response messages per frame, sequence IDs, status values, CRC
    checking, and retries. Requests cover sensors, gimbal control, flight

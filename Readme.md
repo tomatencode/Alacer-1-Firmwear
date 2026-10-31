@@ -35,6 +35,28 @@ Wisp is split into several cooperating hardware and software components:
 | [Rocket-Link Firmware](https://github.com/tomatencode/RocketLinkFirmwear) | Firmware for the Rocket-Link device |
 | [Rocket Monitor App](https://github.com/tomatencode/RocketMonitor) | Ground-station application for monitoring and operating the rocket |
 
+<table>
+  <tr>
+    <td align="center">
+      <strong>Mechanical design</strong><br>
+      <img src="recources/wisp_in_cad.png" alt="Wisp Mk1 mechanical design in CAD" width="280">
+    </td>
+    <td align="center">
+      <strong>Rocket Monitor</strong><br>
+      <img src="recources/rocket_monitor_app.png" alt="Rocket Monitor ground-station app" width="280">
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <strong>Rocket-Link</strong><br>
+      <img src="recources/rocket_link.jpg" alt="Rocket-Link USB-to-radio bridge" width="280">
+    </td>
+    <td align="center">
+      <strong>Alacer-1 flight computer</strong><br>
+      <img src="recources/Alacer-1_flight_computer.jpg" alt="Alacer-1 flight computer" width="280">
+    </td>
+  </tr>
+</table>
 
 Splitting the project into separate parts makes them easier to develop
 independently. This was the first design decision I made for the project.

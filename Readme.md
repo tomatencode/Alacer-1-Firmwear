@@ -74,6 +74,36 @@ flight computer over an HC-12 radio:
 +----------------------+          +----------------------+               +----------------------+
 ```
 
+## What the rocket can do
+
+### Fly and stabilize itself
+
+During flight, the firmware reads the IMU and barometer to track the rocket's
+movement and altitude. It follows the flight sequence from launch to recovery
+and uses the TVC gimbal to keep the rocket pointed in the right direction.
+It can continue this work even if the radio connection is lost.
+
+### Run a simulated flight
+
+The simulation mode replaces the flight sensors, gimbal, igniter, parachute,
+and clock with simulated versions. This makes it possible to test the flight
+sequence and control code on the flight computer without using real flight
+hardware. Radio, logging, battery measurement, LEDs, and the buzzer still use
+the real hardware.
+
+### Record flight logs
+
+The flight computer saves sensor data, altitude, velocity, gimbal position,
+rotation, battery state, and flight events to its flash storage. These logs can
+be downloaded after a flight to review what happened.
+
+### Send live telemetry
+
+Rocket Monitor can request the rocket's current data through Rocket-Link. This
+includes live sensor readings, altitude, flight state, and other status
+information. The same connection can send configuration changes and commands
+to the flight computer.
+
 ## Building
 
 The firmware is built with [PlatformIO](https://platformio.org/) and the

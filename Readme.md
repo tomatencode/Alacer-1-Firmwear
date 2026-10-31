@@ -35,6 +35,10 @@ Wisp is split into several cooperating hardware and software components:
 | [Rocket-Link Firmware](https://github.com/tomatencode/RocketLinkFirmwear) | Firmware for the Rocket-Link device |
 | [Rocket Monitor App](https://github.com/tomatencode/RocketMonitor) | Ground-station application for monitoring and operating the rocket |
 
+
+Splitting the project into separate parts makes them easier to develop
+independently. This was the first design decision I made for the project.
+
 ## How the components communicate
 
 The Rocket Monitor app communicates with the flight computer through
@@ -47,24 +51,6 @@ flight computer over an HC-12 radio:
 | Ground station app   |          | USB/radio bridge     |               | Computer + firmware  |
 +----------------------+          +----------------------+               +----------------------+
 ```
-
-### Component responsibilities
-
-- **Mechanical design** provides the rocket body, mounts, gimbal, recovery
-  system, and places to attach the electronics.
-- **Alacer-1 hardware** connects the STM32 to the rocket's sensors and
-  actuators.
-- **Flight computer firmware** reads sensors, estimates motion and altitude,
-  controls the gimbal and flight sequence, and records telemetry. It also
-  manages ignition and recovery without relying on the ground station.
-- **Rocket-Link hardware and firmware** carry data between USB and the HC-12
-  radio. They do not interpret flight-computer commands.
-- **Rocket Monitor** is the ground-station app. It sends commands, shows live
-  telemetry, changes settings, and downloads logs. It also connects to
-  Rocket-Link over USB.
-
-splitting the project into muulteple parts makes it possible to work on them independently,
-this split is the first thing i worked on when starting the project.
 
 ## Building
 

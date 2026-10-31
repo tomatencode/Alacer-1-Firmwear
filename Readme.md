@@ -61,11 +61,12 @@ Wisp is split into several cooperating hardware and software components:
 Splitting the project into separate parts makes them easier to develop
 independently. This was the first design decision I made for the project.
 
+The rocket was designed in Onshape and 3D printed. Both PCBs were designed in KiCad, then manufactured and assembled by PCBWay.
+
 ## How the components communicate
 
 The Rocket Monitor app communicates with the flight computer through
-Rocket-Link. Rocket-Link connects to the computer by USB and sends data to the
-flight computer over an HC-12 radio:
+Rocket-Link. Rocket-Link connects to the computer by USB and communicates to the rocket over Radio:
 
 ```text
 +----------------------+   USB    +----------------------+  HC-12 radio  +----------------------+

@@ -2,24 +2,25 @@
 
 ![Wisp Mk1](recources/wisp.jpg)
 
-Wisp Mk1 is an extremely lightweight thrust-vector-controlled (TVC) model
-rocket. The project combines a compact flight computer, a radio link, and a
-desktop monitoring application to provide onboard control, telemetry, flight
-logging, and ground-station operation.
+Wisp Mk1 is a lightweight model rocket that uses thrust vector control (TVC).
+Its system includes a custom flight computer, a USB-to-radio bridge, and a
+desktop monitoring app. Together, they control the rocket and provide
+telemetry and flight logs.
 
-This repository contains the **Alacer-1 flight computer firmware**. It runs on
-an STM32F411-based controller and coordinates the rocket's sensors and
-actuators during flight. The firmware includes:
+## Flight stabilization
 
-- IMU and barometric altitude measurement
-- Rotation and ascent tracking
-- PD-based thrust-vector control
-- Flight-state sequencing, including launch, burn, descent, and recovery
-- Gimbal, motor ignition, parachute, pyro, buzzer, LED, battery, and radio
-  hardware interfaces
-- Telemetry, event logging, flash storage, and log download
-- A simulation mode with mock hardware and a simple rocket model
-- A request/response radio protocol used by the Rocket-Link system
+During powered flight, the firmware keeps the rocket near its target direction
+by angeling the rocket motor:
+
+<img src="recources/tvc_concept.jpg" alt="Thrust-vector control concept" width="400">
+
+<img src="recources/Gimbaled_thrust_animation.gif" alt="Gimbaled thrust animation" width="400">
+
+The firmware uses gyroscope readings to estimate the rocket's attitude. A PD
+controller compares this estimate with the target and uses the rotation rate
+to adjust yaw and pitch. It measures roll but does not control it because the
+rocket is axisymmetric. The gimbal redirects thrust to reduce unwanted
+rotation and move the rocket back toward its target.
 
 ## Wisp project
 
@@ -36,74 +37,34 @@ Wisp is split into several cooperating hardware and software components:
 
 ## How the components communicate
 
-The Wisp system is divided into an onboard side and a ground side:
+The Rocket Monitor app communicates with the flight computer through
+Rocket-Link. Rocket-Link connects to the computer by USB and sends data to the
+flight computer over an HC-12 radio:
 
 ```text
-┌──────────────────────┐   USB    ┌──────────────────────┐  HC-12 radio  ┌────────────────────────┐
-│ Rocket Monitor App   │◄────────►│ Rocket-Link          │◄─────────────►│ Alacer-1 Flight        │
-│ Ground station       │          │ USB/radio bridge     │               │ Computer + firmware    │
-└──────────────────────┘          └──────────────────────┘               └────────────────────────┘
-                                                                            │
-                                                           Sensors, gimbal, │
-                                                           ignition, pyro,  │
-                                                           and recovery     │
-                                                                            ▼
-                                                                      Wisp Mk1 rocket hardware
++----------------------+   USB    +----------------------+  HC-12 radio  +----------------------+
+| Rocket Monitor       |<-------->| Rocket-Link          |<------------->| Alacer-1 Flight      |
+| Ground station app   |          | USB/radio bridge     |               | Computer + firmware  |
++----------------------+          +----------------------+               +----------------------+
 ```
 
 ### Component responsibilities
 
-- **Mechanical design** defines the airframe, payload mounting, gimbal
-  mechanism, recovery system, and the physical interfaces between the rocket
-  and its electronics. It does not communicate digitally, but it determines
-  where the sensors and actuators can be installed and how they behave in
-  flight.
-- **Alacer-1 hardware** is the onboard flight computer. It connects the
-  sensors and safety-critical actuators to the STM32 controller.
-- **Flight computer firmware** runs onboard the rocket. It reads the IMU and
-  barometer, estimates motion and altitude, controls the TVC gimbal, manages
-  the flight sequence, records telemetry and events, and operates the ignition
-  and recovery interfaces. The rocket can therefore continue a flight safely
-  without depending on a continuous ground-station connection.
-- **Rocket-Link hardware and firmware** form a small ground-side radio bridge.
-  The device exposes a USB serial connection to the computer and uses an HC-12
-  radio to transmit and receive bytes over the air. It forwards radio data
-  without implementing the flight computer's commands, keeping the bridge
-  simple and focused on transport.
-- **Rocket Monitor** is the ground-station application. It sends commands,
-  displays live telemetry and status, configures the flight computer, and
-  downloads or monitors flight logs. It also provides the operator interface
-  for the Rocket-Link USB connection.
+- **Mechanical design** provides the rocket body, mounts, gimbal, recovery
+  system, and places to attach the electronics.
+- **Alacer-1 hardware** connects the STM32 to the rocket's sensors and
+  actuators.
+- **Flight computer firmware** reads sensors, estimates motion and altitude,
+  controls the gimbal and flight sequence, and records telemetry. It also
+  manages ignition and recovery without relying on the ground station.
+- **Rocket-Link hardware and firmware** carry data between USB and the HC-12
+  radio. They do not interpret flight-computer commands.
+- **Rocket Monitor** is the ground-station app. It sends commands, shows live
+  telemetry, changes settings, and downloads logs. It also connects to
+  Rocket-Link over USB.
 
-### Protocol layers
-
-Communication uses two separate framed protocols:
-
-- **Rocket Monitor ↔ Rocket-Link:** a USB packet protocol with packet types
-   for pinging the bridge, sending radio data, receiving radio data, and
-   issuing HC-12 configuration commands. Packets include a length and checksum
-   so USB stream data can be recovered reliably.
-- **Rocket Monitor/Rocket-Link ↔ flight computer:** a radio-link protocol
-   carried as the payload of the bridge packets. It supports multiple
-   request/response messages per frame, sequence IDs, status values, CRC
-   checking, and retries. Requests cover sensors, gimbal control, flight
-   state, PD control, pyro and recovery controls, telemetry, and log
-   management.
-
-Telemetry and responses travel back along the same path in reverse:
-the flight computer creates a response or telemetry message, Rocket-Link
-bridges the radio bytes to USB, and Rocket Monitor decodes and presents them
-to the operator.
-
-### Why the project is split this way
-
-The split keeps the time-critical and safety-sensitive work on the rocket,
-where it can continue operating even if the radio link is interrupted. The
-Rocket-Link device isolates radio and USB timing from the flight computer,
-while Rocket Monitor can provide a richer user interface without consuming
-onboard processor resources. Separating hardware, embedded firmware, radio
-transport, and ground software also makes each part easier to test, replace,
-and develop independently.
+splitting the project into muulteple parts makes it possible to work on them independently,
+this split is the first thing i worked on when starting the project.
 
 ## Building
 
@@ -114,8 +75,7 @@ Arduino framework:
 pio run -e custom_f411ce
 ```
 
-The default hardware target is a generic STM32F411CE board and uploads use
-ST-Link:
+The default target is a generic STM32F411CE board. Uploads use ST-Link:
 
 ```bash
 pio run -e custom_f411ce -t upload
@@ -127,11 +87,9 @@ To build the on-device simulation configuration:
 pio run -e custom_f411ce_sim
 ```
 
-Additional host-side test runners and simulation documentation are available
-in [`tests/`](tests/).
+See [`tests/`](tests/) for host-side test runners and simulation documentation.
 
-## Status and safety
+## Safety
 
-Wisp Mk1 is an experimental hobby model-rocket project. The firmware and
-hardware were developed by an amateur and should not be relied on without
-careful, independent verification before use.
+Wisp Mk1 is a hobby model rocket project. An amateur developed its firmware
+and hardware. Check them carefully before use.
